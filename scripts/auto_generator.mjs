@@ -11,45 +11,58 @@ if (fs.existsSync('.env.local')) {
 
 const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL || 'https://lcmosfhqeevwcwsogpts.supabase.co';
 const supabaseKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const geminiApiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+const groqApiKey = env.GROQ_API_KEY || process.env.GROQ_API_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function generatePromptsWithGemini() {
-  if (!geminiApiKey) {
-    console.log('⚠️ GEMINI_API_KEY not provided. Set GEMINI_API_KEY in .env.local to generate live AI prompts.');
+async function generatePromptsWithGroq() {
+  if (!groqApiKey) {
+    console.log('⚠️ GROQ_API_KEY not found. Set GROQ_API_KEY in .env.local or GitHub Secrets.');
     return;
   }
 
-  console.log('🤖 Connecting to Gemini API to generate production prompts...');
+  console.log('⚡ Connecting to Groq API (Llama-3.3-70b) to generate production prompts...');
 
   const systemInstruction = `You are a Principal Prompt Engineer. Generate 3 highly specific, battle-tested system prompts in JSON format for technical operators.
-Return ONLY a valid JSON array of objects with keys:
+Return ONLY a valid JSON object with a "prompts" key containing an array of objects.
+Each object must have:
 - title: string
-- slug: string
+- slug: string (unique-kebab-case)
 - model_slug: "chatgpt" | "claude" | "gemini" | "deepseek"
 - profession_slug: "developer" | "seo-specialist" | "founder" | "marketer"
 - task_slug: "code-review" | "client-follow-up" | "content-outline" | "cold-email"
 - description: string (under 120 chars)
-- prompt_template: string (must include uppercase bracketed variables like [INPUT_CODE], [TARGET_GOAL])
+- prompt_template: string (must include uppercase bracketed variables like [CODE_SNIPPET], [TARGET_GOAL])
 - example_input: string
 - example_output: string
 - quality_score: number between 92 and 99`;
 
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${groqApiKey}`
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: systemInstruction }] }],
-        generationConfig: { responseMimeType: 'application/json' }
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemInstruction },
+          { role: 'user', content: 'Generate 3 battle-tested prompt templates now.' }
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.6
       })
     });
 
     const data = await res.json();
-    const generatedJson = JSON.parse(data.candidates[0].content.parts[0].text);
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) throw new Error('No content returned from Groq: ' + JSON.stringify(data));
 
-    console.log(`✨ Generated ${generatedJson.length} prompts. Ingesting into Supabase...`);
+    const parsed = JSON.parse(content);
+    const generatedList = Array.isArray(parsed) ? parsed : (parsed.prompts || Object.values(parsed)[0]);
+
+    console.log(`✨ Generated ${generatedList.length} prompts. Ingesting into Supabase...`);
 
     const { data: models } = await supabase.from('models').select('id, slug');
     const { data: professions } = await supabase.from('professions').select('id, slug');
@@ -59,7 +72,7 @@ Return ONLY a valid JSON array of objects with keys:
     const profMap = Object.fromEntries((professions || []).map(p => [p.slug, p.id]));
     const taskMap = Object.fromEntries((tasks || []).map(t => [t.slug, t.id]));
 
-    for (const item of generatedJson) {
+    for (const item of generatedList) {
       const modelId = modelMap[item.model_slug] || Object.values(modelMap)[0];
       const profId = profMap[item.profession_slug] || Object.values(profMap)[0];
       const taskId = taskMap[item.task_slug] || Object.values(taskMap)[0];
@@ -78,7 +91,7 @@ Return ONLY a valid JSON array of objects with keys:
         status: 'published',
         is_featured: true,
         use_cases: ['Autonomous AI pipelines', 'Production development'],
-        common_mistakes: ['Lack of explicit output schema constraints'],
+        common_mistakes: ['Lack of explicit constraints', 'Skipping input variables'],
       }, { onConflict: 'slug' });
 
       if (error) {
@@ -87,9 +100,11 @@ Return ONLY a valid JSON array of objects with keys:
         console.log(`✅ Ingested: ${item.title}`);
       }
     }
+
+    console.log('🎉 Groq batch ingestion successfully completed!');
   } catch (err) {
-    console.error('Error generating prompts:', err);
+    console.error('Groq Generation Error:', err);
   }
 }
 
-generatePromptsWithGemini();
+generatePromptsWithGroq();

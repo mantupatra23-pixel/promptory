@@ -18,6 +18,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const title = `${prompt.title} - Best ${prompt.model?.name} Prompt | Promptory`;
   const description = `${prompt.description} Quality Score: ${prompt.quality_score}/100. Tested system prompt template for ${prompt.profession?.name}s.`;
   const url = `https://promptory-tau.vercel.app/prompts/${params.model}/${params.profession}/${params.task}`;
+  
+  const ogImageUrl = `https://promptory-tau.vercel.app/api/og?title=${encodeURIComponent(prompt.title)}&model=${encodeURIComponent(prompt.model?.name || 'AI')}&score=${prompt.quality_score || 95}`;
 
   return {
     title,
@@ -31,11 +33,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       url,
       siteName: 'Promptory',
       type: 'article',
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: prompt.title,
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
+      images: [ogImageUrl],
     },
   };
 }
@@ -67,7 +78,6 @@ export default async function PromptDetailPage({ params }: PageProps) {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
-      {/* JSON-LD INJECTION FOR GOOGLE INDEXING */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
