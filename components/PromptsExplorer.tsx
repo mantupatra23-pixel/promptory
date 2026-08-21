@@ -1,5 +1,6 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import PromptCard from './PromptCard';
 import { Search, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 
@@ -9,18 +10,28 @@ interface Props {
   initialPrompts: any[];
 }
 
-export default function PromptsExplorer({ models, professions, initialPrompts }: Props) {
-  const [searchQuery, setSearchQuery] = useState('');
+function ExplorerContent({ models, professions, initialPrompts }: Props) {
+  const searchParams = useSearchParams();
+  const urlSearch = searchParams.get('search') || '';
+
+  const [searchQuery, setSearchQuery] = useState(urlSearch);
   const [selectedModel, setSelectedModel] = useState<string>('all');
   const [selectedProfession, setSelectedProfession] = useState<string>('all');
 
+  useEffect(() => {
+    if (urlSearch) {
+      setSearchQuery(urlSearch);
+    }
+  }, [urlSearch]);
+
   const filteredPrompts = useMemo(() => {
     return initialPrompts.filter((p) => {
+      const q = searchQuery.toLowerCase();
       const matchesSearch =
         searchQuery.trim() === '' ||
-        p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.prompt_template?.toLowerCase().includes(searchQuery.toLowerCase());
+        p.title?.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q) ||
+        p.prompt_template?.toLowerCase().includes(q);
 
       const matchesModel =
         selectedModel === 'all' || p.model?.slug === selectedModel;
@@ -42,7 +53,7 @@ export default function PromptsExplorer({ models, professions, initialPrompts }:
 
   return (
     <div className="space-y-8">
-      {/* SEARCH BAR & ACTIVE FILTER RESET */}
+      {/* SEARCH BAR */}
       <div className="flex flex-col sm:flex-row gap-4 items-center">
         <div className="w-full relative group">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
@@ -53,7 +64,7 @@ export default function PromptsExplorer({ models, professions, initialPrompts }:
             placeholder="Filter prompts by title, keywords, or variable..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-[#0F141C] border border-zinc-800 rounded-xl text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500/60 text-sm"
+            className="w-full pl-10 pr-10 py-3 bg-[#0F141C] border border-zinc-800 rounded-xl text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500/60 text-sm"
           />
           {searchQuery && (
             <button
@@ -142,7 +153,7 @@ export default function PromptsExplorer({ models, professions, initialPrompts }:
         <div className="p-12 text-center rounded-xl bg-[#0F141C] border border-zinc-800">
           <Sparkles className="w-8 h-8 text-zinc-600 mx-auto mb-3" />
           <h3 className="text-sm font-semibold text-zinc-300 mb-1">No matching prompts found</h3>
-          <p className="text-xs text-zinc-500">Try adjusting your search query or removing model filters.</p>
+          <p className="text-xs text-zinc-500">Try searching for keywords like "Python", "SEO", or "FastAPI".</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -168,5 +179,13 @@ export default function PromptsExplorer({ models, professions, initialPrompts }:
         </div>
       )}
     </div>
+  );
+}
+
+export default function PromptsExplorer(props: Props) {
+  return (
+    <Suspense fallback={<div className="text-xs text-zinc-500 font-mono py-8">Loading explorer...</div>}>
+      <ExplorerContent {...props} />
+    </Suspense>
   );
 }

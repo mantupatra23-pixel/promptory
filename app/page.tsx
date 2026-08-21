@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Sparkles, Zap, ArrowRight } from 'lucide-react';
+import { Sparkles, Zap, ArrowRight, Briefcase } from 'lucide-react';
 import { getModels, getProfessions, getPrompts } from '@/lib/db';
 import PromptCard from '@/components/PromptCard';
 import HeroSearch from '@/components/HeroSearch';
@@ -37,7 +37,7 @@ export default async function HomePage() {
         <HeroSearch />
       </section>
 
-      {/* POPULAR AI MODELS */}
+      {/* EXPLORE BY AI MODEL */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10 border-t border-zinc-800/60">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
@@ -58,14 +58,16 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* POPULAR PROFESSIONS */}
+      {/* EXPLORE BY PROFESSION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-        <h2 className="text-lg font-bold text-zinc-100 mb-6">Explore by Profession</h2>
+        <h2 className="text-lg font-bold text-zinc-100 mb-6 flex items-center gap-2">
+          <Briefcase className="w-4 h-4 text-emerald-400" /> Explore by Profession
+        </h2>
         <div className="flex gap-2 flex-wrap">
           {professions.map((prof: any) => (
             <Link
               key={prof.id}
-              href={`/prompts`}
+              href={`/prompts/role/${prof.slug}`}
               className="px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-medium text-zinc-300 hover:border-emerald-500/50 hover:text-emerald-400 transition-all"
             >
               {prof.name}
