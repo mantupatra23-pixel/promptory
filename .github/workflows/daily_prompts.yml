@@ -2,8 +2,8 @@ name: Daily Autonomous AI Prompt Ingestion
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Har roz 00:00 UTC ko run hoga
-  workflow_dispatch:     # GitHub UI se manually run karne ka option
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
   ingest-prompts:
@@ -15,7 +15,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install Dependencies
         run: npm install @supabase/supabase-js

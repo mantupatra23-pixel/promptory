@@ -9,19 +9,25 @@ if (fs.existsSync('.env.local')) {
   });
 }
 
-const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL || 'https://lcmosfhqeevwcwsogpts.supabase.co';
-const supabaseKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const groqApiKey = env.GROQ_API_KEY || process.env.GROQ_API_KEY;
+// Check process.env first (for GitHub Actions / Vercel), fallback to .env.local
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || 'https://lcmosfhqeevwcwsogpts.supabase.co';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const groqApiKey = process.env.GROQ_API_KEY || env.GROQ_API_KEY;
+
+if (!supabaseKey) {
+  console.error('❌ Supabase Anon Key missing from environment.');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function generatePromptsWithGroq() {
   if (!groqApiKey) {
-    console.log('⚠️ GROQ_API_KEY not found. Set GROQ_API_KEY in .env.local or GitHub Secrets.');
-    return;
+    console.error('❌ GROQ_API_KEY missing from environment.');
+    process.exit(1);
   }
 
-  console.log('⚡ Connecting to Groq API (Llama-3.3-70b) to generate production prompts...');
+  console.log('⚡ Connecting to Groq API (Llama-3.3-70b)...');
 
   const systemInstruction = `You are a Principal Prompt Engineer. Generate 3 highly specific, battle-tested system prompts in JSON format for technical operators.
 Return ONLY a valid JSON object with a "prompts" key containing an array of objects.
@@ -104,6 +110,7 @@ Each object must have:
     console.log('🎉 Groq batch ingestion successfully completed!');
   } catch (err) {
     console.error('Groq Generation Error:', err);
+    process.exit(1);
   }
 }
 
