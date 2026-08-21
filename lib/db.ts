@@ -63,3 +63,40 @@ export async function getPromptByRoute(modelSlug: string, profSlug: string, task
   }
   return data;
 }
+
+export async function getWorkflows() {
+  const { data, error } = await supabase
+    .from('workflows')
+    .select(`
+      *,
+      steps:workflow_steps(*)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching workflows:', error);
+    return [];
+  }
+  return data;
+}
+
+export async function getWorkflowBySlug(slug: string) {
+  const { data, error } = await supabase
+    .from('workflows')
+    .select(`
+      *,
+      steps:workflow_steps(*)
+    `)
+    .eq('slug', slug)
+    .single();
+
+  if (error) {
+    console.error('Error fetching workflow by slug:', error);
+    return null;
+  }
+
+  if (data && data.steps) {
+    data.steps.sort((a: any, b: any) => a.step_order - b.step_order);
+  }
+  return data;
+}
