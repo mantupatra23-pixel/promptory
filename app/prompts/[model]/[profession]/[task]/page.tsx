@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
 import { getPromptByRoute } from '@/lib/db';
 import PromptCustomizer from '@/components/PromptCustomizer';
 import { ShieldCheck, ChevronRight, Info, AlertTriangle, Cpu } from 'lucide-react';
@@ -6,19 +7,72 @@ import Link from 'next/link';
 
 export const revalidate = 60;
 
-export default async function PromptDetailPage({
-  params
-}: {
-  params: { model: string; profession: string; task: string }
-}) {
+interface PageProps {
+  params: { model: string; profession: string; task: string };
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const prompt = await getPromptByRoute(params.model, params.profession, params.task);
+  if (!prompt) return { title: 'Prompt Not Found | Promptory' };
+
+  const title = `${prompt.title} - Best ${prompt.model?.name} Prompt | Promptory`;
+  const description = `${prompt.description} Quality Score: ${prompt.quality_score}/100. Tested system prompt template for ${prompt.profession?.name}s.`;
+  const url = `https://promptory-tau.vercel.app/prompts/${params.model}/${params.profession}/${params.task}`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: 'Promptory',
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  };
+}
+
+export default async function PromptDetailPage({ params }: PageProps) {
   const prompt = await getPromptByRoute(params.model, params.profession, params.task);
 
   if (!prompt) {
     return notFound();
   }
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: prompt.title,
+    description: prompt.description,
+    proficiencyLevel: 'Expert',
+    articleSection: prompt.profession?.name,
+    dependencies: prompt.model?.name,
+    author: {
+      '@type': 'Organization',
+      name: 'Promptory',
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://promptory-tau.vercel.app/prompts/${params.model}/${params.profession}/${params.task}`,
+    },
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+      {/* JSON-LD INJECTION FOR GOOGLE INDEXING */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* BREADCRUMB */}
       <nav className="flex items-center gap-2 text-xs text-zinc-500 mb-6 flex-wrap">
         <Link href="/" className="hover:text-zinc-300">Home</Link>
@@ -49,7 +103,7 @@ export default async function PromptDetailPage({
         <p className="text-sm text-zinc-400 leading-relaxed max-w-3xl">{prompt.description}</p>
       </div>
 
-      {/* INTERACTIVE BUILDER (PHASE 2 COMPONENT) */}
+      {/* INTERACTIVE BUILDER */}
       <div className="mb-12">
         <PromptCustomizer
           promptId={prompt.id}
