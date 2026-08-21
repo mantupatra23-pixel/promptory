@@ -14,7 +14,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || env.NEXT_PUBLIC
 const groqApiKey = process.env.GROQ_API_KEY || env.GROQ_API_KEY;
 
 if (!supabaseKey) {
-  console.error('❌ Supabase Anon Key missing from environment.');
+  console.error('❌ Supabase Anon Key missing.');
   process.exit(1);
 }
 
@@ -22,11 +22,11 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function generatePromptsWithGroq() {
   if (!groqApiKey) {
-    console.error('❌ GROQ_API_KEY missing from environment.');
+    console.error('❌ GROQ_API_KEY is missing from environment/secrets.');
     process.exit(1);
   }
 
-  console.log('⚡ Connecting to Groq API (llama-3.1-8b-instant)...');
+  console.log('⚡ Connecting to Groq API...');
 
   const systemInstruction = `You are a Principal Prompt Engineer. Generate 3 highly specific, battle-tested system prompts in JSON format for technical operators.
 Return ONLY a valid JSON object with a "prompts" key containing an array of objects.
@@ -42,49 +42,60 @@ Each object must have:
 - example_output: string
 - quality_score: number between 92 and 99`;
 
-  const modelsToTry = ['llama-3.1-8b-instant', 'llama-3.1-70b-versatile', 'mixtral-8x7b-32768'];
+  const modelsToTry = [
+    'llama-3.1-8b-instant',
+    'llama3-8b-8192',
+    'gemma2-9b-it'
+  ];
+
   let parsed = null;
 
   for (const model of modelsToTry) {
     try {
-      console.log(`Trying Groq model: ${model}...`);
+      console.log(`\nTesting Groq model: ${model}...`);
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${groqApiKey}`
+          'Authorization': `Bearer ${groqApiKey.trim()}`
         },
         body: JSON.stringify({
           model: model,
           messages: [
             { role: 'system', content: systemInstruction },
-            { role: 'user', content: 'Generate 3 battle-tested prompt templates now.' }
+            { role: 'user', content: 'Generate 3 high-converting AI prompt templates in JSON format now.' }
           ],
           response_format: { type: 'json_object' },
-          temperature: 0.6
+          temperature: 0.5
         })
       });
 
       const data = await res.json();
+
+      if (!res.ok) {
+        console.error(`❌ Groq Error (${res.status}) on ${model}:`, JSON.stringify(data));
+        continue;
+      }
+
       const content = data.choices?.[0]?.message?.content;
       if (content) {
         parsed = JSON.parse(content);
-        console.log(`✅ Success with model: ${model}`);
+        console.log(`✅ Success with model: ${model}!`);
         break;
       }
-    } catch (e) {
-      console.warn(`Model ${model} failed, trying next...`);
+    } catch (err) {
+      console.error(`Fetch exception on model ${model}:`, err.message);
     }
   }
 
   if (!parsed) {
-    console.error('❌ Failed to get response from Groq models.');
+    console.error('❌ All Groq models failed. Check the error logs above.');
     process.exit(1);
   }
 
   const generatedList = Array.isArray(parsed) ? parsed : (parsed.prompts || Object.values(parsed)[0]);
 
-  console.log(`✨ Generated ${generatedList.length} prompts. Ingesting into Supabase...`);
+  console.log(`\n✨ Ingesting ${generatedList.length} prompts into Supabase...`);
 
   const { data: models } = await supabase.from('models').select('id, slug');
   const { data: professions } = await supabase.from('professions').select('id, slug');
@@ -117,13 +128,13 @@ Each object must have:
     }, { onConflict: 'slug' });
 
     if (error) {
-      console.error(`❌ Failed: ${item.title}`, error.message);
+      console.error(`❌ Ingestion failed for: ${item.title}`, error.message);
     } else {
       console.log(`✅ Ingested: ${item.title}`);
     }
   }
 
-  console.log('🎉 Groq batch ingestion successfully completed!');
+  console.log('\n🎉 Batch ingestion successfully finished!');
 }
 
 generatePromptsWithGroq();
