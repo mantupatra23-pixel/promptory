@@ -20,41 +20,45 @@ if (!supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function getActiveGroqModel(apiKey) {
-  try {
-    const res = await fetch('https://api.groq.com/openai/v1/models', {
-      headers: { 'Authorization': `Bearer ${apiKey.trim()}` }
-    });
-    const data = await res.json();
-    if (!res.ok || !data.data) {
-      console.error('Error fetching Groq models:', data);
-      return null;
-    }
-    // Filter text chat models
-    const chatModels = data.data.filter(m => !m.id.includes('whisper') && !m.id.includes('guard'));
-    console.log('⚡ Active Groq Models found:', chatModels.map(m => m.id).join(', '));
-    return chatModels.length > 0 ? chatModels[0].id : null;
-  } catch (err) {
-    console.error('Failed to list Groq models:', err.message);
-    return null;
-  }
-}
-
 async function generatePromptsWithGroq() {
   if (!groqApiKey) {
     console.error('❌ GROQ_API_KEY is missing from environment/secrets.');
     process.exit(1);
   }
 
-  console.log('🔍 Fetching live active model from Groq API...');
-  const activeModel = await getActiveGroqModel(groqApiKey);
-
-  if (!activeModel) {
-    console.error('❌ Could not find an active Groq chat model.');
-    process.exit(1);
+  console.log('🔍 Querying live Groq model registry...');
+  
+  let availableModels = [];
+  try {
+    const modelsRes = await fetch('https://api.groq.com/openai/v1/models', {
+      headers: { 'Authorization': `Bearer ${groqApiKey.trim()}` }
+    });
+    const modelsData = await modelsRes.json();
+    if (modelsData.data) {
+      availableModels = modelsData.data
+        .map(m => m.id)
+        .filter(id => 
+          !id.includes('whisper') && 
+          !id.includes('guard') && 
+          !id.includes('orpheus') && 
+          !id.includes('embed')
+        );
+    }
+  } catch (err) {
+    console.warn('Could not fetch dynamic models list, using fallbacks');
   }
 
-  console.log(`🚀 Using active Groq model: ${activeModel}`);
+  // Preferred priority list + dynamically found models
+  const candidateModels = Array.from(new Set([
+    ...availableModels,
+    'qwen/qwen3.6-27b',
+    'groq/compound',
+    'openai/gpt-oss-20b',
+    'groq/compound-mini',
+    'allam-2-7b'
+  ]));
+
+  console.log('⚡ Candidate models to evaluate:', candidateModels.join(', '));
 
   const systemInstruction = `You are a Principal Prompt Engineer. Generate 3 highly specific, battle-tested system prompts in JSON format for technical operators.
 Return ONLY a valid JSON object with a "prompts" key containing an array of objects.
@@ -70,79 +74,95 @@ Each object must have:
 - example_output: string
 - quality_score: number between 92 and 99`;
 
-  try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${groqApiKey.trim()}`
-      },
-      body: JSON.stringify({
-        model: activeModel,
-        messages: [
-          { role: 'system', content: systemInstruction },
-          { role: 'user', content: 'Generate 3 high-converting AI prompt templates in JSON format now.' }
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.5
-      })
-    });
+  let parsed = null;
+  let successfulModel = '';
 
-    const data = await res.json();
+  for (const model of candidateModels) {
+    console.log(`\nTesting Groq model: ${model}...`);
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${groqApiKey.trim()}`
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [
+            { role: 'system', content: systemInstruction },
+            { role: 'user', content: 'Generate 3 high-converting AI prompt templates in JSON format now.' }
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.5
+        })
+      });
 
-    if (!res.ok) {
-      console.error(`❌ Groq Error (${res.status}):`, JSON.stringify(data));
-      process.exit(1);
-    }
+      const data = await res.json();
 
-    const content = data.choices?.[0]?.message?.content;
-    const parsed = JSON.parse(content);
-    const generatedList = Array.isArray(parsed) ? parsed : (parsed.prompts || Object.values(parsed)[0]);
-
-    console.log(`\n✨ Ingesting ${generatedList.length} prompts into Supabase...`);
-
-    const { data: models } = await supabase.from('models').select('id, slug');
-    const { data: professions } = await supabase.from('professions').select('id, slug');
-    const { data: tasks } = await supabase.from('tasks').select('id, slug');
-
-    const modelMap = Object.fromEntries((models || []).map(m => [m.slug, m.id]));
-    const profMap = Object.fromEntries((professions || []).map(p => [p.slug, p.id]));
-    const taskMap = Object.fromEntries((tasks || []).map(t => [t.slug, t.id]));
-
-    for (const item of generatedList) {
-      const modelId = modelMap[item.model_slug] || Object.values(modelMap)[0];
-      const profId = profMap[item.profession_slug] || Object.values(profMap)[0];
-      const taskId = taskMap[item.task_slug] || Object.values(taskMap)[0];
-
-      const { error } = await supabase.from('prompts').upsert({
-        title: item.title,
-        slug: item.slug,
-        model_id: modelId,
-        profession_id: profId,
-        task_id: taskId,
-        description: item.description,
-        prompt_template: item.prompt_template,
-        example_input: item.example_input,
-        example_output: item.example_output,
-        quality_score: item.quality_score,
-        status: 'published',
-        is_featured: true,
-        use_cases: ['Autonomous AI pipelines', 'Production development'],
-        common_mistakes: ['Lack of explicit constraints', 'Skipping input variables'],
-      }, { onConflict: 'slug' });
-
-      if (error) {
-        console.error(`❌ Ingestion failed for: ${item.title}`, error.message);
-      } else {
-        console.log(`✅ Ingested: ${item.title}`);
+      if (!res.ok) {
+        console.warn(`⚠️ Skipped ${model}: ${data.error?.message || 'Request failed'}`);
+        continue;
       }
-    }
 
-    console.log('\n🎉 Autonomous ingestion successfully completed!');
-  } catch (err) {
-    console.error('Groq Execution Error:', err);
+      const content = data.choices?.[0]?.message?.content;
+      if (content) {
+        parsed = JSON.parse(content);
+        successfulModel = model;
+        console.log(`✅ Success! Generated prompts using: ${model}`);
+        break;
+      }
+    } catch (err) {
+      console.warn(`Exception on ${model}:`, err.message);
+    }
+  }
+
+  if (!parsed) {
+    console.error('❌ All Groq models failed.');
     process.exit(1);
   }
+
+  const generatedList = Array.isArray(parsed) ? parsed : (parsed.prompts || Object.values(parsed)[0]);
+
+  console.log(`\n✨ Ingesting ${generatedList.length} prompts into Supabase...`);
+
+  const { data: models } = await supabase.from('models').select('id, slug');
+  const { data: professions } = await supabase.from('professions').select('id, slug');
+  const { data: tasks } = await supabase.from('tasks').select('id, slug');
+
+  const modelMap = Object.fromEntries((models || []).map(m => [m.slug, m.id]));
+  const profMap = Object.fromEntries((professions || []).map(p => [p.slug, p.id]));
+  const taskMap = Object.fromEntries((tasks || []).map(t => [t.slug, t.id]));
+
+  for (const item of generatedList) {
+    const modelId = modelMap[item.model_slug] || Object.values(modelMap)[0];
+    const profId = profMap[item.profession_slug] || Object.values(profMap)[0];
+    const taskId = taskMap[item.task_slug] || Object.values(taskMap)[0];
+
+    const { error } = await supabase.from('prompts').upsert({
+      title: item.title,
+      slug: item.slug,
+      model_id: modelId,
+      profession_id: profId,
+      task_id: taskId,
+      description: item.description,
+      prompt_template: item.prompt_template,
+      example_input: item.example_input,
+      example_output: item.example_output,
+      quality_score: item.quality_score,
+      status: 'published',
+      is_featured: true,
+      use_cases: ['Autonomous AI pipelines', 'Production development'],
+      common_mistakes: ['Lack of explicit constraints', 'Skipping input variables'],
+    }, { onConflict: 'slug' });
+
+    if (error) {
+      console.error(`❌ Ingestion failed for: ${item.title}`, error.message);
+    } else {
+      console.log(`✅ Ingested: ${item.title}`);
+    }
+  }
+
+  console.log(`\n🎉 Autonomous ingestion finished successfully using ${successfulModel}!`);
 }
 
 generatePromptsWithGroq();
