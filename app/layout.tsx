@@ -1,10 +1,19 @@
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import Header from '@/components/Header';
+import MobileNav from '@/components/MobileNav';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Promptory — Tested AI Prompts & Workflow Hub',
-  description: 'Discover curated, tested system prompts and automation recipes for real-world tasks.',
+  metadataBase: new URL('https://promptory-tau.vercel.app'),
+  title: 'Promptory — Tested AI Prompts & Workflow Engine',
+  description: 'Curated, tested system prompts and automation recipes for ChatGPT, Claude, Gemini, and DeepSeek.',
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -13,13 +22,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="bg-[#080B10] text-zinc-100 min-h-screen flex flex-col antialiased">
+    <html lang="en" className="dark">
+      <body className={`${inter.className} bg-[#0A0D12] text-zinc-100 min-h-screen flex flex-col antialiased selection:bg-emerald-500/30 selection:text-emerald-200 pb-16 sm:pb-0`}>
         <Header />
-        <main className="flex-grow">{children}</main>
-        <footer className="border-t border-zinc-800/80 py-8 text-center text-xs text-zinc-500">
-          © {new Date().getFullYear()} Promptory. All rights reserved.
-        </footer>
+        <main className="flex-1">
+          {children}
+        </main>
+        <MobileNav />
       </body>
     </html>
   );
