@@ -11,11 +11,11 @@ module.exports = {
           bg: "#0A0D12",
           card: "#121721",
           border: "#1E2638",
-          primary: "#10B981", // Clean Emerald
+          primary: "#10B981",
           accent: "#38BDF8",
         }
       }
     },
   },
   plugins: [],
-}
+};
