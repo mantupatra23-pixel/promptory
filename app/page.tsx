@@ -1,9 +1,10 @@
 import Link from 'next/link';
-import { Search, Sparkles, Zap, ArrowRight } from 'lucide-react';
+import { Sparkles, Zap, ArrowRight } from 'lucide-react';
 import { getModels, getProfessions, getPrompts } from '@/lib/db';
 import PromptCard from '@/components/PromptCard';
+import HeroSearch from '@/components/HeroSearch';
 
-export const revalidate = 60; // 60 seconds ISR cache
+export const revalidate = 60;
 
 export default async function HomePage() {
   const [models, professions, prompts] = await Promise.all([
@@ -32,27 +33,8 @@ export default async function HomePage() {
           Discover curated, tested system prompts and automation recipes built for engineers, marketers, and operators.
         </p>
 
-        {/* SEARCH BAR */}
-        <div className="max-w-2xl mx-auto relative group mb-6">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500">
-            <Search className="w-5 h-5 group-focus-within:text-emerald-400 transition-colors" />
-          </div>
-          <input
-            type="text"
-            placeholder="What do you want AI to help you do? (e.g. Python code review, SEO outline...)"
-            className="w-full pl-12 pr-4 py-4 bg-[#0F141C] border border-zinc-800 rounded-xl text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/60 transition-all text-sm sm:text-base shadow-xl"
-          />
-        </div>
-
-        {/* POPULAR SEARCH TAGS */}
-        <div className="flex items-center justify-center gap-2 flex-wrap text-xs text-zinc-400">
-          <span className="text-zinc-500">Popular:</span>
-          {['Python Debugging', 'Real Estate Follow-Up', 'SEO Content Outline', 'Cold Email', 'Code Review'].map((tag) => (
-            <span key={tag} className="px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-300 hover:border-zinc-700 cursor-pointer transition-colors">
-              {tag}
-            </span>
-          ))}
-        </div>
+        {/* FUNCTIONAL HERO SEARCH */}
+        <HeroSearch />
       </section>
 
       {/* POPULAR AI MODELS */}
@@ -83,7 +65,7 @@ export default async function HomePage() {
           {professions.map((prof: any) => (
             <Link
               key={prof.id}
-              href={`/prompts/all/${prof.slug}`}
+              href={`/prompts`}
               className="px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-medium text-zinc-300 hover:border-emerald-500/50 hover:text-emerald-400 transition-all"
             >
               {prof.name}
