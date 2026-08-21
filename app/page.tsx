@@ -1,9 +1,17 @@
 import Link from 'next/link';
-import { Search, Sparkles, Zap, Shield, ArrowRight } from 'lucide-react';
-import { models, professions, samplePrompts } from '@/lib/data';
+import { Search, Sparkles, Zap, ArrowRight } from 'lucide-react';
+import { getModels, getProfessions, getPrompts } from '@/lib/db';
 import PromptCard from '@/components/PromptCard';
 
-export default function HomePage() {
+export const revalidate = 60; // 60 seconds ISR cache
+
+export default async function HomePage() {
+  const [models, professions, prompts] = await Promise.all([
+    getModels(),
+    getProfessions(),
+    getPrompts()
+  ]);
+
   return (
     <div className="min-h-screen">
       {/* HERO SECTION */}
@@ -54,8 +62,8 @@ export default function HomePage() {
             <Zap className="w-4 h-4 text-emerald-400" /> Explore by AI Model
           </h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {models.map((model) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {models.map((model: any) => (
             <Link 
               key={model.id}
               href={`/prompts/${model.slug}`}
@@ -72,7 +80,7 @@ export default function HomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
         <h2 className="text-lg font-bold text-zinc-100 mb-6">Explore by Profession</h2>
         <div className="flex gap-2 flex-wrap">
-          {professions.map((prof) => (
+          {professions.map((prof: any) => (
             <Link
               key={prof.id}
               href={`/prompts/all/${prof.slug}`}
@@ -84,20 +92,36 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* TRENDING PROMPTS */}
+      {/* FEATURED PROMPTS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-lg font-bold text-zinc-100">Featured & High-Score Prompts</h2>
-            <p className="text-xs text-zinc-400">Tested prompts with quality score &gt; 90</p>
+            <p className="text-xs text-zinc-400">Tested prompts loaded dynamically from Supabase</p>
           </div>
           <Link href="/prompts" className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-medium">
             View All Prompts <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {samplePrompts.map((p) => (
-            <PromptCard key={p.id} prompt={p} />
+          {prompts.map((p: any) => (
+            <PromptCard 
+              key={p.id} 
+              prompt={{
+                id: p.id,
+                title: p.title,
+                slug: p.slug,
+                model: p.model,
+                profession: p.profession,
+                task: p.task,
+                description: p.description,
+                promptTemplate: p.prompt_template,
+                exampleInput: p.example_input,
+                exampleOutput: p.example_output,
+                qualityScore: p.quality_score,
+                status: p.status
+              }} 
+            />
           ))}
         </div>
       </section>
