@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { Copy, Check, RotateCcw, Sliders, FileCode } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Copy, Check, RotateCcw, Sliders, FileCode, ChevronDown } from 'lucide-react';
 import { parsePromptVariables, replacePromptVariables } from '@/lib/variableParser';
 import AIBridge from './AIBridge';
 
@@ -21,6 +21,74 @@ const TONES = ['Default', 'Professional', 'Persuasive', 'Concise', 'Technical', 
 const FORMATS = ['Default', 'Markdown', 'Bullet Points', 'Table', 'JSON', 'Step-by-Step', 'Plain Text'];
 const LENGTHS = ['Default', 'Short', 'Medium', 'Detailed'];
 
+// Custom Dark Dropdown Component (Replaces native white Android selects)
+function CustomSelect({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: string[];
+  value: string;
+  onChange: (val: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <label className="block text-xs font-semibold text-zinc-400 mb-1.5">{label}</label>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full bg-[#0A0D12] border border-zinc-800 hover:border-emerald-500/50 rounded-xl px-3.5 py-2.5 text-xs text-zinc-200 flex items-center justify-between transition focus:outline-none focus:border-emerald-500"
+      >
+        <span className={value !== 'Default' ? 'text-emerald-400 font-semibold' : 'text-zinc-300'}>
+          {value}
+        </span>
+        <ChevronDown className={`w-3.5 h-3.5 text-zinc-500 transition-transform duration-200 ${open ? 'rotate-180 text-emerald-400' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto bg-[#12161F] border border-zinc-700/80 rounded-xl p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
+          {options.map((opt) => {
+            const isSelected = opt === value;
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => {
+                  onChange(opt);
+                  setOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between transition ${
+                  isSelected
+                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                    : 'text-zinc-300 hover:bg-[#0A0D12] hover:text-white'
+                }`}
+              >
+                <span>{opt}</span>
+                {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PromptCustomizer({
   initialPrompt,
   template,
@@ -39,7 +107,6 @@ export default function PromptCustomizer({
   const [selectedLength, setSelectedLength] = useState('Default');
   const [copied, setCopied] = useState(false);
 
-  // Auto-fill example inputs if provided by workflows
   useEffect(() => {
     if (exampleInput && typeof exampleInput === 'object') {
       setValues(exampleInput);
@@ -47,7 +114,7 @@ export default function PromptCustomizer({
   }, [exampleInput]);
 
   const handleInputChange = (key: string, val: string) => {
-    setValues(prev => ({ ...prev, [key]: val }));
+    setValues((prev) => ({ ...prev, [key]: val }));
   };
 
   const handleReset = () => {
@@ -88,7 +155,7 @@ export default function PromptCustomizer({
             </div>
             <button
               onClick={handleReset}
-              className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-zinc-200 transition"
+              className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-emerald-400 transition"
             >
               <RotateCcw className="w-3 h-3" />
               <span>Reset</span>
@@ -109,26 +176,15 @@ export default function PromptCustomizer({
                       placeholder={`Enter ${v.label.toLowerCase()}...`}
                       value={currentVal}
                       onChange={(e) => handleInputChange(v.key, e.target.value)}
-                      className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition font-mono"
+                      className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition font-mono"
                     />
-                  ) : v.type === 'select' && v.options ? (
-                    <select
-                      value={currentVal}
-                      onChange={(e) => handleInputChange(v.key, e.target.value)}
-                      className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-emerald-500 transition"
-                    >
-                      <option value="">Select {v.label}</option>
-                      {v.options.map((opt) => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
                   ) : (
                     <input
                       type="text"
                       placeholder={`Enter ${v.label.toLowerCase()}...`}
                       value={currentVal}
                       onChange={(e) => handleInputChange(v.key, e.target.value)}
-                      className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition"
+                      className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition"
                     />
                   )}
                 </div>
@@ -138,40 +194,26 @@ export default function PromptCustomizer({
         </div>
       )}
 
-      {/* OUTPUT CONTROLS (Tone, Format, Length) */}
-      <div className="bg-[#12161F]/70 border border-zinc-800 rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Output Tone</label>
-          <select
-            value={selectedTone}
-            onChange={(e) => setSelectedTone(e.target.value)}
-            className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
-          >
-            {TONES.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Output Format</label>
-          <select
-            value={selectedFormat}
-            onChange={(e) => setSelectedFormat(e.target.value)}
-            className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
-          >
-            {FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Output Length</label>
-          <select
-            value={selectedLength}
-            onChange={(e) => setSelectedLength(e.target.value)}
-            className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
-          >
-            {LENGTHS.map(l => <option key={l} value={l}>{l}</option>)}
-          </select>
-        </div>
+      {/* OUTPUT CONSTRAINTS (Pure Dark & Neon Green Custom Selectors) */}
+      <div className="bg-[#12161F]/90 border border-zinc-800 rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <CustomSelect
+          label="Output Tone"
+          options={TONES}
+          value={selectedTone}
+          onChange={setSelectedTone}
+        />
+        <CustomSelect
+          label="Output Format"
+          options={FORMATS}
+          value={selectedFormat}
+          onChange={setSelectedFormat}
+        />
+        <CustomSelect
+          label="Output Length"
+          options={LENGTHS}
+          value={selectedLength}
+          onChange={setSelectedLength}
+        />
       </div>
 
       {/* LIVE GENERATED PROMPT PREVIEW */}
