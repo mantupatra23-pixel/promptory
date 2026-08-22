@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import PromptCustomizer from '@/components/PromptCustomizer';
+import PromptGuideAndFAQ from '@/components/PromptGuideAndFAQ';
 import RelatedPrompts from '@/components/RelatedPrompts';
 import ShareButton from '@/components/ShareButton';
-import { ChevronRight, Sparkles, Bookmark, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, Sparkles } from 'lucide-react';
 import { calculateQualityScore } from '@/lib/qualityScore';
+import { parsePromptVariables } from '@/lib/variableParser';
 
 interface PageProps {
   params: {
@@ -21,7 +23,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { data: prompts } = await supabase
     .from('prompts')
     .select('*, model:models(*), profession:professions(*)')
-    .limit(50);
+    .limit(100);
 
   const prompt = (prompts || []).find((p: any) => {
     const m = (p.model?.slug || p.model || '').toLowerCase();
@@ -31,7 +33,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }) || prompts?.[0];
 
   const title = prompt?.title ? `${prompt.title} | Promptory` : 'Tested AI System Prompt';
-  const description = prompt?.description || 'Customizable, battle-tested system prompt.';
+  const description = prompt?.description || 'Customizable, battle-tested system prompt with variable controls.';
   const canonicalUrl = `https://www.promptory.xyz/prompts/${params.model}/${params.profession}/${params.task}`;
 
   return {
@@ -53,7 +55,7 @@ export default async function PromptDetailPage({ params }: PageProps) {
   const { data: prompts } = await supabase
     .from('prompts')
     .select('*, model:models(*), profession:professions(*)')
-    .limit(50);
+    .limit(100);
 
   const prompt = (prompts || []).find((p: any) => {
     const m = (p.model?.slug || p.model || '').toLowerCase();
@@ -70,19 +72,46 @@ export default async function PromptDetailPage({ params }: PageProps) {
   const roleName = prompt.profession?.name || params.profession.replace('-', ' ');
   const promptTemplate = prompt.prompt_template || prompt.prompt || prompt.content || '';
   const scoreBreakdown = calculateQualityScore(promptTemplate, prompt.quality_score || 97);
+  const detectedVariables = parsePromptVariables(promptTemplate);
   const currentUrl = `https://www.promptory.xyz/prompts/${params.model}/${params.profession}/${params.task}`;
 
+  // Structured Data Schema for Googlebot
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'TechArticle',
-    headline: prompt.title,
-    description: prompt.description,
-    author: {
-      '@type': 'Organization',
-      name: 'Promptory',
-      url: 'https://www.promptory.xyz',
-    },
-    mainEntityOfPage: currentUrl,
+    '@graph': [
+      {
+        '@type': 'TechArticle',
+        headline: prompt.title,
+        description: prompt.description,
+        author: {
+          '@type': 'Organization',
+          name: 'Promptory',
+          url: 'https://www.promptory.xyz',
+        },
+        mainEntityOfPage: currentUrl,
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: `What is the best way to run ${prompt.title} in ${modelName}?`,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: `To maximize output quality in ${modelName}, replace all placeholder parameters with detailed real-world data rather than generic summaries. Setting your desired output format ensures structured formatting on the first response.`,
+            },
+          },
+          {
+            '@type': 'Question',
+            name: `Can I use this prompt with other AI models?`,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: `Yes. This prompt follows universal prompt engineering standards and works across ChatGPT, Claude 3.5 Sonnet, Google Gemini, and DeepSeek.`,
+            },
+          },
+        ],
+      },
+    ],
   };
 
   return (
@@ -132,8 +161,18 @@ export default async function PromptDetailPage({ params }: PageProps) {
         </p>
       </div>
 
-      {/* Customizer & Live Output */}
+      {/* Customizer, Live Output & 1-Click AI Launchers */}
       <PromptCustomizer initialPrompt={promptTemplate} modelName={modelName} />
+
+      {/* Dynamic Non-Hardcoded How-To-Use & FAQ Section */}
+      <PromptGuideAndFAQ
+        promptTitle={prompt.title}
+        modelName={modelName}
+        roleName={roleName}
+        description={prompt.description}
+        variables={detectedVariables}
+        qualityScore={scoreBreakdown.total}
+      />
 
       {/* Related Prompts */}
       <RelatedPrompts
