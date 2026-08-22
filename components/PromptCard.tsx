@@ -7,8 +7,24 @@ import { useSavedPrompts } from '@/hooks/useSavedPrompts';
 import QualityScoreModal from './QualityScoreModal';
 import { calculateQualityScore } from '@/lib/qualityScore';
 
-interface PromptCardProps {
-  prompt: any;
+export interface PromptCardData {
+  id: string | number;
+  title: string;
+  slug?: string;
+  task?: string;
+  description?: string;
+  prompt_template?: string;
+  prompt?: string;
+  content?: string;
+  model?: any;
+  profession?: any;
+  role?: any;
+  quality_score?: number;
+  [key: string]: any;
+}
+
+export interface PromptCardProps {
+  prompt: PromptCardData;
 }
 
 export default function PromptCard({ prompt }: PromptCardProps) {
