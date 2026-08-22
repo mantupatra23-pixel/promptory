@@ -6,7 +6,7 @@ import { Sparkles, PlusCircle, Bookmark, Workflow } from 'lucide-react';
 
 export default function Navbar() {
   return (
-    <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-[#161B22]/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-slate-700/60 bg-[#1e2330]/90 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
         {/* Logo */}
@@ -23,22 +23,22 @@ export default function Navbar() {
         <div className="flex items-center gap-2 sm:gap-4">
           <Link
             href="/directory"
-            className="text-xs font-semibold text-zinc-300 hover:text-emerald-400 px-3 py-1.5 rounded-lg hover:bg-zinc-800/50 transition"
+            className="text-xs font-semibold text-slate-300 hover:text-emerald-400 px-3 py-1.5 rounded-lg hover:bg-slate-800 transition"
           >
             Directory
           </Link>
           <Link
             href="/workflows"
-            className="text-xs font-semibold text-zinc-300 hover:text-emerald-400 px-3 py-1.5 rounded-lg hover:bg-zinc-800/50 transition flex items-center gap-1.5"
+            className="text-xs font-semibold text-slate-300 hover:text-emerald-400 px-3 py-1.5 rounded-lg hover:bg-slate-800 transition flex items-center gap-1.5"
           >
-            <Workflow className="w-3.5 h-3.5 text-zinc-400" />
+            <Workflow className="w-3.5 h-3.5 text-slate-400" />
             <span>Workflows</span>
           </Link>
           <Link
             href="/saved"
-            className="text-xs font-semibold text-zinc-300 hover:text-emerald-400 px-3 py-1.5 rounded-lg hover:bg-zinc-800/50 transition flex items-center gap-1.5"
+            className="text-xs font-semibold text-slate-300 hover:text-emerald-400 px-3 py-1.5 rounded-lg hover:bg-slate-800 transition flex items-center gap-1.5"
           >
-            <Bookmark className="w-3.5 h-3.5 text-zinc-400" />
+            <Bookmark className="w-3.5 h-3.5 text-slate-400" />
             <span className="hidden sm:inline">Saved</span>
           </Link>
           <Link
