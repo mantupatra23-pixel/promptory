@@ -1,21 +1,34 @@
 import fs from 'fs';
 import { createClient } from '@supabase/supabase-js';
 
-// Load .env.local
+// Load environment variables
 let env = {};
-try {
-  const envContent = fs.readFileSync('.env.local', 'utf8');
-  envContent.split('\n').forEach(line => {
-    const parts = line.split('=');
-    if (parts[0] && parts[1]) {
-      env[parts[0].trim()] = parts.slice(1).join('=').trim().replace(/^["']|["']$/g, '');
+const envFiles = ['.env.local', '.env'];
+for (const file of envFiles) {
+  if (fs.existsSync(file)) {
+    const lines = fs.readFileSync(file, 'utf8').split('\n');
+    for (const line of lines) {
+      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      if (match) {
+        let val = (match[2] || '').trim();
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+          val = val.slice(1, -1);
+        }
+        env[match[1]] = val;
+      }
     }
-  });
-} catch (e) {}
+  }
+}
 
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL || env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = env.SUPABASE_SERVICE_ROLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_KEY = env.SUPABASE_SERVICE_ROLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  console.error('❌ Supabase credentials missing in .env or .env.local');
+  process.exit(1);
+}
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const BASE_URL = 'https://www.promptory.xyz';
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -31,61 +44,79 @@ const staticPaths = [
   { path: '/contact', priority: '0.5', freq: 'monthly' },
 ];
 
-async function run() {
-  console.log('🔍 Generating sitemap...');
-  let dynamicUrls = [];
+async function generate() {
+  console.log('🔄 Connecting to Supabase...');
 
-  if (SUPABASE_URL && SUPABASE_KEY) {
-    try {
-      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-      const { data: prompts } = await supabase
-        .from('prompts')
-        .select('slug, model:models(slug), profession:professions(slug)')
-        .eq('status', 'published')
-        .limit(2000);
+  // 1. Fetch Models Map
+  const { data: modelsData } = await supabase.from('models').select('id, slug');
+  const modelMap = {};
+  (modelsData || []).forEach(m => { modelMap[m.id] = m.slug; });
 
-      if (prompts && prompts.length > 0) {
-        dynamicUrls = prompts.map(p => {
-          const modelSlug = p.model?.slug || 'chatgpt';
-          const roleSlug = p.profession?.slug || 'developer';
-          return `/prompts/${modelSlug}/${roleSlug}/${p.slug}`;
-        });
-      }
-    } catch (err) {
-      console.error('Supabase fetch error:', err.message);
-    }
+  // 2. Fetch Professions Map
+  const { data: profData } = await supabase.from('professions').select('id, slug');
+  const profMap = {};
+  (profData || []).forEach(p => { profMap[p.id] = p.slug; });
+
+  // 3. Fetch All Prompts
+  const { data: prompts, error } = await supabase
+    .from('prompts')
+    .select('slug, model_id, profession_id, updated_at, created_at')
+    .limit(5000);
+
+  if (error) {
+    console.error('❌ Error fetching prompts:', error.message);
+    return;
   }
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${staticPaths
-  .map(
-    s => `  <url>
+  console.log(`📦 Found ${prompts?.length || 0} prompts in database.`);
+
+  const dynamicUrls = [];
+  (prompts || []).forEach(p => {
+    if (p.slug) {
+      const modelSlug = modelMap[p.model_id] || 'chatgpt';
+      const roleSlug = profMap[p.profession_id] || 'developer';
+      const date = (p.updated_at || p.created_at || TODAY).split('T')[0];
+
+      dynamicUrls.push({
+        loc: `${BASE_URL}/prompts/${modelSlug}/${roleSlug}/${p.slug}`,
+        lastmod: date,
+        freq: 'weekly',
+        priority: '0.8',
+      });
+    }
+  });
+
+  const xmlLines = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+  ];
+
+  staticPaths.forEach(s => {
+    xmlLines.push(`  <url>
     <loc>${BASE_URL}${s.path}</loc>
     <lastmod>${TODAY}</lastmod>
     <changefreq>${s.freq}</changefreq>
     <priority>${s.priority}</priority>
-  </url>`
-  )
-  .join('\n')}
-${dynamicUrls
-  .map(
-    url => `  <url>
-    <loc>${BASE_URL}${url}</loc>
-    <lastmod>${TODAY}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>`
-  )
-  .join('\n')}
-</urlset>`;
+  </url>`);
+  });
+
+  dynamicUrls.forEach(d => {
+    xmlLines.push(`  <url>
+    <loc>${d.loc}</loc>
+    <lastmod>${d.lastmod}</lastmod>
+    <changefreq>${d.freq}</changefreq>
+    <priority>${d.priority}</priority>
+  </url>`);
+  });
+
+  xmlLines.push('</urlset>');
 
   if (!fs.existsSync('public')) {
     fs.mkdirSync('public', { recursive: true });
   }
 
-  fs.writeFileSync('public/sitemap.xml', xml, 'utf8');
-  console.log(`✅ Success: public/sitemap.xml generated with ${staticPaths.length + dynamicUrls.length} total URLs!`);
+  fs.writeFileSync('public/sitemap.xml', xmlLines.join('\n'), 'utf8');
+  console.log(`✅ Success! Generated public/sitemap.xml with ${staticPaths.length + dynamicUrls.length} indexable URLs!`);
 }
 
-run();
+generate();
