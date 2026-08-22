@@ -156,28 +156,37 @@ export default function SubmitPromptPage() {
         .map((t) => t.trim())
         .filter(Boolean);
 
-      const { error } = await supabase.from('prompts').insert([
-        {
-          title: title.trim(),
-          slug,
-          description: description.trim() || promptTemplate.slice(0, 140) + '...',
-          prompt_template: promptTemplate.trim(),
-          prompt: promptTemplate.trim(),
-          model,
-          profession,
-          quality_score: scoreBreakdown.total,
-          tags,
-          status: 'approved',
-          created_at: new Date().toISOString(),
-        },
+      // 1. Fetch Model ID & Profession ID from Supabase
+      const [modelRes, profRes] = await Promise.all([
+        supabase.from('models').select('id').eq('slug', model).maybeSingle(),
+        supabase.from('professions').select('id').eq('slug', profession).maybeSingle(),
       ]);
+
+      const modelId = modelRes.data?.id;
+      const professionId = profRes.data?.id;
+
+      // 2. Build resilient insertion payload
+      const insertPayload: Record<string, any> = {
+        title: title.trim(),
+        slug,
+        description: description.trim() || promptTemplate.slice(0, 140) + '...',
+        prompt_template: promptTemplate.trim(),
+        quality_score: scoreBreakdown.total,
+        tags,
+        status: 'approved',
+      };
+
+      if (modelId) insertPayload.model_id = modelId;
+      if (professionId) insertPayload.profession_id = professionId;
+
+      const { error } = await supabase.from('prompts').insert([insertPayload]);
 
       if (error) throw error;
 
       setSuccess(true);
       setTimeout(() => {
         router.push(`/prompts/${model}/${profession}/${slug}`);
-      }, 1500);
+      }, 1200);
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to submit prompt. Please try again.');
     } finally {
