@@ -6,6 +6,7 @@ import { Copy, Check, RotateCcw, Sliders, FileCode, ChevronDown, GitFork, Downlo
 import { parsePromptVariables, replacePromptVariables } from '@/lib/variableParser';
 import AIBridge from './AIBridge';
 import PromptExportModal from './PromptExportModal';
+import PromptSimulator from './PromptSimulator';
 
 interface Props {
   initialPrompt?: string;
@@ -13,10 +14,8 @@ interface Props {
   prompt?: string;
   promptTitle?: string;
   title?: string;
-  promptId?: string | number;
   modelName?: string;
   exampleInput?: any;
-  [key: string]: any;
 }
 
 const TONES = ['Default', 'Professional', 'Persuasive', 'Concise', 'Technical', 'Friendly', 'Casual', 'Urgent', 'Creative'];
@@ -162,9 +161,7 @@ export default function PromptCustomizer({
           <div className="flex items-center justify-between pb-3 border-b border-[#30363D]">
             <div className="flex items-center gap-2">
               <Sliders className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-sm font-bold text-white">
-                Customize Template Variables
-              </h3>
+              <h3 className="text-sm font-bold text-white">Customize Template Variables</h3>
             </div>
             <button
               onClick={handleReset}
@@ -180,9 +177,7 @@ export default function PromptCustomizer({
               const currentVal = values[v.key] || '';
               return (
                 <div key={v.key} className={v.type === 'textarea' ? 'md:col-span-2' : ''}>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    {v.label}
-                  </label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">{v.label}</label>
                   {v.type === 'textarea' ? (
                     <textarea
                       rows={3}
@@ -209,27 +204,12 @@ export default function PromptCustomizer({
 
       {/* OUTPUT CONSTRAINTS */}
       <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-md">
-        <CustomSelect
-          label="Output Tone"
-          options={TONES}
-          value={selectedTone}
-          onChange={setSelectedTone}
-        />
-        <CustomSelect
-          label="Output Format"
-          options={FORMATS}
-          value={selectedFormat}
-          onChange={setSelectedFormat}
-        />
-        <CustomSelect
-          label="Output Length"
-          options={LENGTHS}
-          value={selectedLength}
-          onChange={setSelectedLength}
-        />
+        <CustomSelect label="Output Tone" options={TONES} value={selectedTone} onChange={setSelectedTone} />
+        <CustomSelect label="Output Format" options={FORMATS} value={selectedFormat} onChange={setSelectedFormat} />
+        <CustomSelect label="Output Length" options={LENGTHS} value={selectedLength} onChange={setSelectedLength} />
       </div>
 
-      {/* LIVE GENERATED PROMPT PREVIEW WITH EXPORT & FORK ACTIONS */}
+      {/* LIVE GENERATED PROMPT PREVIEW */}
       <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5 md:p-6 space-y-4 shadow-md">
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#30363D]">
           <div className="flex items-center gap-2">
@@ -241,7 +221,6 @@ export default function PromptCustomizer({
             <button
               onClick={handleRemix}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#21262D] hover:bg-[#30363D] text-slate-200 text-xs font-semibold transition border border-[#30363D]"
-              title="Clone & customize this template in Submit"
             >
               <GitFork className="w-3.5 h-3.5 text-cyan-400" />
               <span>Remix / Fork</span>
@@ -250,7 +229,6 @@ export default function PromptCustomizer({
             <button
               onClick={() => setShowExportModal(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#21262D] hover:bg-[#30363D] text-slate-200 text-xs font-semibold transition border border-[#30363D]"
-              title="Export as .cursorrules or API JSON"
             >
               <Download className="w-3.5 h-3.5 text-emerald-400" />
               <span>Export API / IDE</span>
@@ -279,6 +257,9 @@ export default function PromptCustomizer({
           {generatedPrompt}
         </div>
       </div>
+
+      {/* LIVE AI OUTPUT SIMULATOR */}
+      <PromptSimulator promptText={generatedPrompt} />
 
       {/* 1-CLICK AI BRIDGE */}
       <AIBridge promptText={generatedPrompt} modelName={modelName} />
