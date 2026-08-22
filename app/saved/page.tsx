@@ -1,107 +1,114 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
 import { useSavedPrompts } from '@/hooks/useSavedPrompts';
-import PromptCard from '@/components/PromptCard';
-import { Bookmark, Sparkles, ArrowRight, Search } from 'lucide-react';
+import { Bookmark, Sparkles, ArrowRight, Trash2, BookOpen } from 'lucide-react';
 
 export default function SavedPromptsPage() {
-  const { savedIds, isLoaded } = useSavedPrompts();
-  const [prompts, setPrompts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const { savedList, toggleSave, mounted } = useSavedPrompts();
 
-  useEffect(() => {
-    async function fetchSaved() {
-      if (!isLoaded) return;
-      if (savedIds.length === 0) {
-        setPrompts([]);
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('prompts')
-        .select('*, model:models(*), profession:professions(*)')
-        .in('id', savedIds);
-
-      if (!error && data) {
-        setPrompts(data);
-      }
-      setLoading(false);
-    }
-    fetchSaved();
-  }, [savedIds, isLoaded]);
-
-  const filteredPrompts = prompts.filter((p) => {
-    const term = searchTerm.toLowerCase();
+  if (!mounted) {
     return (
-      p.title?.toLowerCase().includes(term) ||
-      p.description?.toLowerCase().includes(term)
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <div className="animate-pulse text-xs text-slate-400">Loading your saved prompts...</div>
+      </div>
     );
-  });
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-      {/* Header */}
-      <div className="border border-zinc-800 bg-[#12161F]/60 backdrop-blur rounded-2xl p-6 md:p-8 mb-8">
+      
+      {/* Header Banner */}
+      <div className="border border-slate-700/70 bg-[#1e2330] rounded-2xl p-6 md:p-8 mb-8">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-3">
           <Bookmark className="w-3.5 h-3.5 fill-emerald-400" />
           <span>Personal Library</span>
         </div>
-        <h1 className="text-2xl md:text-4xl font-extrabold text-zinc-100 mb-2 tracking-tight">
-          My Saved <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Prompts</span>
+        <h1 className="text-2xl md:text-4xl font-extrabold text-white mb-2 tracking-tight">
+          Saved <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Prompts</span>
         </h1>
-        <p className="text-zinc-400 text-sm max-w-xl">
-          Quickly access and customize your favorite system prompts stored locally in guest storage.
+        <p className="text-slate-400 text-xs md:text-sm max-w-2xl">
+          Quick access to all your bookmarked battle-tested system prompts stored directly in your browser.
         </p>
-
-        {prompts.length > 0 && (
-          <div className="mt-5 relative max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-            <input
-              type="text"
-              placeholder="Search your saved prompts..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-        )}
       </div>
 
-      {/* Content State */}
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-48 bg-[#12161F]/50 border border-zinc-800/60 rounded-2xl animate-pulse" />
-          ))}
-        </div>
-      ) : filteredPrompts.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPrompts.map((prompt) => (
-            <PromptCard key={prompt.id} prompt={prompt} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-16 border border-zinc-800 rounded-2xl bg-[#12161F]/30 p-8">
-          <Bookmark className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-zinc-200 mb-2">No Saved Prompts Yet</h3>
-          <p className="text-xs text-zinc-400 max-w-md mx-auto mb-6">
-            Click the bookmark icon on any prompt card or detail page to build your custom prompt workspace.
+      {/* Empty State vs List Grid */}
+      {savedList.length === 0 ? (
+        <div className="border border-slate-800 bg-[#1e2330]/50 rounded-2xl p-12 text-center">
+          <BookOpen className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+          <h3 className="text-base font-bold text-white mb-1">No saved prompts yet</h3>
+          <p className="text-xs text-slate-400 mb-6 max-w-md mx-auto">
+            Browse the directory and tap the bookmark icon on any prompt card to save it for quick access.
           </p>
           <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-lg shadow-emerald-500/20"
+            href="/directory"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition"
           >
-            <span>Explore Prompts</span>
+            <span>Explore Prompt Directory</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {savedList.map((p) => (
+            <div
+              key={p.id}
+              className="group bg-[#1e2330] border border-slate-700/70 hover:border-emerald-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 shadow-md"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {p.model && (
+                      <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 capitalize">
+                        {p.model}
+                      </span>
+                    )}
+                    {p.role && (
+                      <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-800 text-slate-300 capitalize">
+                        {p.role.replace('-', ' ')}
+                      </span>
+                    )}
+                  </div>
+                  {p.qualityScore && (
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+                      <Sparkles className="w-3 h-3 text-emerald-400" />
+                      <span>{p.qualityScore}/100</span>
+                    </span>
+                  )}
+                </div>
+
+                <Link href={`/prompts/${p.model || 'chatgpt'}/${p.role || 'developer'}/${p.slug}`}>
+                  <h2 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors line-clamp-1 mb-1.5">
+                    {p.title}
+                  </h2>
+                </Link>
+                <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-4">
+                  {p.description || 'Customizable system prompt.'}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 pt-3 border-t border-slate-700/60">
+                <Link
+                  href={`/prompts/${p.model || 'chatgpt'}/${p.role || 'developer'}/${p.slug}`}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-black text-xs font-bold transition border border-emerald-500/20"
+                >
+                  <span>Open Prompt</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+                <button
+                  onClick={() => toggleSave(p)}
+                  className="p-2 rounded-xl bg-slate-800/80 hover:bg-red-950/50 hover:text-red-400 text-slate-400 border border-slate-700/70 transition"
+                  title="Remove from saved"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
+
     </div>
   );
 }

@@ -51,5 +51,14 @@ export function useSavedPrompts() {
     });
   };
 
-  return { savedList, isSaved, toggleSave, mounted };
+  const savedIds = savedList.map((item) => item.id);
+
+  return {
+    savedList,
+    savedIds,
+    isSaved,
+    toggleSave,
+    mounted,
+    isLoaded: mounted,
+  };
 }
