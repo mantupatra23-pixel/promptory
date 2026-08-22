@@ -20,7 +20,7 @@ export default function PromptCard({ prompt }: PromptCardProps) {
   const professionSlug = (prompt.profession?.slug || prompt.role || prompt.profession || 'developer')
     .toLowerCase()
     .replace(/\s+/g, '-');
-  const taskSlug = (prompt.slug || prompt.task || prompt.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
+  const taskSlug = (prompt.slug || prompt.task || prompt.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'prompt');
 
   const modelName = prompt.model?.name || prompt.model || 'ChatGPT';
   const roleName = prompt.profession?.name || prompt.profession || 'Developer';
@@ -43,10 +43,10 @@ export default function PromptCard({ prompt }: PromptCardProps) {
     e.preventDefault();
     e.stopPropagation();
     toggleSave({
-      id: prompt.id,
-      title: prompt.title,
+      id: String(prompt.id),
+      title: prompt.title || 'Untitled Prompt',
       slug: taskSlug,
-      description: prompt.description,
+      description: prompt.description || '',
       model: modelSlug,
       role: professionSlug,
       qualityScore: scoreBreakdown.total,
@@ -63,7 +63,7 @@ export default function PromptCard({ prompt }: PromptCardProps) {
     <>
       <div className="group relative bg-[#1e2330] border border-slate-700/70 hover:border-emerald-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-xl hover:shadow-emerald-950/20">
         <div>
-          {/* Top Badges & Save Action */}
+          {/* Badges & Save Action */}
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">

@@ -2,49 +2,54 @@
 
 import { useState, useEffect } from 'react';
 
-const STORAGE_KEY = 'promptory_saved_prompts';
+export interface SavedPrompt {
+  id: string | number;
+  title: string;
+  slug: string;
+  description?: string;
+  model?: string;
+  role?: string;
+  qualityScore?: number;
+}
 
 export function useSavedPrompts() {
-  const [savedIds, setSavedIds] = useState<string[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [savedList, setSavedList] = useState<SavedPrompt[]>([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem('saved_prompts');
       if (stored) {
-        setSavedIds(JSON.parse(stored));
+        setSavedList(JSON.parse(stored));
       }
-    } catch {
-      // Fallback if localStorage is disabled
+    } catch (err) {
+      console.error('Error reading saved prompts from localStorage', err);
     }
-    setIsLoaded(true);
-
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        setSavedIds(JSON.parse(e.newValue));
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
-  const toggleSave = (id: string | number) => {
-    const strId = String(id);
-    setSavedIds(prev => {
-      const next = prev.includes(strId)
-        ? prev.filter(item => item !== strId)
-        : [...prev, strId];
+  const isSaved = (id: string | number) => {
+    if (!mounted) return false;
+    return savedList.some((item) => String(item.id) === String(id));
+  };
+
+  const toggleSave = (prompt: SavedPrompt) => {
+    setSavedList((prev) => {
+      const exists = prev.some((item) => String(item.id) === String(prompt.id));
+      let updated: SavedPrompt[];
+      if (exists) {
+        updated = prev.filter((item) => String(item.id) !== String(prompt.id));
+      } else {
+        updated = [prompt, ...prev];
+      }
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        window.dispatchEvent(new Event('promptory_saved_updated'));
-      } catch {}
-      return next;
+        localStorage.setItem('saved_prompts', JSON.stringify(updated));
+      } catch (err) {
+        console.error('Error saving prompts to localStorage', err);
+      }
+      return updated;
     });
   };
 
-  const isSaved = (id: string | number) => {
-    return savedIds.includes(String(id));
-  };
-
-  return { savedIds, toggleSave, isSaved, isLoaded };
+  return { savedList, isSaved, toggleSave, mounted };
 }
