@@ -13,13 +13,10 @@ import {
   Megaphone, 
   Rocket, 
   Home as HomeIcon, 
-  Search as SearchIcon,
-  Database,
-  Layers,
-  Zap
+  Search as SearchIcon
 } from 'lucide-react';
 
-export const revalidate = 60; // Next.js ISR: updates automatically every 60s when new prompts are added
+export const revalidate = 60;
 
 // AI Brand Official SVG Logos
 const MODEL_LOGOS: Record<string, { icon: React.ReactNode; color: string; bg: string }> = {
@@ -126,12 +123,10 @@ export default async function HomePage() {
       {/* HERO SECTION */}
       <section className="text-center py-10 md:py-16">
         
-        {/* Dynamic Live Counter Pill */}
+        {/* Clean Live Badge */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-6">
           <Sparkles className="w-3.5 h-3.5" />
           <span>{totalPromptsCount} Production Prompts Live</span>
-          <span className="w-1 h-1 rounded-full bg-emerald-400" />
-          <span className="text-zinc-400 font-normal">Auto-Ingesting Daily</span>
         </div>
 
         <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-zinc-100 tracking-tight leading-tight mb-4">
@@ -148,7 +143,7 @@ export default async function HomePage() {
         {/* FUNCTIONAL HERO SEARCH */}
         <HeroSearch />
 
-        {/* Real-time Platform Metrics */}
+        {/* Clean Metrics Bar */}
         <div className="grid grid-cols-3 max-w-lg mx-auto mt-10 pt-6 border-t border-zinc-800/80 text-center">
           <div>
             <div className="text-xl sm:text-2xl font-extrabold text-zinc-100">{totalPromptsCount}</div>
@@ -159,8 +154,8 @@ export default async function HomePage() {
             <div className="text-[11px] text-zinc-500 font-medium">AI Models</div>
           </div>
           <div>
-            <div className="text-xl sm:text-2xl font-extrabold text-cyan-400">+10/day</div>
-            <div className="text-[11px] text-zinc-500 font-medium">Auto Ingestion</div>
+            <div className="text-xl sm:text-2xl font-extrabold text-cyan-400">100%</div>
+            <div className="text-[11px] text-zinc-500 font-medium">Quality Audited</div>
           </div>
         </div>
 
