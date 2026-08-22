@@ -24,7 +24,6 @@ interface Option {
   label: string;
 }
 
-// Dark & Neon Green Custom Select Component
 function CustomDropdown({
   label,
   options,
@@ -120,17 +119,14 @@ export default function SubmitPromptPage() {
   const [profession, setProfession] = useState('developer');
   const [description, setDescription] = useState('');
   const [promptTemplate, setPromptTemplate] = useState('');
-  const [tagsInput, setTagsInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Real-time quality audit
   const scoreBreakdown = useMemo(() => {
     return calculateQualityScore(promptTemplate);
   }, [promptTemplate]);
 
-  // Real-time variable detection
   const detectedVariables = useMemo(() => {
     return parsePromptVariables(promptTemplate);
   }, [promptTemplate]);
@@ -151,12 +147,7 @@ export default function SubmitPromptPage() {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
 
-      const tags = tagsInput
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean);
-
-      // 1. Fetch Model ID & Profession ID from Supabase
+      // 1. Fetch matching Model & Profession IDs
       const [modelRes, profRes] = await Promise.all([
         supabase.from('models').select('id').eq('slug', model).maybeSingle(),
         supabase.from('professions').select('id').eq('slug', profession).maybeSingle(),
@@ -165,14 +156,13 @@ export default function SubmitPromptPage() {
       const modelId = modelRes.data?.id;
       const professionId = profRes.data?.id;
 
-      // 2. Build resilient insertion payload
+      // 2. Verified Supabase Table Schema Payload (No invalid columns)
       const insertPayload: Record<string, any> = {
         title: title.trim(),
         slug,
         description: description.trim() || promptTemplate.slice(0, 140) + '...',
         prompt_template: promptTemplate.trim(),
         quality_score: scoreBreakdown.total,
-        tags,
         status: 'approved',
       };
 
@@ -252,7 +242,7 @@ export default function SubmitPromptPage() {
             />
           </div>
 
-          {/* Custom Dropdowns (Model & Role) */}
+          {/* Custom Dropdowns */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <CustomDropdown
               label="Optimized AI Model"
@@ -297,18 +287,6 @@ export default function SubmitPromptPage() {
               value={promptTemplate}
               onChange={(e) => setPromptTemplate(e.target.value)}
               className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-4 py-3 text-xs md:text-sm text-zinc-100 font-mono placeholder-zinc-600 focus:outline-none focus:border-emerald-500 leading-relaxed"
-            />
-          </div>
-
-          {/* Tags */}
-          <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Tags (Comma separated)</label>
-            <input
-              type="text"
-              placeholder="python, fastapi, backend, security"
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
-              className="w-full bg-[#12161F] border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
             />
           </div>
 
