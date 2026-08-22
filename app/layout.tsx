@@ -9,7 +9,7 @@ import { ToastProvider } from '@/components/Toast';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://promptory-tau.vercel.app'),
+  metadataBase: new URL('https://www.promptory.xyz'),
   title: 'Promptory — Tested AI Prompts & Workflow Engine',
   description: 'Curated, tested system prompts and automation recipes for ChatGPT, Claude, Gemini, and DeepSeek.',
   robots: {
