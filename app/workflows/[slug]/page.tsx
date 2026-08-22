@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getWorkflowBySlug } from '@/lib/db';
 import WorkflowRunner from '@/components/WorkflowRunner';
+import ProPaywall from '@/components/ProPaywall';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 
@@ -26,6 +27,11 @@ export default async function WorkflowDetailPage({ params }: { params: { slug: s
 
       {/* RUNNER INTERFACE */}
       <WorkflowRunner workflow={workflow} />
+
+      {/* BLURRED MONETIZATION PAYWALL */}
+      <div className="mt-8">
+        <ProPaywall title={`Unlock Full ${workflow.title} Pipeline`} />
+      </div>
     </div>
   );
 }
