@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { getPrompts, getWorkflows } from '@/lib/db';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://promptory-tau.vercel.app';
+  const baseUrl = 'https://www.promptory.xyz';
 
   const [prompts, workflows] = await Promise.all([
     getPrompts(),

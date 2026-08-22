@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
     },
-    sitemap: 'https://promptory-tau.vercel.app/sitemap.xml',
+    sitemap: 'https://www.promptory.xyz/sitemap.xml',
   };
 }

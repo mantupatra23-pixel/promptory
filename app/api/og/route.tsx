@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
           }}
         >
           <span>Battle-tested prompt template & live variable generator</span>
-          <span style={{ color: '#10b981', fontWeight: 'bold' }}>promptory-tau.vercel.app</span>
+          <span style={{ color: '#10b981', fontWeight: 'bold' }}>www.promptory.xyz</span>
         </div>
       </div>
     ),

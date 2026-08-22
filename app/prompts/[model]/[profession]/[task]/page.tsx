@@ -17,9 +17,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = `${prompt.title} - Best ${prompt.model?.name} Prompt | Promptory`;
   const description = `${prompt.description} Quality Score: ${prompt.quality_score}/100. Tested system prompt template for ${prompt.profession?.name}s.`;
-  const url = `https://promptory-tau.vercel.app/prompts/${params.model}/${params.profession}/${params.task}`;
+  const url = `https://www.promptory.xyz/prompts/${params.model}/${params.profession}/${params.task}`;
   
-  const ogImageUrl = `https://promptory-tau.vercel.app/api/og?title=${encodeURIComponent(prompt.title)}&model=${encodeURIComponent(prompt.model?.name || 'AI')}&score=${prompt.quality_score || 95}`;
+  const ogImageUrl = `https://www.promptory.xyz/api/og?title=${encodeURIComponent(prompt.title)}&model=${encodeURIComponent(prompt.model?.name || 'AI')}&score=${prompt.quality_score || 95}`;
 
   return {
     title,
@@ -72,7 +72,7 @@ export default async function PromptDetailPage({ params }: PageProps) {
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://promptory-tau.vercel.app/prompts/${params.model}/${params.profession}/${params.task}`,
+      '@id': `https://www.promptory.xyz/prompts/${params.model}/${params.profession}/${params.task}`,
     },
   };
 
