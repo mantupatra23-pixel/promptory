@@ -1,21 +1,37 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { Copy, Check, Sparkles, RotateCcw, Sliders, FileCode, Layers } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Copy, Check, RotateCcw, Sliders, FileCode } from 'lucide-react';
 import { parsePromptVariables, replacePromptVariables } from '@/lib/variableParser';
 import AIBridge from './AIBridge';
 
 interface Props {
-  initialPrompt: string;
+  initialPrompt?: string;
+  template?: string;
+  prompt?: string;
+  promptTitle?: string;
+  title?: string;
+  promptId?: string | number;
   modelName?: string;
+  exampleInput?: any;
+  [key: string]: any;
 }
 
 const TONES = ['Default', 'Professional', 'Persuasive', 'Concise', 'Technical', 'Friendly', 'Casual', 'Urgent', 'Creative'];
 const FORMATS = ['Default', 'Markdown', 'Bullet Points', 'Table', 'JSON', 'Step-by-Step', 'Plain Text'];
 const LENGTHS = ['Default', 'Short', 'Medium', 'Detailed'];
 
-export default function PromptCustomizer({ initialPrompt, modelName }: Props) {
-  const detectedVariables = useMemo(() => parsePromptVariables(initialPrompt), [initialPrompt]);
+export default function PromptCustomizer({
+  initialPrompt,
+  template,
+  prompt,
+  promptTitle,
+  title,
+  modelName,
+  exampleInput,
+}: Props) {
+  const baseTemplate = initialPrompt || template || prompt || '';
+  const detectedVariables = useMemo(() => parsePromptVariables(baseTemplate), [baseTemplate]);
 
   const [values, setValues] = useState<Record<string, string>>({});
   const [selectedTone, setSelectedTone] = useState('Default');
@@ -23,24 +39,31 @@ export default function PromptCustomizer({ initialPrompt, modelName }: Props) {
   const [selectedLength, setSelectedLength] = useState('Default');
   const [copied, setCopied] = useState(false);
 
+  // Auto-fill example inputs if provided by workflows
+  useEffect(() => {
+    if (exampleInput && typeof exampleInput === 'object') {
+      setValues(exampleInput);
+    }
+  }, [exampleInput]);
+
   const handleInputChange = (key: string, val: string) => {
     setValues(prev => ({ ...prev, [key]: val }));
   };
 
   const handleReset = () => {
-    setValues({});
+    setValues(exampleInput && typeof exampleInput === 'object' ? exampleInput : {});
     setSelectedTone('Default');
     setSelectedFormat('Default');
     setSelectedLength('Default');
   };
 
   const generatedPrompt = useMemo(() => {
-    return replacePromptVariables(initialPrompt, values, {
+    return replacePromptVariables(baseTemplate, values, {
       tone: selectedTone,
       format: selectedFormat,
       length: selectedLength,
     });
-  }, [initialPrompt, values, selectedTone, selectedFormat, selectedLength]);
+  }, [baseTemplate, values, selectedTone, selectedFormat, selectedLength]);
 
   const handleCopy = async () => {
     try {
@@ -59,7 +82,9 @@ export default function PromptCustomizer({ initialPrompt, modelName }: Props) {
           <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
             <div className="flex items-center gap-2">
               <Sliders className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-sm font-bold text-zinc-100">Customize Template Variables</h3>
+              <h3 className="text-sm font-bold text-zinc-100">
+                {promptTitle || title ? `Customize: ${promptTitle || title}` : 'Customize Template Variables'}
+              </h3>
             </div>
             <button
               onClick={handleReset}
@@ -113,9 +138,8 @@ export default function PromptCustomizer({ initialPrompt, modelName }: Props) {
         </div>
       )}
 
-      {/* OUTPUT CONSTRAINTS CONTROLS (Tone, Format, Length) */}
+      {/* OUTPUT CONTROLS (Tone, Format, Length) */}
       <div className="bg-[#12161F]/70 border border-zinc-800 rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Tone */}
         <div>
           <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Output Tone</label>
           <select
@@ -127,7 +151,6 @@ export default function PromptCustomizer({ initialPrompt, modelName }: Props) {
           </select>
         </div>
 
-        {/* Format */}
         <div>
           <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Output Format</label>
           <select
@@ -139,7 +162,6 @@ export default function PromptCustomizer({ initialPrompt, modelName }: Props) {
           </select>
         </div>
 
-        {/* Length */}
         <div>
           <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Output Length</label>
           <select
@@ -182,7 +204,7 @@ export default function PromptCustomizer({ initialPrompt, modelName }: Props) {
         </div>
       </div>
 
-      {/* 1-CLICK AI BRIDGE LAUNCHER */}
+      {/* 1-CLICK AI BRIDGE */}
       <AIBridge promptText={generatedPrompt} modelName={modelName} />
 
     </div>
