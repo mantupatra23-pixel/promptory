@@ -1,70 +1,94 @@
+import React from 'react';
+import { Metadata } from 'next';
 import Link from 'next/link';
-import { getWorkflows } from '@/lib/db';
-import { Layers, ArrowRight, Clock, Sparkles } from 'lucide-react';
+import { WORKFLOWS_DATA } from '@/lib/workflowsData';
+import { Workflow, Sparkles, Clock, ArrowRight, CheckCircle2 } from 'lucide-react';
 
-export const revalidate = 60;
+export const metadata: Metadata = {
+  title: 'AI Workflow Recipes | Multi-Prompt Automation Pipelines | Promptory',
+  description: 'End-to-end chained sequences of prompts designed to execute complete business operations from strategy to output.',
+  alternates: {
+    canonical: 'https://www.promptory.xyz/workflows',
+  },
+};
 
-export default async function WorkflowsDirectoryPage() {
-  const workflows = await getWorkflows();
-
+export default function WorkflowsPage() {
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-      <div className="max-w-2xl mb-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium mb-4">
-          <Sparkles className="w-3.5 h-3.5" />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      
+      {/* Header Banner */}
+      <div className="border border-zinc-800 bg-[#12161F]/60 backdrop-blur rounded-2xl p-6 md:p-8 mb-10">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-3">
+          <Workflow className="w-3.5 h-3.5" />
           <span>Multi-Prompt Automation</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-zinc-100 mb-3">AI Workflow Recipes</h1>
-        <p className="text-sm text-zinc-400 leading-relaxed">
-          End-to-end chained sequences of prompts designed to execute complete business operations from strategy to output.
+        <h1 className="text-2xl md:text-4xl font-extrabold text-zinc-100 mb-2 tracking-tight">
+          AI Workflow <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Recipes</span>
+        </h1>
+        <p className="text-zinc-400 text-xs md:text-sm max-w-2xl">
+          Chained sequences of verified prompts designed to execute complete business operations from initial strategy to production-ready output.
         </p>
       </div>
 
+      {/* Workflows Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {workflows.map((wf: any) => (
+        {WORKFLOWS_DATA.map((wf) => (
           <div
-            key={wf.id}
-            className="p-6 rounded-xl bg-[#0F141C] border border-zinc-800 hover:border-emerald-500/40 transition-all flex flex-col justify-between group"
+            key={wf.slug}
+            className="group bg-[#12161F]/90 border border-zinc-800/90 hover:border-emerald-500/40 rounded-2xl p-6 flex flex-col justify-between transition-all duration-200 hover:shadow-xl hover:shadow-emerald-950/20"
           >
             <div>
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <span className="px-2.5 py-0.5 rounded text-[11px] font-semibold bg-zinc-800 text-emerald-400 border border-zinc-700/60">
+              {/* Badges */}
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   {wf.category}
                 </span>
-                <span className="text-xs font-mono text-zinc-500 flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> {wf.estimated_time}
+                <span className="flex items-center gap-1 text-xs text-zinc-400">
+                  <Clock className="w-3.5 h-3.5 text-zinc-500" />
+                  <span>{wf.estTime}</span>
                 </span>
               </div>
-              <h3 className="text-lg font-bold text-zinc-100 group-hover:text-emerald-400 transition-colors mb-2">
+
+              {/* Title */}
+              <h2 className="text-lg font-bold text-zinc-100 group-hover:text-emerald-400 transition-colors mb-2">
                 {wf.title}
-              </h3>
-              <p className="text-xs text-zinc-400 leading-relaxed mb-6">
+              </h2>
+
+              {/* Description */}
+              <p className="text-xs md:text-sm text-zinc-400 leading-relaxed mb-6">
                 {wf.description}
               </p>
-            </div>
 
-            <div>
-              <div className="flex items-center gap-2 mb-4 pt-4 border-t border-zinc-800/80">
-                <span className="text-[11px] text-zinc-500 font-mono">Steps ({wf.steps?.length || 0}):</span>
-                <div className="flex gap-1.5 flex-wrap">
-                  {wf.steps?.map((st: any, i: number) => (
-                    <span key={st.id} className="text-[10px] px-2 py-0.5 rounded bg-zinc-900 text-zinc-300 border border-zinc-800">
-                      {i + 1}. {st.title.split(' ')[0]}
+              {/* Step Sequence Pills */}
+              <div className="space-y-2 mb-6">
+                <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider block">
+                  Workflow Pipeline ({wf.steps.length} Steps):
+                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  {wf.steps.map((step, idx) => (
+                    <span
+                      key={step.id}
+                      className="px-2.5 py-1 rounded-lg bg-[#0A0D12] border border-zinc-800 text-[11px] font-mono text-zinc-300"
+                    >
+                      {idx + 1}. {step.title.split(' ')[0]}
                     </span>
                   ))}
                 </div>
               </div>
-
-              <Link
-                href={`/workflows/${wf.slug}`}
-                className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition-all group-hover:bg-emerald-500 group-hover:text-zinc-950"
-              >
-                Run Workflow Sequence <ArrowRight className="w-4 h-4" />
-              </Link>
             </div>
+
+            {/* Launch Button */}
+            <Link
+              href={`/workflows/${wf.slug}`}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition group-hover:bg-emerald-500 group-hover:text-black shadow-md"
+            >
+              <span>Run Workflow Sequence</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         ))}
       </div>
+
     </div>
   );
 }
