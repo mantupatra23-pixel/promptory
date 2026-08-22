@@ -1,7 +1,6 @@
 import React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import PromptCard from '@/components/PromptCard';
 import { ChevronRight, Sparkles, Cpu, Layers } from 'lucide-react';
@@ -56,12 +55,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `Best ${info.name} Prompts & System Instructions | Promptory`,
     description: info.desc,
     alternates: {
-      canonical: `https://www.promptory.xyz/prompts/model/${params.model.toLowerCase()}`,
+      canonical: `https://www.promptory.xyz/models/${key}`,
     },
     openGraph: {
       title: `Best ${info.name} Prompts | Promptory`,
       description: info.desc,
-      url: `https://www.promptory.xyz/prompts/model/${params.model.toLowerCase()}`,
+      url: `https://www.promptory.xyz/models/${key}`,
     },
   };
 }
@@ -74,8 +73,7 @@ export default async function ModelPromptsPage({ params }: Props) {
     highlights: 'Tested accuracy, structured formatting, live parameter tuning',
   };
 
-  // Fetch prompts matching model
-  const { data: prompts, error } = await supabase
+  const { data: prompts } = await supabase
     .from('prompts')
     .select('*, model:models(*), profession:professions(*)')
     .order('quality_score', { ascending: false });
@@ -91,13 +89,13 @@ export default async function ModelPromptsPage({ params }: Props) {
     '@type': 'CollectionPage',
     name: `Best ${modelInfo.name} Prompts`,
     description: modelInfo.desc,
-    url: `https://www.promptory.xyz/prompts/model/${modelKey}`,
+    url: `https://www.promptory.xyz/models/${modelKey}`,
     breadcrumb: {
       '@type': 'BreadcrumbList',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.promptory.xyz' },
         { '@type': 'ListItem', position: 2, name: 'Models', item: 'https://www.promptory.xyz/directory' },
-        { '@type': 'ListItem', position: 3, name: modelInfo.name, item: `https://www.promptory.xyz/prompts/model/${modelKey}` },
+        { '@type': 'ListItem', position: 3, name: modelInfo.name, item: `https://www.promptory.xyz/models/${modelKey}` },
       ],
     },
   };
@@ -109,7 +107,6 @@ export default async function ModelPromptsPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Breadcrumbs */}
       <nav className="flex items-center gap-2 text-xs text-zinc-400 mb-6" aria-label="Breadcrumb">
         <Link href="/" className="hover:text-emerald-400 transition-colors">Home</Link>
         <ChevronRight className="w-3.5 h-3.5 text-zinc-600" />
@@ -118,7 +115,6 @@ export default async function ModelPromptsPage({ params }: Props) {
         <span className="text-zinc-100 font-medium">{modelInfo.name}</span>
       </nav>
 
-      {/* Hero Header */}
       <div className="border border-zinc-800 bg-[#12161F]/60 backdrop-blur rounded-2xl p-6 md:p-8 mb-10">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-4">
           <Cpu className="w-3.5 h-3.5" />
@@ -138,7 +134,6 @@ export default async function ModelPromptsPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Prompts Grid */}
       <div className="mb-8 flex items-center justify-between">
         <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
           <Layers className="w-4 h-4 text-emerald-400" />

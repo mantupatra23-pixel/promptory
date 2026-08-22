@@ -50,12 +50,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `Best AI Prompts for ${info.title} | Promptory`,
     description: info.desc,
     alternates: {
-      canonical: `https://www.promptory.xyz/prompts/role/${key}`,
+      canonical: `https://www.promptory.xyz/roles/${key}`,
     },
     openGraph: {
       title: `AI Prompts for ${info.title} | Promptory`,
       description: info.desc,
-      url: `https://www.promptory.xyz/prompts/role/${key}`,
+      url: `https://www.promptory.xyz/roles/${key}`,
     },
   };
 }
@@ -84,13 +84,13 @@ export default async function RolePromptsPage({ params }: Props) {
     '@type': 'CollectionPage',
     name: `AI Prompts for ${roleInfo.title}`,
     description: roleInfo.desc,
-    url: `https://www.promptory.xyz/prompts/role/${roleKey}`,
+    url: `https://www.promptory.xyz/roles/${roleKey}`,
     breadcrumb: {
       '@type': 'BreadcrumbList',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.promptory.xyz' },
         { '@type': 'ListItem', position: 2, name: 'Roles', item: 'https://www.promptory.xyz/directory' },
-        { '@type': 'ListItem', position: 3, name: roleInfo.title, item: `https://www.promptory.xyz/prompts/role/${roleKey}` },
+        { '@type': 'ListItem', position: 3, name: roleInfo.title, item: `https://www.promptory.xyz/roles/${roleKey}` },
       ],
     },
   };
@@ -102,7 +102,6 @@ export default async function RolePromptsPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Breadcrumbs */}
       <nav className="flex items-center gap-2 text-xs text-zinc-400 mb-6" aria-label="Breadcrumb">
         <Link href="/" className="hover:text-emerald-400 transition-colors">Home</Link>
         <ChevronRight className="w-3.5 h-3.5 text-zinc-600" />
@@ -111,7 +110,6 @@ export default async function RolePromptsPage({ params }: Props) {
         <span className="text-zinc-100 font-medium">{roleInfo.title}</span>
       </nav>
 
-      {/* Hero Header */}
       <div className="border border-zinc-800 bg-[#12161F]/60 backdrop-blur rounded-2xl p-6 md:p-8 mb-10">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold mb-4">
           <Briefcase className="w-3.5 h-3.5" />
@@ -131,7 +129,6 @@ export default async function RolePromptsPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Prompts Grid */}
       <div className="mb-8 flex items-center justify-between">
         <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
           <Layers className="w-4 h-4 text-emerald-400" />
