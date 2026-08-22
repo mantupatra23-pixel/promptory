@@ -8,9 +8,6 @@ export async function GET() {
   const baseUrl = 'https://www.promptory.xyz';
   const today = new Date().toISOString().split('T')[0];
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-
   const staticRoutes = [
     { loc: `${baseUrl}`, freq: 'daily', priority: '1.0' },
     { loc: `${baseUrl}/directory`, freq: 'daily', priority: '0.9' },
@@ -25,10 +22,12 @@ export async function GET() {
 
   let dynamicRoutes: { loc: string; freq: string; priority: string; lastmod: string }[] = [];
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
   if (supabaseUrl && supabaseKey) {
     try {
       const supabase = createClient(supabaseUrl, supabaseKey);
-
       const [{ data: models }, { data: professions }, { data: prompts }] = await Promise.all([
         supabase.from('models').select('id, slug'),
         supabase.from('professions').select('id, slug'),
@@ -55,30 +54,22 @@ export async function GET() {
           });
         }
       });
-    } catch (e) {
-      console.error('Sitemap DB query error:', e);
+    } catch (err) {
+      console.error('Supabase fetch error in sitemap:', err);
     }
   }
 
+  const allUrls = [...staticRoutes, ...dynamicRoutes];
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${staticRoutes
+${allUrls
   .map(
-    (s) => `  <url>
-    <loc>${s.loc}</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>${s.freq}</changefreq>
-    <priority>${s.priority}</priority>
-  </url>`
-  )
-  .join('\n')}
-${dynamicRoutes
-  .map(
-    (d) => `  <url>
-    <loc>${d.loc}</loc>
-    <lastmod>${d.lastmod}</lastmod>
-    <changefreq>${d.freq}</changefreq>
-    <priority>${d.priority}</priority>
+    (u) => `  <url>
+    <loc>${u.loc}</loc>
+    <lastmod>${'lastmod' in u ? u.lastmod : today}</lastmod>
+    <changefreq>${u.freq}</changefreq>
+    <priority>${u.priority}</priority>
   </url>`
   )
   .join('\n')}
