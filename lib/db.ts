@@ -43,8 +43,25 @@ export async function getPrompts() {
   return data;
 }
 
-export async function getPromptByRoute(modelSlug: string, profSlug: string, taskSlug: string) {
-  const { data, error } = await supabase
+export async function getPromptByRoute(modelSlug: string, profSlug: string, promptOrTaskSlug: string) {
+  // 1. Direct match with prompt unique slug
+  const { data: promptBySlug } = await supabase
+    .from('prompts')
+    .select(`
+      *,
+      model:models(*),
+      profession:professions(*),
+      task:tasks(*)
+    `)
+    .eq('slug', promptOrTaskSlug)
+    .maybeSingle();
+
+  if (promptBySlug) {
+    return promptBySlug;
+  }
+
+  // 2. Fallback match by task.slug + model + profession
+  const { data: promptByTask } = await supabase
     .from('prompts')
     .select(`
       *,
@@ -54,14 +71,11 @@ export async function getPromptByRoute(modelSlug: string, profSlug: string, task
     `)
     .eq('model.slug', modelSlug)
     .eq('profession.slug', profSlug)
-    .eq('task.slug', taskSlug)
-    .single();
+    .eq('task.slug', promptOrTaskSlug)
+    .limit(1)
+    .maybeSingle();
 
-  if (error) {
-    console.error('Error fetching prompt route:', error);
-    return null;
-  }
-  return data;
+  return promptByTask || null;
 }
 
 export async function getWorkflows() {
