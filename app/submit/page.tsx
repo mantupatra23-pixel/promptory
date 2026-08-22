@@ -1,12 +1,117 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { calculateQualityScore } from '@/lib/qualityScore';
 import { parsePromptVariables } from '@/lib/variableParser';
-import { PlusCircle, Sparkles, Target, ShieldCheck, FileText, Zap, Eye, Check, AlertCircle, ArrowLeft } from 'lucide-react';
+import { 
+  PlusCircle, 
+  Target, 
+  ShieldCheck, 
+  FileText, 
+  Zap, 
+  Eye, 
+  Check, 
+  AlertCircle, 
+  ArrowLeft,
+  ChevronDown 
+} from 'lucide-react';
+
+interface Option {
+  value: string;
+  label: string;
+}
+
+// Dark & Neon Green Custom Select Component
+function CustomDropdown({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: Option[];
+  value: string;
+  onChange: (val: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find((o) => o.value === value) || options[0];
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <label className="block text-xs font-semibold text-zinc-300 mb-1.5">{label}</label>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full bg-[#0A0D12] border border-zinc-800 hover:border-emerald-500/50 rounded-xl px-3.5 py-3 text-xs text-zinc-100 flex items-center justify-between transition focus:outline-none focus:border-emerald-500"
+      >
+        <span className="text-emerald-400 font-semibold">{selectedOption.label}</span>
+        <ChevronDown
+          className={`w-3.5 h-3.5 text-zinc-500 transition-transform duration-200 ${
+            open ? 'rotate-180 text-emerald-400' : ''
+          }`}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 z-50 mt-1.5 max-h-60 overflow-y-auto bg-[#12161F] border border-zinc-700/90 rounded-xl p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
+          {options.map((opt) => {
+            const isSelected = opt.value === value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+                className={`w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-medium flex items-center justify-between transition ${
+                  isSelected
+                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                    : 'text-zinc-300 hover:bg-[#0A0D12] hover:text-white'
+                }`}
+              >
+                <span>{opt.label}</span>
+                {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const MODEL_OPTIONS: Option[] = [
+  { value: 'chatgpt', label: 'ChatGPT (GPT-4o)' },
+  { value: 'claude', label: 'Anthropic Claude' },
+  { value: 'deepseek', label: 'DeepSeek (R1/V3)' },
+  { value: 'gemini', label: 'Google Gemini 1.5 Pro' },
+  { value: 'midjourney', label: 'Midjourney v6' },
+  { value: 'perplexity', label: 'Perplexity AI' },
+];
+
+const PROFESSION_OPTIONS: Option[] = [
+  { value: 'developer', label: 'Developer' },
+  { value: 'digital-marketer', label: 'Digital Marketer' },
+  { value: 'founder', label: 'Founder / Executive' },
+  { value: 'seo-specialist', label: 'SEO Specialist' },
+  { value: 'real-estate-agent', label: 'Real Estate Agent' },
+];
 
 export default function SubmitPromptPage() {
   const router = useRouter();
@@ -48,7 +153,7 @@ export default function SubmitPromptPage() {
 
       const tags = tagsInput
         .split(',')
-        .map(t => t.trim())
+        .map((t) => t.trim())
         .filter(Boolean);
 
       const { error } = await supabase.from('prompts').insert([
@@ -82,10 +187,12 @@ export default function SubmitPromptPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-      
       {/* Header */}
       <div className="mb-8">
-        <Link href="/" className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-emerald-400 mb-4 transition">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-emerald-400 mb-4 transition"
+        >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Home</span>
         </Link>
@@ -95,15 +202,18 @@ export default function SubmitPromptPage() {
           </span>
         </div>
         <h1 className="text-2xl md:text-4xl font-extrabold text-zinc-100 tracking-tight">
-          Submit a <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Battle-Tested Prompt</span>
+          Submit a{' '}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+            Battle-Tested Prompt
+          </span>
         </h1>
         <p className="text-xs md:text-sm text-zinc-400 mt-1 max-w-2xl">
-          Contribute your high-performing system prompts to Promptory. Use square brackets like <code className="text-emerald-400">[TARGET_GOAL]</code> to define dynamic variables.
+          Contribute your high-performing system prompts to Promptory. Use square brackets like{' '}
+          <code className="text-emerald-400 font-mono">[TARGET_GOAL]</code> to define dynamic variables.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
         {/* Main Form */}
         <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-5">
           {errorMsg && (
@@ -133,38 +243,20 @@ export default function SubmitPromptPage() {
             />
           </div>
 
-          {/* Model & Role Selectors */}
+          {/* Custom Dropdowns (Model & Role) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Optimized AI Model</label>
-              <select
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                className="w-full bg-[#12161F] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-emerald-500"
-              >
-                <option value="chatgpt">ChatGPT (GPT-4o)</option>
-                <option value="claude">Anthropic Claude</option>
-                <option value="deepseek">DeepSeek (R1/V3)</option>
-                <option value="gemini">Google Gemini 1.5 Pro</option>
-                <option value="midjourney">Midjourney v6</option>
-                <option value="perplexity">Perplexity AI</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Target Profession / Role</label>
-              <select
-                value={profession}
-                onChange={(e) => setProfession(e.target.value)}
-                className="w-full bg-[#12161F] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-emerald-500"
-              >
-                <option value="developer">Developer</option>
-                <option value="digital-marketer">Digital Marketer</option>
-                <option value="founder">Founder / Executive</option>
-                <option value="seo-specialist">SEO Specialist</option>
-                <option value="real-estate-agent">Real Estate Agent</option>
-              </select>
-            </div>
+            <CustomDropdown
+              label="Optimized AI Model"
+              options={MODEL_OPTIONS}
+              value={model}
+              onChange={setModel}
+            />
+            <CustomDropdown
+              label="Target Profession / Role"
+              options={PROFESSION_OPTIONS}
+              value={profession}
+              onChange={setProfession}
+            />
           </div>
 
           {/* Short Description */}
@@ -182,8 +274,12 @@ export default function SubmitPromptPage() {
           {/* Prompt Body */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-semibold text-zinc-300">Prompt Instructions & Template *</label>
-              <span className="text-[11px] text-zinc-500">Variables detected: {detectedVariables.length}</span>
+              <label className="block text-xs font-semibold text-zinc-300">
+                Prompt Instructions & Template *
+              </label>
+              <span className="text-[11px] text-zinc-500">
+                Variables detected: {detectedVariables.length}
+              </span>
             </div>
             <textarea
               required
@@ -271,7 +367,10 @@ export default function SubmitPromptPage() {
               <span className="text-xs font-bold text-zinc-200 block mb-3">Detected Variables:</span>
               <div className="flex flex-wrap gap-1.5">
                 {detectedVariables.map((v) => (
-                  <span key={v.key} className="px-2 py-1 rounded bg-[#0A0D12] border border-zinc-800 text-[11px] font-mono text-emerald-400">
+                  <span
+                    key={v.key}
+                    className="px-2 py-1 rounded bg-[#0A0D12] border border-zinc-800 text-[11px] font-mono text-emerald-400"
+                  >
                     [{v.key}]
                   </span>
                 ))}
@@ -279,7 +378,6 @@ export default function SubmitPromptPage() {
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
