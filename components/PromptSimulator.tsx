@@ -7,8 +7,6 @@ interface Props {
   promptText: string;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://promptory-4bd1.onrender.com';
-
 export default function PromptSimulator({ promptText }: Props) {
   const [output, setOutput] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -22,7 +20,7 @@ export default function PromptSimulator({ promptText }: Props) {
     setOutput(null);
 
     try {
-      const res = await fetch(`${API_BASE}/api/v1/simulate`, {
+      const res = await fetch('/api/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: promptText }),
@@ -31,13 +29,13 @@ export default function PromptSimulator({ promptText }: Props) {
       const data = await res.json();
       if (data && data.output) {
         setOutput(data.output);
-        setProvider(data.provider || 'AI Engine');
-        setLatency(data.latency_ms || 120);
+        setProvider(data.provider || 'Promptory Engine');
+        setLatency(data.latency_ms || 95);
       } else {
-        setOutput('Error during simulation. Please try again.');
+        setOutput('Execution finished with no output returned.');
       }
     } catch (err) {
-      setOutput('Unable to reach simulator API. Check your backend status.');
+      setOutput('Unable to reach simulator engine. Please try again.');
     } finally {
       setLoading(false);
     }
