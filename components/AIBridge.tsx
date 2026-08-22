@@ -1,14 +1,16 @@
 'use client';
 
-import React from 'react';
-import { ExternalLink, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { ExternalLink, Sparkles, Check, Copy } from 'lucide-react';
 
 interface AIBridgeProps {
   promptText: string;
   modelName?: string;
 }
 
-export default function AIBridge({ promptText, modelName }: AIBridgeProps) {
+export default function AIBridge({ promptText }: AIBridgeProps) {
+  const [copiedApp, setCopiedApp] = useState<string | null>(null);
+
   const encodedPrompt = encodeURIComponent(promptText || '');
 
   const aiApps = [
@@ -27,7 +29,7 @@ export default function AIBridge({ promptText, modelName }: AIBridgeProps) {
     {
       name: 'Claude',
       provider: 'Anthropic 3.5',
-      url: `https://claude.ai/new?q=${encodedPrompt}`,
+      url: `https://claude.ai/new`,
       borderHover: 'hover:border-amber-500/60 hover:shadow-amber-950/40',
       iconColor: 'text-amber-400',
       logo: (
@@ -62,7 +64,7 @@ export default function AIBridge({ promptText, modelName }: AIBridgeProps) {
     },
     {
       name: 'Perplexity',
-      provider: 'Web Research',
+      provider: 'Web Search',
       url: `https://www.perplexity.ai/search?q=${encodedPrompt}`,
       borderHover: 'hover:border-teal-500/60 hover:shadow-teal-950/40',
       iconColor: 'text-teal-400',
@@ -110,24 +112,53 @@ export default function AIBridge({ promptText, modelName }: AIBridgeProps) {
     },
   ];
 
+  const handleLaunch = async (e: React.MouseEvent, app: (typeof aiApps)[0]) => {
+    e.preventDefault();
+
+    // 1. Auto-copy generated prompt to clipboard
+    try {
+      await navigator.clipboard.writeText(promptText);
+      setCopiedApp(app.name);
+      setTimeout(() => setCopiedApp(null), 3000);
+    } catch {}
+
+    // 2. Open AI app in new tab
+    window.open(app.url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div className="bg-[#12161F] border border-zinc-800/90 rounded-2xl p-5 md:p-6 mt-6">
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800/80">
+      
+      {/* Header with smart auto-copy banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-zinc-800/80">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-emerald-400" />
           <h3 className="text-sm font-bold text-zinc-100">Open Directly in AI App</h3>
         </div>
-        <span className="text-[11px] text-zinc-500 font-mono">1-Click Launch</span>
+        <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+          <Copy className="w-3 h-3" />
+          <span>Auto-copies prompt to clipboard on click</span>
+        </div>
       </div>
 
+      {/* Copy Notification Toast */}
+      {copiedApp && (
+        <div className="mb-4 p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-xs text-emerald-300 flex items-center justify-between animate-in fade-in slide-in-from-top-1">
+          <span className="flex items-center gap-2 font-medium">
+            <Check className="w-4 h-4 text-emerald-400" />
+            Prompt copied! Just press <b className="text-white font-mono bg-zinc-900 px-1.5 py-0.5 rounded">Paste</b> in {copiedApp}.
+          </span>
+        </div>
+      )}
+
+      {/* AI Platform Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {aiApps.map((app) => (
-          <a
+          <button
             key={app.name}
-            href={app.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`flex items-center justify-between p-3 rounded-xl border border-zinc-800/90 bg-[#0A0D12] text-xs transition-all duration-200 ${app.borderHover} hover:shadow-lg group`}
+            type="button"
+            onClick={(e) => handleLaunch(e, app)}
+            className={`w-full text-left flex items-center justify-between p-3 rounded-xl border border-zinc-800/90 bg-[#0A0D12] text-xs transition-all duration-200 ${app.borderHover} hover:shadow-lg group cursor-pointer`}
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <div className={`shrink-0 ${app.iconColor}`}>
@@ -143,9 +174,10 @@ export default function AIBridge({ promptText, modelName }: AIBridgeProps) {
               </div>
             </div>
             <ExternalLink className="w-3.5 h-3.5 text-zinc-600 group-hover:text-emerald-400 transition-colors shrink-0 ml-1" />
-          </a>
+          </button>
         ))}
       </div>
+
     </div>
   );
 }
