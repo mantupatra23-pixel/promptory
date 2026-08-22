@@ -1,168 +1,146 @@
-import { notFound } from 'next/navigation';
+import React from 'react';
 import { Metadata } from 'next';
-import { getPromptByRoute } from '@/lib/db';
-import PromptCustomizer from '@/components/PromptCustomizer';
-import { ShieldCheck, ChevronRight, Info, AlertTriangle, Cpu } from 'lucide-react';
 import Link from 'next/link';
-
-export const revalidate = 60;
+import { notFound } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import PromptCustomizer from '@/components/PromptCustomizer';
+import RelatedPrompts from '@/components/RelatedPrompts';
+import ShareButton from '@/components/ShareButton';
+import { ChevronRight, Sparkles, Bookmark, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { calculateQualityScore } from '@/lib/qualityScore';
 
 interface PageProps {
-  params: { model: string; profession: string; task: string };
+  params: {
+    model: string;
+    profession: string;
+    task: string;
+  };
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const prompt = await getPromptByRoute(params.model, params.profession, params.task);
-  if (!prompt) return { title: 'Prompt Not Found | Promptory' };
+  const { data: prompts } = await supabase
+    .from('prompts')
+    .select('*, model:models(*), profession:professions(*)')
+    .limit(50);
 
-  const title = `${prompt.title} - Best ${prompt.model?.name} Prompt | Promptory`;
-  const description = `${prompt.description} Quality Score: ${prompt.quality_score}/100. Tested system prompt template for ${prompt.profession?.name}s.`;
-  const url = `https://www.promptory.xyz/prompts/${params.model}/${params.profession}/${params.task}`;
-  
-  const ogImageUrl = `https://www.promptory.xyz/api/og?title=${encodeURIComponent(prompt.title)}&model=${encodeURIComponent(prompt.model?.name || 'AI')}&score=${prompt.quality_score || 95}`;
+  const prompt = (prompts || []).find((p: any) => {
+    const m = (p.model?.slug || p.model || '').toLowerCase();
+    const prof = (p.profession?.slug || p.role || p.profession || '').toLowerCase().replace(/\s+/g, '-');
+    const t = (p.slug || p.task || p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
+    return m === params.model.toLowerCase() && prof === params.profession.toLowerCase() && t === params.task.toLowerCase();
+  }) || prompts?.[0];
+
+  const title = prompt?.title ? `${prompt.title} | Promptory` : 'Tested AI System Prompt';
+  const description = prompt?.description || 'Customizable, battle-tested system prompt.';
+  const canonicalUrl = `https://www.promptory.xyz/prompts/${params.model}/${params.profession}/${params.task}`;
 
   return {
     title,
     description,
     alternates: {
-      canonical: url,
+      canonical: canonicalUrl,
     },
     openGraph: {
       title,
       description,
-      url,
-      siteName: 'Promptory',
+      url: canonicalUrl,
       type: 'article',
-      images: [
-        {
-          url: ogImageUrl,
-          width: 1200,
-          height: 630,
-          alt: prompt.title,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [ogImageUrl],
     },
   };
 }
 
 export default async function PromptDetailPage({ params }: PageProps) {
-  const prompt = await getPromptByRoute(params.model, params.profession, params.task);
+  const { data: prompts } = await supabase
+    .from('prompts')
+    .select('*, model:models(*), profession:professions(*)')
+    .limit(50);
+
+  const prompt = (prompts || []).find((p: any) => {
+    const m = (p.model?.slug || p.model || '').toLowerCase();
+    const prof = (p.profession?.slug || p.role || p.profession || '').toLowerCase().replace(/\s+/g, '-');
+    const t = (p.slug || p.task || p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
+    return m === params.model.toLowerCase() && prof === params.profession.toLowerCase() && t === params.task.toLowerCase();
+  }) || prompts?.[0];
 
   if (!prompt) {
-    return notFound();
+    notFound();
   }
+
+  const modelName = prompt.model?.name || params.model.toUpperCase();
+  const roleName = prompt.profession?.name || params.profession.replace('-', ' ');
+  const promptTemplate = prompt.prompt_template || prompt.prompt || prompt.content || '';
+  const scoreBreakdown = calculateQualityScore(promptTemplate, prompt.quality_score || 97);
+  const currentUrl = `https://www.promptory.xyz/prompts/${params.model}/${params.profession}/${params.task}`;
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
     headline: prompt.title,
     description: prompt.description,
-    proficiencyLevel: 'Expert',
-    articleSection: prompt.profession?.name,
-    dependencies: prompt.model?.name,
     author: {
       '@type': 'Organization',
       name: 'Promptory',
+      url: 'https://www.promptory.xyz',
     },
-    mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': `https://www.promptory.xyz/prompts/${params.model}/${params.profession}/${params.task}`,
-    },
+    mainEntityOfPage: currentUrl,
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* BREADCRUMB */}
-      <nav className="flex items-center gap-2 text-xs text-zinc-500 mb-6 flex-wrap">
-        <Link href="/" className="hover:text-zinc-300">Home</Link>
-        <ChevronRight className="w-3 h-3" />
-        <Link href="/prompts" className="hover:text-zinc-300">Prompts</Link>
-        <ChevronRight className="w-3 h-3" />
-        <span className="text-zinc-400">{prompt.model?.name}</span>
-        <ChevronRight className="w-3 h-3" />
-        <span className="text-emerald-400">{prompt.title}</span>
+      {/* Breadcrumb Navigation */}
+      <nav className="flex items-center gap-2 text-xs text-zinc-400 mb-6 flex-wrap" aria-label="Breadcrumb">
+        <Link href="/" className="hover:text-emerald-400 transition-colors">Home</Link>
+        <ChevronRight className="w-3.5 h-3.5 text-zinc-600 shrink-0" />
+        <Link href={`/models/${params.model}`} className="hover:text-emerald-400 transition-colors">{modelName}</Link>
+        <ChevronRight className="w-3.5 h-3.5 text-zinc-600 shrink-0" />
+        <Link href={`/roles/${params.profession}`} className="hover:text-emerald-400 transition-colors">{roleName}</Link>
+        <ChevronRight className="w-3.5 h-3.5 text-zinc-600 shrink-0" />
+        <span className="text-zinc-100 font-medium truncate max-w-[200px]">{prompt.title}</span>
       </nav>
 
-      {/* HEADER SECTION */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            {prompt.model?.name}
-          </span>
-          <span className="px-2.5 py-0.5 rounded text-xs bg-zinc-800 text-zinc-300">
-            {prompt.profession?.name}
-          </span>
-          <div className="ml-auto flex items-center gap-1 text-xs text-zinc-400 font-mono">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Quality Score: {prompt.quality_score}/100</span>
+      {/* Header Info */}
+      <div className="border border-zinc-800 bg-[#12161F]/60 backdrop-blur rounded-2xl p-6 md:p-8 mb-8">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              {modelName}
+            </span>
+            <span className="px-3 py-1 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-300">
+              {roleName}
+            </span>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-950/50 border border-emerald-800/50 text-emerald-300">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              Score {scoreBreakdown.total}/100
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <ShareButton title={prompt.title} url={currentUrl} />
           </div>
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100 mb-3">{prompt.title}</h1>
-        <p className="text-sm text-zinc-400 leading-relaxed max-w-3xl">{prompt.description}</p>
+        <h1 className="text-2xl md:text-4xl font-extrabold text-zinc-100 mb-3 tracking-tight">
+          {prompt.title}
+        </h1>
+        <p className="text-zinc-300 text-sm md:text-base leading-relaxed max-w-3xl">
+          {prompt.description}
+        </p>
       </div>
 
-      {/* INTERACTIVE BUILDER */}
-      <div className="mb-12">
-        <PromptCustomizer
-          promptId={prompt.id}
-          promptTitle={prompt.title}
-          template={prompt.prompt_template}
-          exampleInput={prompt.example_input}
-        />
-      </div>
+      {/* Customizer & Live Output */}
+      <PromptCustomizer initialPrompt={promptTemplate} modelName={modelName} />
 
-      {/* EXAMPLE DEMO OUTPUT */}
-      {prompt.example_output && (
-        <div className="mb-10 bg-zinc-900/30 border border-zinc-800/80 rounded-xl p-5">
-          <div className="flex items-center gap-2 mb-3 text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-            <Info className="w-4 h-4 text-emerald-400" /> Illustrative Output Demo
-          </div>
-          <div className="p-4 rounded-lg bg-[#0A0D12] text-xs sm:text-sm text-zinc-300 font-mono whitespace-pre-wrap leading-relaxed border border-zinc-900">
-            {prompt.example_output}
-          </div>
-        </div>
-      )}
-
-      {/* USE CASES & COMMON MISTAKES */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {prompt.use_cases && prompt.use_cases.length > 0 && (
-          <div className="p-5 rounded-xl bg-[#0F141C] border border-zinc-800">
-            <h3 className="text-sm font-semibold text-zinc-200 mb-3 flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-emerald-400" /> Best Use Cases
-            </h3>
-            <ul className="text-xs text-zinc-400 space-y-2 list-disc list-inside">
-              {prompt.use_cases.map((uc: string, idx: number) => (
-                <li key={idx}>{uc}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {prompt.common_mistakes && prompt.common_mistakes.length > 0 && (
-          <div className="p-5 rounded-xl bg-[#0F141C] border border-zinc-800">
-            <h3 className="text-sm font-semibold text-zinc-200 mb-3 flex items-center gap-2 text-amber-400">
-              <AlertTriangle className="w-4 h-4" /> Common Mistakes
-            </h3>
-            <ul className="text-xs text-zinc-400 space-y-2 list-disc list-inside">
-              {prompt.common_mistakes.map((cm: string, idx: number) => (
-                <li key={idx}>{cm}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
+      {/* Related Prompts */}
+      <RelatedPrompts
+        currentId={prompt.id}
+        modelSlug={params.model}
+        professionSlug={params.profession}
+      />
     </div>
   );
 }

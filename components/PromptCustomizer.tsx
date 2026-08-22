@@ -1,246 +1,190 @@
 'use client';
-import { useState, useMemo } from 'react';
-import { extractVariables, replaceVariables } from '@/lib/variableParser';
-import CopyButton from './CopyButton';
-import { Sparkles, RotateCcw, Bookmark, Download, Wand2, Sliders, ExternalLink } from 'lucide-react';
-import { useFavorites } from '@/hooks/useFavorites';
+
+import React, { useState, useMemo } from 'react';
+import { Copy, Check, Sparkles, RotateCcw, Sliders, FileCode, Layers } from 'lucide-react';
+import { parsePromptVariables, replacePromptVariables } from '@/lib/variableParser';
+import AIBridge from './AIBridge';
 
 interface Props {
-  promptId: string;
-  promptTitle: string;
-  template: string;
-  exampleInput?: string;
+  initialPrompt: string;
+  modelName?: string;
 }
 
-export default function PromptCustomizer({ promptId, promptTitle, template, exampleInput }: Props) {
-  const variables = useMemo(() => extractVariables(template), [template]);
+const TONES = ['Default', 'Professional', 'Persuasive', 'Concise', 'Technical', 'Friendly', 'Casual', 'Urgent', 'Creative'];
+const FORMATS = ['Default', 'Markdown', 'Bullet Points', 'Table', 'JSON', 'Step-by-Step', 'Plain Text'];
+const LENGTHS = ['Default', 'Short', 'Medium', 'Detailed'];
+
+export default function PromptCustomizer({ initialPrompt, modelName }: Props) {
+  const detectedVariables = useMemo(() => parsePromptVariables(initialPrompt), [initialPrompt]);
+
   const [values, setValues] = useState<Record<string, string>>({});
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const [selectedTone, setSelectedTone] = useState('Default');
+  const [selectedFormat, setSelectedFormat] = useState('Default');
+  const [selectedLength, setSelectedLength] = useState('Default');
+  const [copied, setCopied] = useState(false);
 
   const handleInputChange = (key: string, val: string) => {
-    setValues((prev) => ({ ...prev, [key]: val }));
+    setValues(prev => ({ ...prev, [key]: val }));
   };
 
-  const handlePrefill = () => {
-    if (!exampleInput) return;
-    const lines = exampleInput.split('\n');
-    const newValues: Record<string, string> = {};
-
-    variables.forEach((v) => {
-      const match = lines.find((l) =>
-        l.toLowerCase().includes(v.label.toLowerCase()) ||
-        l.toLowerCase().includes(v.key.toLowerCase().replace(/_/g, ' '))
-      );
-      if (match) {
-        const val = match.split(':')[1]?.trim() || match.trim();
-        newValues[v.key] = val;
-      } else if (v.type === 'select' && v.options?.length) {
-        newValues[v.key] = v.options[0];
-      }
-    });
-
-    setValues(newValues);
+  const handleReset = () => {
+    setValues({});
+    setSelectedTone('Default');
+    setSelectedFormat('Default');
+    setSelectedLength('Default');
   };
-
-  const handleReset = () => setValues({});
 
   const generatedPrompt = useMemo(() => {
-    return replaceVariables(template, values);
-  }, [template, values]);
+    return replacePromptVariables(initialPrompt, values, {
+      tone: selectedTone,
+      format: selectedFormat,
+      length: selectedLength,
+    });
+  }, [initialPrompt, values, selectedTone, selectedFormat, selectedLength]);
 
-  const applyTone = (tone: string) => {
-    const toneVar = variables.find((v) => v.key.includes('/') || /tone/i.test(v.key));
-    if (toneVar) {
-      handleInputChange(toneVar.key, tone);
-    }
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedPrompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
   };
-
-  const handleExport = () => {
-    const blob = new Blob([generatedPrompt], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${promptTitle.toLowerCase().replace(/\s+/g, '-')}-prompt.txt`;
-    link.click();
-  };
-
-  // Direct AI Deep Launchers
-  const openInChatGPT = () => {
-    navigator.clipboard.writeText(generatedPrompt);
-    window.open(`https://chatgpt.com/?q=${encodeURIComponent(generatedPrompt)}`, '_blank');
-  };
-
-  const openInClaude = () => {
-    navigator.clipboard.writeText(generatedPrompt);
-    window.open('https://claude.ai/new', '_blank');
-  };
-
-  const openInPerplexity = () => {
-    navigator.clipboard.writeText(generatedPrompt);
-    window.open(`https://www.perplexity.ai/search?q=${encodeURIComponent(generatedPrompt)}`, '_blank');
-  };
-
-  const charCount = generatedPrompt.length;
-  const wordCount = generatedPrompt.trim().split(/\s+/).filter(Boolean).length;
 
   return (
     <div className="space-y-6">
-      {/* ACTION BAR */}
-      <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-zinc-800/80">
-        <div className="flex items-center gap-2">
-          <Sliders className="w-4 h-4 text-emerald-400" />
-          <span className="text-sm font-semibold text-zinc-200">Interactive Prompt Builder</span>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {exampleInput && (
+      
+      {/* VARIABLE INPUTS SECTION */}
+      {detectedVariables.length > 0 && (
+        <div className="bg-[#12161F] border border-zinc-800 rounded-2xl p-5 md:p-6 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
+            <div className="flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-emerald-400" />
+              <h3 className="text-sm font-bold text-zinc-100">Customize Template Variables</h3>
+            </div>
             <button
-              onClick={handlePrefill}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-colors"
+              onClick={handleReset}
+              className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-zinc-200 transition"
             >
-              <Wand2 className="w-3.5 h-3.5 text-emerald-400" /> Fill Sample Data
+              <RotateCcw className="w-3 h-3" />
+              <span>Reset</span>
             </button>
-          )}
-          <button
-            onClick={handleReset}
-            className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
-            title="Reset variables"
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            {detectedVariables.map((v) => {
+              const currentVal = values[v.key] || '';
+              return (
+                <div key={v.key} className={v.type === 'textarea' ? 'md:col-span-2' : ''}>
+                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                    {v.label}
+                  </label>
+                  {v.type === 'textarea' ? (
+                    <textarea
+                      rows={3}
+                      placeholder={`Enter ${v.label.toLowerCase()}...`}
+                      value={currentVal}
+                      onChange={(e) => handleInputChange(v.key, e.target.value)}
+                      className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition font-mono"
+                    />
+                  ) : v.type === 'select' && v.options ? (
+                    <select
+                      value={currentVal}
+                      onChange={(e) => handleInputChange(v.key, e.target.value)}
+                      className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-emerald-500 transition"
+                    >
+                      <option value="">Select {v.label}</option>
+                      {v.options.map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      placeholder={`Enter ${v.label.toLowerCase()}...`}
+                      value={currentVal}
+                      onChange={(e) => handleInputChange(v.key, e.target.value)}
+                      className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition"
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* OUTPUT CONSTRAINTS CONTROLS (Tone, Format, Length) */}
+      <div className="bg-[#12161F]/70 border border-zinc-800 rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Tone */}
+        <div>
+          <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Output Tone</label>
+          <select
+            value={selectedTone}
+            onChange={(e) => setSelectedTone(e.target.value)}
+            className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
           >
-            <RotateCcw className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => toggleFavorite(promptId)}
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
-              isFavorite(promptId)
-                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
-                : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
-            }`}
+            {TONES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+
+        {/* Format */}
+        <div>
+          <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Output Format</label>
+          <select
+            value={selectedFormat}
+            onChange={(e) => setSelectedFormat(e.target.value)}
+            className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
           >
-            <Bookmark className={`w-3.5 h-3.5 ${isFavorite(promptId) ? 'fill-current' : ''}`} />
-            {isFavorite(promptId) ? 'Saved' : 'Save'}
-          </button>
+            {FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
+          </select>
+        </div>
+
+        {/* Length */}
+        <div>
+          <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Output Length</label>
+          <select
+            value={selectedLength}
+            onChange={(e) => setSelectedLength(e.target.value)}
+            className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
+          >
+            {LENGTHS.map(l => <option key={l} value={l}>{l}</option>)}
+          </select>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* LEFT COLUMN: DYNAMIC FORM */}
-        <div className="lg:col-span-5 space-y-4 bg-[#0F141C] p-5 rounded-xl border border-zinc-800/90">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-            Customize Variables ({variables.length})
-          </h3>
-
-          {variables.length === 0 ? (
-            <p className="text-xs text-zinc-500">No customizable variables in this prompt.</p>
-          ) : (
-            variables.map((v) => (
-              <div key={v.key} className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-300 flex items-center justify-between">
-                  <span>{v.label}</span>
-                  <span className="text-[10px] text-zinc-500 font-mono">[{v.key}]</span>
-                </label>
-
-                {v.type === 'select' ? (
-                  <select
-                    value={values[v.key] || v.defaultValue || ''}
-                    onChange={(e) => handleInputChange(v.key, e.target.value)}
-                    className="w-full bg-[#080B10] border border-zinc-700/80 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-emerald-500"
-                  >
-                    {v.options?.map((opt) => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                ) : v.type === 'textarea' ? (
-                  <textarea
-                    rows={3}
-                    placeholder={`Enter ${v.label}...`}
-                    value={values[v.key] || ''}
-                    onChange={(e) => handleInputChange(v.key, e.target.value)}
-                    className="w-full bg-[#080B10] border border-zinc-700/80 rounded-lg px-3 py-2 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-emerald-500 resize-y"
-                  />
-                ) : (
-                  <input
-                    type="text"
-                    placeholder={`e.g. ${v.label}`}
-                    value={values[v.key] || ''}
-                    onChange={(e) => handleInputChange(v.key, e.target.value)}
-                    className="w-full bg-[#080B10] border border-zinc-700/80 rounded-lg px-3 py-2 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-emerald-500"
-                  />
-                )}
-              </div>
-            ))
-          )}
-
-          <div className="pt-3 border-t border-zinc-800/80">
-            <span className="text-[11px] text-zinc-500 block mb-2 font-medium">Quick Tone Shift:</span>
-            <div className="flex gap-1.5 flex-wrap">
-              {['PROFESSIONAL', 'FRIENDLY', 'URGENT', 'CASUAL'].map((tone) => (
-                <button
-                  key={tone}
-                  onClick={() => applyTone(tone)}
-                  className="px-2 py-0.5 rounded text-[10px] bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 transition-colors"
-                >
-                  {tone}
-                </button>
-              ))}
-            </div>
+      {/* LIVE GENERATED PROMPT PREVIEW */}
+      <div className="bg-[#12161F] border border-zinc-800 rounded-2xl p-5 md:p-6 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
+          <div className="flex items-center gap-2">
+            <FileCode className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-sm font-bold text-zinc-100">Live Generated Prompt</h3>
           </div>
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-md shadow-emerald-500/20"
+          >
+            {copied ? (
+              <>
+                <Check className="w-3.5 h-3.5" />
+                <span>Copied to Clipboard!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy Final Prompt</span>
+              </>
+            )}
+          </button>
         </div>
 
-        {/* RIGHT COLUMN: LIVE OUTPUT & DEEP LAUNCHERS */}
-        <div className="lg:col-span-7 flex flex-col justify-between bg-[#0F141C] rounded-xl border border-zinc-800 overflow-hidden shadow-xl">
-          <div>
-            <div className="px-4 py-3 bg-zinc-900/80 border-b border-zinc-800 flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-xs font-semibold text-zinc-300">Live Generated Output</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleExport}
-                  className="p-1 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded transition-colors"
-                  title="Export .txt"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                </button>
-                <CopyButton text={generatedPrompt} />
-              </div>
-            </div>
-
-            <pre className="p-5 text-xs sm:text-sm text-zinc-200 font-mono whitespace-pre-wrap leading-relaxed overflow-x-auto selection:bg-emerald-500/30 min-h-[200px]">
-              {generatedPrompt}
-            </pre>
-          </div>
-
-          <div className="p-4 bg-zinc-900/40 border-t border-zinc-800/60 space-y-3">
-            {/* DIRECT AI TRIGGER BUTTONS */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] text-zinc-500 font-mono">Open in:</span>
-              <button
-                onClick={openInChatGPT}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-800 hover:bg-emerald-500/20 hover:text-emerald-400 text-zinc-300 text-xs font-medium transition-all"
-              >
-                ChatGPT <ExternalLink className="w-3 h-3" />
-              </button>
-              <button
-                onClick={openInClaude}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-800 hover:bg-orange-500/20 hover:text-orange-400 text-zinc-300 text-xs font-medium transition-all"
-              >
-                Claude <ExternalLink className="w-3 h-3" />
-              </button>
-              <button
-                onClick={openInPerplexity}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-800 hover:bg-cyan-500/20 hover:text-cyan-400 text-zinc-300 text-xs font-medium transition-all"
-              >
-                Perplexity <ExternalLink className="w-3 h-3" />
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between text-[11px] text-zinc-500 font-mono pt-1 border-t border-zinc-800/40">
-              <span>{charCount} characters</span>
-              <span>~{wordCount} words</span>
-            </div>
-          </div>
+        <div className="p-4 rounded-xl bg-[#0A0D12] border border-zinc-800 text-xs md:text-sm text-zinc-200 font-mono leading-relaxed whitespace-pre-wrap select-all max-h-96 overflow-y-auto">
+          {generatedPrompt}
         </div>
       </div>
+
+      {/* 1-CLICK AI BRIDGE LAUNCHER */}
+      <AIBridge promptText={generatedPrompt} modelName={modelName} />
+
     </div>
   );
 }
