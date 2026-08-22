@@ -23,6 +23,11 @@ export interface PromptCardData {
   task?: string;
   slug?: string;
   status?: string;
+  example_input?: any;
+  exampleInput?: any;
+  example_output?: any;
+  exampleOutput?: any;
+  [key: string]: any;
 }
 
 export default function PromptCard({ prompt }: { prompt: PromptCardData }) {
@@ -30,7 +35,7 @@ export default function PromptCard({ prompt }: { prompt: PromptCardData }) {
   const [copied, setCopied] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  // Normalize model information
+  // Normalize Model
   const modelName = typeof prompt.model === 'object' 
     ? prompt.model?.name || 'AI' 
     : prompt.model || 'AI';
@@ -38,7 +43,7 @@ export default function PromptCard({ prompt }: { prompt: PromptCardData }) {
     ? prompt.model?.slug 
     : String(prompt.model || 'chatgpt')).toLowerCase();
 
-  // Normalize profession / role information
+  // Normalize Profession / Role
   const roleName = typeof prompt.profession === 'object' 
     ? prompt.profession?.name || 'Developer' 
     : prompt.role || prompt.profession || 'Developer';
@@ -46,13 +51,13 @@ export default function PromptCard({ prompt }: { prompt: PromptCardData }) {
     ? prompt.profession?.slug 
     : String(roleName).toLowerCase().replace(/\s+/g, '-'));
 
-  // Normalize prompt template text & score
+  // Normalize Prompt Template Text & Score
   const promptText = prompt.prompt_template || prompt.promptTemplate || prompt.prompt || prompt.content || '';
   const rawScore = prompt.quality_score || prompt.qualityScore || 96;
   const scoreBreakdown = calculateQualityScore(promptText, rawScore);
   const saved = isSaved(prompt.id);
 
-  // Clean navigation URL
+  // Clean Navigation Route
   const taskSlug = prompt.slug || prompt.task || prompt.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   const detailUrl = `/prompts/${modelSlug}/${roleSlug}/${taskSlug}`;
 
@@ -76,7 +81,7 @@ export default function PromptCard({ prompt }: { prompt: PromptCardData }) {
     <>
       <div className="group relative bg-[#12161F]/90 border border-zinc-800/90 hover:border-emerald-500/40 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-lg hover:shadow-emerald-950/20">
         <div>
-          {/* Top Badges & Triggers */}
+          {/* Top Badges & Actions */}
           <div className="flex items-center justify-between gap-2 mb-3.5">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -103,7 +108,7 @@ export default function PromptCard({ prompt }: { prompt: PromptCardData }) {
                 <span>{scoreBreakdown.total}/100</span>
               </button>
 
-              {/* Guest / Account Save Button */}
+              {/* Save Button */}
               <button
                 type="button"
                 onClick={handleToggleSave}
@@ -128,7 +133,7 @@ export default function PromptCard({ prompt }: { prompt: PromptCardData }) {
 
           {/* Description */}
           <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed mb-5">
-            {prompt.description || promptText.slice(0, 120) + '...'}
+            {prompt.description || (promptText ? promptText.slice(0, 120) + '...' : '')}
           </p>
         </div>
 

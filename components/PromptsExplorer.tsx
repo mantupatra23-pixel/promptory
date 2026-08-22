@@ -1,7 +1,8 @@
 'use client';
-import { useState, useMemo, useEffect, Suspense } from 'react';
+
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import PromptCard from './PromptCard';
+import PromptCard, { PromptCardData } from './PromptCard';
 import { Search, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 
 interface Props {
@@ -10,9 +11,9 @@ interface Props {
   initialPrompts: any[];
 }
 
-function ExplorerContent({ models, professions, initialPrompts }: Props) {
+function ExplorerContent({ models = [], professions = [], initialPrompts = [] }: Props) {
   const searchParams = useSearchParams();
-  const urlSearch = searchParams.get('search') || '';
+  const urlSearch = searchParams.get('q') || searchParams.get('search') || '';
 
   const [searchQuery, setSearchQuery] = useState(urlSearch);
   const [selectedModel, setSelectedModel] = useState<string>('all');
@@ -26,18 +27,24 @@ function ExplorerContent({ models, professions, initialPrompts }: Props) {
 
   const filteredPrompts = useMemo(() => {
     return initialPrompts.filter((p) => {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
+      const title = (p.title || '').toLowerCase();
+      const desc = (p.description || '').toLowerCase();
+      const template = (p.prompt_template || p.prompt || p.content || '').toLowerCase();
+
       const matchesSearch =
-        searchQuery.trim() === '' ||
-        p.title?.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q) ||
-        p.prompt_template?.toLowerCase().includes(q);
+        q === '' ||
+        title.includes(q) ||
+        desc.includes(q) ||
+        template.includes(q);
 
+      const modelSlug = (typeof p.model === 'object' ? p.model?.slug : p.model) || '';
       const matchesModel =
-        selectedModel === 'all' || p.model?.slug === selectedModel;
+        selectedModel === 'all' || modelSlug.toLowerCase() === selectedModel.toLowerCase();
 
+      const profSlug = (typeof p.profession === 'object' ? p.profession?.slug : (p.role || p.profession)) || '';
       const matchesProfession =
-        selectedProfession === 'all' || p.profession?.slug === selectedProfession;
+        selectedProfession === 'all' || profSlug.toLowerCase() === selectedProfession.toLowerCase();
 
       return matchesSearch && matchesModel && matchesProfession;
     });
@@ -104,7 +111,7 @@ function ExplorerContent({ models, professions, initialPrompts }: Props) {
             </button>
             {models.map((m) => (
               <button
-                key={m.id}
+                key={m.id || m.slug}
                 onClick={() => setSelectedModel(m.slug)}
                 className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors shrink-0 ${
                   selectedModel === m.slug
@@ -133,7 +140,7 @@ function ExplorerContent({ models, professions, initialPrompts }: Props) {
             </button>
             {professions.map((p) => (
               <button
-                key={p.id}
+                key={p.id || p.slug}
                 onClick={() => setSelectedProfession(p.slug)}
                 className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors shrink-0 ${
                   selectedProfession === p.slug
@@ -168,11 +175,11 @@ function ExplorerContent({ models, professions, initialPrompts }: Props) {
                 profession: p.profession,
                 task: p.task,
                 description: p.description,
-                promptTemplate: p.prompt_template,
+                promptTemplate: p.prompt_template || p.prompt,
                 exampleInput: p.example_input,
                 exampleOutput: p.example_output,
                 qualityScore: p.quality_score,
-                status: p.status
+                status: p.status,
               }}
             />
           ))}
