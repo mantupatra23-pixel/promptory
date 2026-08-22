@@ -10,7 +10,6 @@ export interface DetectedVariable {
 export function parsePromptVariables(content: string): DetectedVariable[] {
   if (!content) return [];
   
-  // Match patterns like [VARIABLE_NAME] or [Variable Name]
   const regex = /\[([A-Z0-9_\s\-]+)\]/g;
   const matches = Array.from(content.matchAll(regex));
   const seen = new Set<string>();
@@ -23,14 +22,12 @@ export function parsePromptVariables(content: string): DetectedVariable[] {
     if (seen.has(key)) continue;
     seen.add(key);
 
-    // Human-readable label: "TARGET_GOAL" -> "Target Goal"
     const label = key
       .toLowerCase()
       .split(/[_\s\-]+/)
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
 
-    // Smart input type detection
     let inputType: 'text' | 'textarea' | 'select' = 'text';
     let options: string[] | undefined = undefined;
     const lowerKey = key.toLowerCase();
@@ -72,13 +69,11 @@ export function replacePromptVariables(
 ): string {
   let output = template;
 
-  // Replace each detected variable
   Object.entries(values).forEach(([key, val]) => {
     const regex = new RegExp(`\\[${key}\\]`, 'g');
     output = output.replace(regex, val.trim() ? val : `[${key}]`);
   });
 
-  // Append Tone / Length / Format constraints cleanly if selected
   const additions: string[] = [];
   if (options?.tone && options.tone !== 'Default') {
     additions.push(`Tone: ${options.tone}`);
@@ -96,3 +91,7 @@ export function replacePromptVariables(
 
   return output;
 }
+
+// Backward compatibility exports for existing components
+export const extractVariables = parsePromptVariables;
+export const replaceVariables = replacePromptVariables;
