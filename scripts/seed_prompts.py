@@ -1,6 +1,9 @@
 import os
 import re
 import sys
+import http.server
+import socketserver
+import threading
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
@@ -11,7 +14,7 @@ SUPABASE_URL = os.getenv("NEXT_PUBLIC_SUPABASE_URL") or os.getenv("SUPABASE_URL"
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    print("❌ Error: SUPABASE_URL ya SUPABASE_KEY .env file me nahi mili!")
+    print("❌ Error: SUPABASE_URL ya SUPABASE_KEY environment variables me nahi mila!")
     sys.exit(1)
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -161,10 +164,6 @@ DOMAINS_DATA = [
     }
 ]
 
-# Generate programmatic variations to hit 200+ unique production prompts
-MODELS = ['chatgpt', 'claude', 'gemini', 'deepseek', 'perplexity', 'midjourney']
-PROFESSIONS = ['developer', 'seo-specialist', 'founder', 'digital-marketer', 'real-estate-agent']
-
 TECH_STACKS = [
     ('FastAPI', 'Python', 'developer'),
     ('Next.js', 'React', 'developer'),
@@ -205,7 +204,6 @@ MARKETING_TOPICS = [
 def build_catalog():
     catalog = list(DOMAINS_DATA)
 
-    # 1. Expand Tech Stack Engineering Prompts
     for tech, lang, role in TECH_STACKS:
         for m in ['claude', 'chatgpt', 'deepseek']:
             catalog.append({
@@ -225,7 +223,6 @@ def build_catalog():
                 "score": 94 + (len(tech) % 5)
             })
 
-    # 2. Expand SEO Prompts
     for seo in SEO_TOPICS:
         for m in ['gemini', 'perplexity', 'chatgpt']:
             catalog.append({
@@ -237,7 +234,6 @@ def build_catalog():
                 "score": 93 + (len(seo) % 6)
             })
 
-    # 3. Expand Marketing & Founder Prompts
     for mkt in MARKETING_TOPICS:
         for m in ['claude', 'chatgpt']:
             catalog.append({
@@ -255,9 +251,9 @@ def seed_database():
     prompts = build_catalog()
     print(f"🚀 Preparing to seed {len(prompts)} Production Prompts into Supabase...")
 
-    # Fetch lookup models and professions
-    models_res = supabase.from('models').select('id, slug').execute()
-    profs_res = supabase.from('professions').select('id, slug').execute()
+    # Fetch lookup models and professions using supabase.table()
+    models_res = supabase.table('models').select('id, slug').execute()
+    profs_res = supabase.table('professions').select('id, slug').execute()
 
     model_map = {m['slug'].lower(): m['id'] for m in (models_res.data or [])}
     prof_map = {p['slug'].lower(): p['id'] for p in (profs_res.data or [])}
@@ -285,8 +281,7 @@ def seed_database():
             payload["profession_id"] = prof_id
 
         try:
-            # Upsert into supabase
-            res = supabase.from('prompts').upsert(payload, on_conflict='slug').execute()
+            res = supabase.table('prompts').upsert(payload, on_conflict='slug').execute()
             if res.data:
                 success_count += 1
                 if idx % 20 == 0 or idx == len(prompts):
@@ -297,5 +292,15 @@ def seed_database():
 
     print(f"\n🎉 SEED COMPLETE! Total: {len(prompts)} | Success: {success_count} | Skipped: {skipped_count}\n")
 
+# Simple HTTP Health Check Server so Render Web Service stays Live
+def start_health_server():
+    port = int(os.environ.get("PORT", 10000))
+    handler = http.server.SimpleHTTPRequestHandler
+    with socketserver.TCPServer(("", port), handler) as httpd:
+        print(f"🌐 Health check server running on port {port}")
+        httpd.serve_forever()
+
 if __name__ == "__main__":
     seed_database()
+    # Keep service running for Render Web Service health checks
+    start_health_server()
