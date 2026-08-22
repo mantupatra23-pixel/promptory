@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Sparkles, PlusCircle, Bookmark, Workflow, Compass, Menu, X } from 'lucide-react';
+import { PlusCircle, Bookmark, Workflow, Compass, Menu, X } from 'lucide-react';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -13,17 +14,24 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 border-b border-[#30363D]/80 bg-[#161B22]/90 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
         
-        {/* Left: Logo */}
-        <Link href="/" className="flex items-center gap-2 group shrink-0">
-          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-black transition-all duration-200 shadow-sm shadow-emerald-500/10">
-            <Sparkles className="w-4 h-4" />
+        {/* Left: Brand Logo & Wordmark */}
+        <Link href="/" className="flex items-center gap-2.5 group shrink-0">
+          <div className="relative w-8 h-8 rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition-transform duration-200">
+            <Image
+              src="/logo.png"
+              alt="Promptory Logo"
+              width={32}
+              height={32}
+              className="object-cover w-full h-full"
+              priority
+            />
           </div>
           <span className="text-base sm:text-lg font-black tracking-tight text-white">
             Prompt<span className="text-emerald-400">ory</span>
           </span>
         </Link>
 
-        {/* Center/Right: Desktop Navigation Links (Desktop par visible) */}
+        {/* Center: Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-1 sm:gap-2">
           <Link
             href="/directory"
@@ -59,17 +67,16 @@ export default function Navbar() {
           </Link>
         </nav>
 
-        {/* Right Actions: Submit Button (Always Visible) & Mobile Menu Button */}
+        {/* Right Actions: Pinned Submit CTA & Mobile Menu */}
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href="/submit"
-            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-md shadow-emerald-500/20 shrink-0"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-md shadow-emerald-500/20 shrink-0"
           >
             <PlusCircle className="w-3.5 h-3.5" />
             <span>Submit</span>
           </Link>
 
-          {/* Mobile Hamburger Toggle */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -82,7 +89,7 @@ export default function Navbar() {
 
       </div>
 
-      {/* Mobile Dropdown Menu Drawer */}
+      {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-[#30363D] bg-[#161B22] px-4 py-3 space-y-1.5 animate-in slide-in-from-top-2 duration-150 shadow-2xl">
           <Link

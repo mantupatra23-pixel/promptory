@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { Sparkles, Heart } from 'lucide-react';
+import Image from 'next/image';
+import { Heart } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -10,9 +11,15 @@ export default function Footer() {
           
           {/* Col 1: Brand */}
           <div className="space-y-3">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                <Sparkles className="w-3.5 h-3.5" />
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="relative w-7 h-7 rounded-lg overflow-hidden shadow-sm">
+                <Image
+                  src="/logo.png"
+                  alt="Promptory Logo"
+                  width={28}
+                  height={28}
+                  className="object-cover w-full h-full"
+                />
               </div>
               <span className="text-base font-black tracking-tight text-white">
                 Prompt<span className="text-emerald-400">ory</span>
@@ -77,7 +84,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Col 4: Platform & Legal (AdSense Ready) */}
+          {/* Col 4: Platform & Legal */}
           <div>
             <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Company & Legal</h4>
             <ul className="space-y-2 text-xs text-slate-400">
