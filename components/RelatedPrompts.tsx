@@ -22,12 +22,41 @@ export default async function RelatedPrompts({ currentId, modelSlug = 'all', pro
   // Filter out the active prompt
   const otherPrompts = allPrompts.filter((p: any) => String(p.id) !== String(currentId));
 
-  // Score candidate prompts using current context (model & role)
-  const searchQuery = `${modelSlug} ${professionSlug.replace('-', ' ')}`;
-  const { results } = searchPrompts(otherPrompts, searchQuery);
+  // 1. First priority: Match by same Profession / Role
+  let relatedCandidates = otherPrompts.filter((p: any) => {
+    const pRole = (p.profession?.slug || p.role || '').toLowerCase();
+    return pRole === professionSlug.toLowerCase();
+  });
 
-  const relatedList = results.slice(0, 3).length > 0 ? results.slice(0, 3) : otherPrompts.slice(0, 3);
+  // 2. If fewer than 3, expand search to role keywords + model
+  if (relatedCandidates.length < 3) {
+    const searchQuery = professionSlug.replace(/-/g, ' ');
+    const { results } = searchPrompts(otherPrompts, searchQuery);
+    
+    // Merge unique candidates
+    const seenIds = new Set(relatedCandidates.map((p) => String(p.id)));
+    for (const res of results) {
+      if (!seenIds.has(String(res.id))) {
+        relatedCandidates.push(res);
+        seenIds.add(String(res.id));
+      }
+      if (relatedCandidates.length >= 3) break;
+    }
+  }
 
+  // 3. Fallback to highest quality prompts if still under 3
+  if (relatedCandidates.length < 3) {
+    const seenIds = new Set(relatedCandidates.map((p) => String(p.id)));
+    for (const p of otherPrompts) {
+      if (!seenIds.has(String(p.id))) {
+        relatedCandidates.push(p);
+        seenIds.add(String(p.id));
+      }
+      if (relatedCandidates.length >= 3) break;
+    }
+  }
+
+  const relatedList = relatedCandidates.slice(0, 3);
   if (relatedList.length === 0) return null;
 
   return (
@@ -42,7 +71,7 @@ export default async function RelatedPrompts({ currentId, modelSlug = 'all', pro
         </div>
 
         <Link
-          href="/directory"
+          href={`/directory?role=${professionSlug !== 'all' ? professionSlug : ''}`}
           className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
         >
           <span>Explore All</span>
