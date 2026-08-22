@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Copy, Check, RotateCcw, Sliders, FileCode, ChevronDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Copy, Check, RotateCcw, Sliders, FileCode, ChevronDown, GitFork, Download } from 'lucide-react';
 import { parsePromptVariables, replacePromptVariables } from '@/lib/variableParser';
 import AIBridge from './AIBridge';
+import PromptExportModal from './PromptExportModal';
 
 interface Props {
   initialPrompt?: string;
@@ -21,7 +23,6 @@ const TONES = ['Default', 'Professional', 'Persuasive', 'Concise', 'Technical', 
 const FORMATS = ['Default', 'Markdown', 'Bullet Points', 'Table', 'JSON', 'Step-by-Step', 'Plain Text'];
 const LENGTHS = ['Default', 'Short', 'Medium', 'Detailed'];
 
-// Custom Dark Charcoal Dropdown (No native white OS popups)
 function CustomSelect({
   label,
   options,
@@ -48,20 +49,20 @@ function CustomSelect({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <label className="block text-xs font-semibold text-zinc-400 mb-1.5">{label}</label>
+      <label className="block text-xs font-semibold text-slate-400 mb-1.5">{label}</label>
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full bg-zinc-950 border border-zinc-800 hover:border-emerald-500/50 rounded-xl px-3.5 py-2.5 text-xs text-zinc-200 flex items-center justify-between transition focus:outline-none focus:border-emerald-500"
+        className="w-full bg-[#0D1117] border border-[#30363D] hover:border-emerald-500/50 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 flex items-center justify-between transition focus:outline-none focus:border-emerald-500"
       >
-        <span className={value !== 'Default' ? 'text-emerald-400 font-semibold' : 'text-zinc-300'}>
+        <span className={value !== 'Default' ? 'text-emerald-400 font-semibold' : 'text-slate-300'}>
           {value}
         </span>
-        <ChevronDown className={`w-3.5 h-3.5 text-zinc-500 transition-transform duration-200 ${open ? 'rotate-180 text-emerald-400' : ''}`} />
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${open ? 'rotate-180 text-emerald-400' : ''}`} />
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto bg-zinc-900 border border-zinc-700/80 rounded-xl p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto bg-[#161B22] border border-[#30363D] rounded-xl p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
           {options.map((opt) => {
             const isSelected = opt === value;
             return (
@@ -75,7 +76,7 @@ function CustomSelect({
                 className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between transition ${
                   isSelected
                     ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                    : 'text-zinc-300 hover:bg-zinc-950 hover:text-white'
+                    : 'text-slate-300 hover:bg-[#0D1117] hover:text-white'
                 }`}
               >
                 <span>{opt}</span>
@@ -95,10 +96,12 @@ export default function PromptCustomizer({
   prompt,
   promptTitle,
   title,
-  modelName,
+  modelName = 'ChatGPT',
   exampleInput,
 }: Props) {
+  const router = useRouter();
   const baseTemplate = initialPrompt || template || prompt || '';
+  const effectiveTitle = promptTitle || title || 'Custom System Prompt';
   const detectedVariables = useMemo(() => parsePromptVariables(baseTemplate), [baseTemplate]);
 
   const [values, setValues] = useState<Record<string, string>>({});
@@ -106,6 +109,7 @@ export default function PromptCustomizer({
   const [selectedFormat, setSelectedFormat] = useState('Default');
   const [selectedLength, setSelectedLength] = useState('Default');
   const [copied, setCopied] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   useEffect(() => {
     if (exampleInput && typeof exampleInput === 'object') {
@@ -140,22 +144,31 @@ export default function PromptCustomizer({
     } catch {}
   };
 
+  const handleRemix = () => {
+    const params = new URLSearchParams({
+      fork_title: `[Remix] ${effectiveTitle}`,
+      fork_template: baseTemplate,
+      fork_model: modelName.toLowerCase(),
+    });
+    router.push(`/submit?${params.toString()}`);
+  };
+
   return (
     <div className="space-y-6">
       
       {/* VARIABLE INPUTS SECTION */}
       {detectedVariables.length > 0 && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 md:p-6 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
+        <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5 md:p-6 space-y-4 shadow-md">
+          <div className="flex items-center justify-between pb-3 border-b border-[#30363D]">
             <div className="flex items-center gap-2">
               <Sliders className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-sm font-bold text-zinc-100">
-                {promptTitle || title ? `Customize: ${promptTitle || title}` : 'Customize Template Variables'}
+              <h3 className="text-sm font-bold text-white">
+                Customize Template Variables
               </h3>
             </div>
             <button
               onClick={handleReset}
-              className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-emerald-400 transition"
+              className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-emerald-400 transition"
             >
               <RotateCcw className="w-3 h-3" />
               <span>Reset</span>
@@ -167,7 +180,7 @@ export default function PromptCustomizer({
               const currentVal = values[v.key] || '';
               return (
                 <div key={v.key} className={v.type === 'textarea' ? 'md:col-span-2' : ''}>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                     {v.label}
                   </label>
                   {v.type === 'textarea' ? (
@@ -176,7 +189,7 @@ export default function PromptCustomizer({
                       placeholder={`Enter ${v.label.toLowerCase()}...`}
                       value={currentVal}
                       onChange={(e) => handleInputChange(v.key, e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition font-mono"
+                      className="w-full bg-[#0D1117] border border-[#30363D] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition font-mono"
                     />
                   ) : (
                     <input
@@ -184,7 +197,7 @@ export default function PromptCustomizer({
                       placeholder={`Enter ${v.label.toLowerCase()}...`}
                       value={currentVal}
                       onChange={(e) => handleInputChange(v.key, e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition"
+                      className="w-full bg-[#0D1117] border border-[#30363D] rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition"
                     />
                   )}
                 </div>
@@ -194,8 +207,8 @@ export default function PromptCustomizer({
         </div>
       )}
 
-      {/* OUTPUT CONSTRAINTS (Dark Charcoal & Emerald Dropdowns) */}
-      <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* OUTPUT CONSTRAINTS */}
+      <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-md">
         <CustomSelect
           label="Output Tone"
           options={TONES}
@@ -216,38 +229,68 @@ export default function PromptCustomizer({
         />
       </div>
 
-      {/* LIVE GENERATED PROMPT PREVIEW */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 md:p-6 space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
+      {/* LIVE GENERATED PROMPT PREVIEW WITH EXPORT & FORK ACTIONS */}
+      <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5 md:p-6 space-y-4 shadow-md">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#30363D]">
           <div className="flex items-center gap-2">
             <FileCode className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-sm font-bold text-zinc-100">Live Generated Prompt</h3>
+            <h3 className="text-sm font-bold text-white">Live Generated Prompt</h3>
           </div>
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-md shadow-emerald-500/20"
-          >
-            {copied ? (
-              <>
-                <Check className="w-3.5 h-3.5" />
-                <span>Copied to Clipboard!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5" />
-                <span>Copy Final Prompt</span>
-              </>
-            )}
-          </button>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleRemix}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#21262D] hover:bg-[#30363D] text-slate-200 text-xs font-semibold transition border border-[#30363D]"
+              title="Clone & customize this template in Submit"
+            >
+              <GitFork className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Remix / Fork</span>
+            </button>
+
+            <button
+              onClick={() => setShowExportModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#21262D] hover:bg-[#30363D] text-slate-200 text-xs font-semibold transition border border-[#30363D]"
+              title="Export as .cursorrules or API JSON"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Export API / IDE</span>
+            </button>
+
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-md shadow-emerald-500/20"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy Final Prompt</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-xs md:text-sm text-zinc-200 font-mono leading-relaxed whitespace-pre-wrap select-all max-h-96 overflow-y-auto">
+        <div className="p-4 rounded-xl bg-[#0D1117] border border-[#30363D] text-xs md:text-sm text-slate-200 font-mono leading-relaxed whitespace-pre-wrap select-all max-h-96 overflow-y-auto">
           {generatedPrompt}
         </div>
       </div>
 
       {/* 1-CLICK AI BRIDGE */}
       <AIBridge promptText={generatedPrompt} modelName={modelName} />
+
+      {/* DEVELOPER EXPORT MODAL */}
+      <PromptExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        promptTitle={effectiveTitle}
+        compiledPrompt={generatedPrompt}
+        modelName={modelName}
+      />
 
     </div>
   );
