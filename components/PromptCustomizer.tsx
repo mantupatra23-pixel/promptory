@@ -8,14 +8,16 @@ import AIBridge from './AIBridge';
 import PromptExportModal from './PromptExportModal';
 import PromptSimulator from './PromptSimulator';
 
-interface Props {
+export interface Props {
   initialPrompt?: string;
   template?: string;
   prompt?: string;
   promptTitle?: string;
   title?: string;
+  promptId?: string | number;
   modelName?: string;
   exampleInput?: any;
+  [key: string]: any;
 }
 
 const TONES = ['Default', 'Professional', 'Persuasive', 'Concise', 'Technical', 'Friendly', 'Casual', 'Urgent', 'Creative'];
@@ -95,6 +97,7 @@ export default function PromptCustomizer({
   prompt,
   promptTitle,
   title,
+  promptId,
   modelName = 'ChatGPT',
   exampleInput,
 }: Props) {
