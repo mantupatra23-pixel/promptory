@@ -2,6 +2,7 @@ export interface DetectedVariable {
   key: string;
   raw: string;
   label: string;
+  type: 'text' | 'textarea' | 'select';
   inputType: 'text' | 'textarea' | 'select';
   options?: string[];
   defaultValue: string;
@@ -49,6 +50,7 @@ export function parsePromptVariables(content: string): DetectedVariable[] {
       key,
       raw,
       label,
+      type: inputType,
       inputType,
       options,
       defaultValue: '',
@@ -92,6 +94,6 @@ export function replacePromptVariables(
   return output;
 }
 
-// Backward compatibility exports for existing components
+// Backward compatibility exports
 export const extractVariables = parsePromptVariables;
 export const replaceVariables = replacePromptVariables;
