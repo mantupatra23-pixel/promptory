@@ -147,23 +147,25 @@ export default function SubmitPromptPage() {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
 
-      // 1. Fetch matching Model & Profession IDs
-      const [modelRes, profRes] = await Promise.all([
+      // 1. Fetch matching Model & Profession IDs along with a valid sample status
+      const [modelRes, profRes, sampleStatusRes] = await Promise.all([
         supabase.from('models').select('id').eq('slug', model).maybeSingle(),
         supabase.from('professions').select('id').eq('slug', profession).maybeSingle(),
+        supabase.from('prompts').select('status').limit(1).maybeSingle(),
       ]);
 
       const modelId = modelRes.data?.id;
       const professionId = profRes.data?.id;
+      const validStatus = sampleStatusRes.data?.status || 'published';
 
-      // 2. Verified Supabase Table Schema Payload (No invalid columns)
+      // 2. Safe Payload matching PostgreSQL check constraint
       const insertPayload: Record<string, any> = {
         title: title.trim(),
         slug,
         description: description.trim() || promptTemplate.slice(0, 140) + '...',
         prompt_template: promptTemplate.trim(),
         quality_score: scoreBreakdown.total,
-        status: 'approved',
+        status: validStatus,
       };
 
       if (modelId) insertPayload.model_id = modelId;
