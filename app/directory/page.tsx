@@ -8,14 +8,14 @@ import { Layers, PlusCircle } from 'lucide-react';
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: 'AI Prompts Library | Promptory',
+  title: 'AI Prompts Directory | Browse Tested Prompts | Promptory',
   description: 'Search and filter verified system prompts across ChatGPT, Claude, Gemini, and DeepSeek.',
   alternates: {
-    canonical: 'https://www.promptory.xyz/prompts',
+    canonical: 'https://www.promptory.xyz/directory',
   },
 };
 
-export default async function PromptsDirectoryPage() {
+export default async function DirectoryPage() {
   const [promptsRes, modelsRes, professionsRes] = await Promise.allSettled([
     supabase.from('prompts').select('*, model:models(*), profession:professions(*)').order('quality_score', { ascending: false }),
     supabase.from('models').select('*').order('name'),
@@ -36,10 +36,10 @@ export default async function PromptsDirectoryPage() {
             <span>Curated Library</span>
           </div>
           <h1 className="text-2xl md:text-4xl font-extrabold text-zinc-100 mb-2 tracking-tight">
-            Curated <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Prompts Library</span>
+            Explore AI <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Prompts Directory</span>
           </h1>
           <p className="text-zinc-400 text-xs md:text-sm max-w-2xl">
-            Real-time filter and instant search across AI models, tasks, and industry roles.
+            Filter by AI model, profession, or search natural language tasks to find battle-tested system prompts.
           </p>
         </div>
         <Link
