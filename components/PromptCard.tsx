@@ -141,7 +141,8 @@ export default function PromptCard({ prompt }: PromptCardProps) {
 
       {showModal && (
         <QualityScoreModal
-          title={prompt.title}
+          isOpen={showModal}
+          title={prompt.title || 'Prompt Quality Audit'}
           breakdown={scoreBreakdown}
           onClose={() => setShowModal(false)}
         />
