@@ -77,15 +77,15 @@ export default function PromptCard({ prompt }: PromptCardProps) {
 
   return (
     <>
-      <div className="group relative bg-[#4F4F51]/30 hover:bg-[#4F4F51]/60 border border-[#4F4F51] hover:border-[#F58F7C]/60 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-xl backdrop-blur">
+      <div className="group relative bg-[#161B22] border border-[#30363D] hover:border-emerald-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-xl hover:shadow-emerald-950/20 hover:bg-[#1C2128]">
         <div>
-          {/* Badges & Save Action */}
+          {/* Top Badges & Actions */}
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#F58F7C]/15 text-[#F58F7C] border border-[#F58F7C]/30">
+              <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 {modelName}
               </span>
-              <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#2C2B30] text-[#D6D6D6]">
+              <span className="px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-[#21262D] text-slate-300 border border-[#30363D]/60">
                 {roleName}
               </span>
             </div>
@@ -93,9 +93,9 @@ export default function PromptCard({ prompt }: PromptCardProps) {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={handleScoreClick}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#2C2B30] border border-[#F58F7C]/30 text-[11px] font-bold text-[#F58F7C] hover:bg-[#F58F7C]/20 transition"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-950/40 border border-emerald-800/40 text-[11px] font-bold text-emerald-400 hover:bg-emerald-900/40 transition"
               >
-                <Sparkles className="w-3 h-3 text-[#F58F7C]" />
+                <Sparkles className="w-3 h-3 text-emerald-400" />
                 <span>{scoreBreakdown.total}/100</span>
               </button>
 
@@ -104,42 +104,42 @@ export default function PromptCard({ prompt }: PromptCardProps) {
                 aria-label="Save prompt"
                 className={`p-1.5 rounded-lg border transition ${
                   saved
-                    ? 'bg-[#F58F7C]/20 border-[#F58F7C]/40 text-[#F58F7C]'
-                    : 'bg-[#2C2B30] border-[#4F4F51] text-[#D6D6D6]/70 hover:text-white'
+                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                    : 'bg-[#21262D] border-[#30363D] text-slate-400 hover:text-white'
                 }`}
               >
-                <Bookmark className={`w-3.5 h-3.5 ${saved ? 'fill-[#F58F7C]' : ''}`} />
+                <Bookmark className={`w-3.5 h-3.5 ${saved ? 'fill-emerald-400' : ''}`} />
               </button>
             </div>
           </div>
 
           {/* Title */}
           <Link href={`/prompts/${modelSlug}/${professionSlug}/${taskSlug}`}>
-            <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-[#F58F7C] transition-colors line-clamp-1 mb-1.5">
+            <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-emerald-400 transition-colors line-clamp-1 mb-1.5">
               {prompt.title}
             </h3>
           </Link>
 
           {/* Description */}
-          <p className="text-xs text-[#D6D6D6]/80 line-clamp-2 leading-relaxed mb-4">
+          <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-4">
             {prompt.description || promptText}
           </p>
         </div>
 
         {/* Actions Bottom Bar */}
-        <div className="flex items-center gap-2 pt-3 border-t border-[#4F4F51]/60">
+        <div className="flex items-center gap-2 pt-3 border-t border-[#30363D]">
           <button
             onClick={handleCopy}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#2C2B30] hover:bg-[#2C2B30]/80 text-xs font-semibold text-[#D6D6D6] transition border border-[#4F4F51]"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#21262D] hover:bg-[#30363D] text-xs font-semibold text-slate-200 transition border border-[#30363D]"
           >
             {copied ? (
               <>
-                <Check className="w-3.5 h-3.5 text-[#F58F7C]" />
-                <span className="text-[#F58F7C]">Copied</span>
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-emerald-400 font-bold">Copied</span>
               </>
             ) : (
               <>
-                <Copy className="w-3.5 h-3.5 text-[#D6D6D6]/70" />
+                <Copy className="w-3.5 h-3.5 text-slate-400" />
                 <span>Copy Prompt</span>
               </>
             )}
@@ -147,7 +147,7 @@ export default function PromptCard({ prompt }: PromptCardProps) {
 
           <Link
             href={`/prompts/${modelSlug}/${professionSlug}/${taskSlug}`}
-            className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-[#F58F7C]/15 hover:bg-[#F58F7C] text-[#F58F7C] hover:text-black text-xs font-bold transition border border-[#F58F7C]/30"
+            className="flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-black text-xs font-bold transition border border-emerald-500/20"
           >
             <span>Details</span>
             <ArrowRight className="w-3.5 h-3.5" />
