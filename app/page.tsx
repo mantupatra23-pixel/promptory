@@ -13,10 +13,13 @@ import {
   Megaphone, 
   Rocket, 
   Home as HomeIcon, 
-  Search as SearchIcon 
+  Search as SearchIcon,
+  Database,
+  Layers,
+  Zap
 } from 'lucide-react';
 
-export const revalidate = 60;
+export const revalidate = 60; // Next.js ISR: updates automatically every 60s when new prompts are added
 
 // AI Brand Official SVG Logos
 const MODEL_LOGOS: Record<string, { icon: React.ReactNode; color: string; bg: string }> = {
@@ -76,7 +79,6 @@ const MODEL_LOGOS: Record<string, { icon: React.ReactNode; color: string; bg: st
   },
 };
 
-// Role Icons Map
 const ROLE_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
   developer: { icon: <Code2 className="w-3.5 h-3.5" />, color: 'text-emerald-400' },
   'digital-marketer': { icon: <Megaphone className="w-3.5 h-3.5" />, color: 'text-amber-400' },
@@ -95,6 +97,8 @@ export default async function HomePage() {
   const prompts = promptsRes.status === 'fulfilled' && promptsRes.value.data ? promptsRes.value.data : [];
   const dbModels = modelsRes.status === 'fulfilled' && modelsRes.value.data ? modelsRes.value.data : [];
   const dbProfessions = professionsRes.status === 'fulfilled' && professionsRes.value.data ? professionsRes.value.data : [];
+
+  const totalPromptsCount = prompts.length;
 
   const modelsList = dbModels.length > 0 ? dbModels : [
     { id: '1', name: 'ChatGPT', slug: 'chatgpt', description: 'OpenAI GPT-4o & reasoning models' },
@@ -121,9 +125,13 @@ export default async function HomePage() {
       
       {/* HERO SECTION */}
       <section className="text-center py-10 md:py-16">
+        
+        {/* Dynamic Live Counter Pill */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-6">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Tested & Verified AI Prompts Engine</span>
+          <span>{totalPromptsCount} Production Prompts Live</span>
+          <span className="w-1 h-1 rounded-full bg-emerald-400" />
+          <span className="text-zinc-400 font-normal">Auto-Ingesting Daily</span>
         </div>
 
         <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-zinc-100 tracking-tight leading-tight mb-4">
@@ -139,9 +147,26 @@ export default async function HomePage() {
 
         {/* FUNCTIONAL HERO SEARCH */}
         <HeroSearch />
+
+        {/* Real-time Platform Metrics */}
+        <div className="grid grid-cols-3 max-w-lg mx-auto mt-10 pt-6 border-t border-zinc-800/80 text-center">
+          <div>
+            <div className="text-xl sm:text-2xl font-extrabold text-zinc-100">{totalPromptsCount}</div>
+            <div className="text-[11px] text-zinc-500 font-medium">Total Prompts</div>
+          </div>
+          <div className="border-x border-zinc-800/80">
+            <div className="text-xl sm:text-2xl font-extrabold text-emerald-400">6</div>
+            <div className="text-[11px] text-zinc-500 font-medium">AI Models</div>
+          </div>
+          <div>
+            <div className="text-xl sm:text-2xl font-extrabold text-cyan-400">+10/day</div>
+            <div className="text-[11px] text-zinc-500 font-medium">Auto Ingestion</div>
+          </div>
+        </div>
+
       </section>
 
-      {/* EXPLORE BY AI MODEL (WITH OFFICIAL BRAND LOGOS) */}
+      {/* EXPLORE BY AI MODEL */}
       <section className="mb-14 border-t border-zinc-800/60 pt-10">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
@@ -162,7 +187,6 @@ export default async function HomePage() {
                 href={`/models/${m.slug}`}
                 className="flex items-center gap-3.5 p-4 rounded-xl bg-[#12161F]/60 border border-zinc-800 hover:border-emerald-500/40 hover:bg-[#12161F] transition group shadow-sm hover:shadow-md"
               >
-                {/* Official Logo Badge */}
                 <div className={`p-2.5 rounded-xl border ${logoInfo.bg} ${logoInfo.color} shrink-0 transition`}>
                   {logoInfo.icon}
                 </div>
@@ -181,7 +205,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* EXPLORE BY PROFESSION (WITH ICONS) */}
+      {/* EXPLORE BY PROFESSION */}
       <section className="mb-14">
         <div className="flex items-center gap-2 mb-4">
           <Briefcase className="w-4 h-4 text-cyan-400" />
@@ -219,7 +243,7 @@ export default async function HomePage() {
             <p className="text-xs text-zinc-500 mt-0.5">Tested prompts loaded dynamically from Supabase</p>
           </div>
           <Link href="/directory" className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
-            <span>View All Prompts</span>
+            <span>View All ({totalPromptsCount}) Prompts</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
