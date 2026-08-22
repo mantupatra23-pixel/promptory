@@ -83,7 +83,7 @@ export default async function PromptDetailPage({ params }: Props) {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       
-      {/* Breadcrumb Navigation */}
+      {/* Breadcrumbs */}
       <nav className="flex items-center gap-1.5 text-xs text-slate-400 mb-6 flex-wrap">
         <Link href="/" className="hover:text-emerald-400 transition">Home</Link>
         <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
@@ -98,7 +98,7 @@ export default async function PromptDetailPage({ params }: Props) {
         <span className="text-slate-200 font-medium truncate max-w-[200px]">{prompt.title}</span>
       </nav>
 
-      {/* Header Banner */}
+      {/* Header Info */}
       <div className="mb-8 space-y-3">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2 flex-wrap">
@@ -126,7 +126,7 @@ export default async function PromptDetailPage({ params }: Props) {
         </p>
       </div>
 
-      {/* Interactive Customizer & AI Launch Engine */}
+      {/* Interactive Builder */}
       <PromptCustomizer
         initialPrompt={prompt.prompt_template || prompt.prompt}
         promptTitle={prompt.title}
@@ -182,7 +182,7 @@ export default async function PromptDetailPage({ params }: Props) {
         </div>
       </section>
 
-      {/* Contextual Related Prompts */}
+      {/* Related Prompts */}
       <RelatedPrompts
         currentId={prompt.id}
         modelSlug={modelSlug}
