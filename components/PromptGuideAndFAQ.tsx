@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { HelpCircle, BookOpen, ChevronDown, CheckCircle2, Sliders, Play, Copy, ShieldCheck } from 'lucide-react';
+import { HelpCircle, BookOpen, ChevronDown, Sliders, Play, Copy } from 'lucide-react';
 import { PromptVariable } from '@/lib/variableParser';
 
 interface Props {
@@ -17,8 +17,7 @@ export default function PromptGuideAndFAQ({
   promptTitle,
   modelName,
   roleName,
-  description,
-  variables,
+  variables = [],
   qualityScore,
 }: Props) {
   const [openFaq, setOpenFaq] = useState<number | null>(0);

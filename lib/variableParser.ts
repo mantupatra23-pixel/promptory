@@ -1,99 +1,70 @@
-export interface DetectedVariable {
+export interface PromptVariable {
   key: string;
-  raw: string;
   label: string;
   type: 'text' | 'textarea' | 'select';
-  inputType: 'text' | 'textarea' | 'select';
   options?: string[];
-  defaultValue: string;
+  defaultValue?: string;
 }
 
-export function parsePromptVariables(content: string): DetectedVariable[] {
-  if (!content) return [];
-  
-  const regex = /\[([A-Z0-9_\s\-]+)\]/g;
-  const matches = Array.from(content.matchAll(regex));
-  const seen = new Set<string>();
-  const variables: DetectedVariable[] = [];
+export interface FormatConstraints {
+  tone?: string;
+  format?: string;
+  length?: string;
+}
 
-  for (const match of matches) {
-    const raw = match[0];
-    const key = match[1].trim();
+export function parsePromptVariables(template: string): PromptVariable[] {
+  if (!template) return [];
 
-    if (seen.has(key)) continue;
-    seen.add(key);
+  const regex = /\[([A-Z0-9_]+)\]/g;
+  const matches = new Set<string>();
+  let match;
 
-    const label = key
-      .toLowerCase()
-      .split(/[_\s\-]+/)
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-
-    let inputType: 'text' | 'textarea' | 'select' = 'text';
-    let options: string[] | undefined = undefined;
-    const lowerKey = key.toLowerCase();
-
-    if (lowerKey.includes('code') || lowerKey.includes('content') || lowerKey.includes('data') || lowerKey.includes('draft') || lowerKey.includes('context')) {
-      inputType = 'textarea';
-    } else if (lowerKey.includes('tone')) {
-      inputType = 'select';
-      options = ['Professional', 'Persuasive', 'Concise', 'Technical', 'Friendly', 'Casual', 'Urgent', 'Creative'];
-    } else if (lowerKey.includes('language') || lowerKey.includes('lang')) {
-      inputType = 'select';
-      options = ['English', 'Spanish', 'French', 'German', 'Hindi', 'Mandarin', 'Japanese'];
-    } else if (lowerKey.includes('format')) {
-      inputType = 'select';
-      options = ['Markdown', 'Bullet Points', 'Table', 'Step-by-Step', 'JSON', 'Plain Text'];
-    }
-
-    variables.push({
-      key,
-      raw,
-      label,
-      type: inputType,
-      inputType,
-      options,
-      defaultValue: '',
-    });
+  while ((match = regex.exec(template)) !== null) {
+    matches.add(match[1]);
   }
 
-  return variables;
+  return Array.from(matches).map((key) => {
+    const label = key
+      .toLowerCase()
+      .split('_')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+
+    const isLong = key.includes('CODE') || key.includes('TEXT') || key.includes('CONTENT') || key.includes('PROMPT') || key.includes('DATA');
+
+    return {
+      key,
+      label,
+      type: isLong ? 'textarea' : 'text',
+    };
+  });
 }
 
 export function replacePromptVariables(
   template: string,
   values: Record<string, string>,
-  options?: {
-    tone?: string;
-    format?: string;
-    length?: string;
-  }
+  constraints?: FormatConstraints
 ): string {
-  let output = template;
+  if (!template) return '';
 
-  Object.entries(values).forEach(([key, val]) => {
-    const regex = new RegExp(`\\[${key}\\]`, 'g');
-    output = output.replace(regex, val.trim() ? val : `[${key}]`);
+  let result = template.replace(/\[([A-Z0-9_]+)\]/g, (match, key) => {
+    return values[key] && values[key].trim() !== '' ? values[key].trim() : match;
   });
 
-  const additions: string[] = [];
-  if (options?.tone && options.tone !== 'Default') {
-    additions.push(`Tone: ${options.tone}`);
+  const constraintLines: string[] = [];
+  if (constraints?.tone && constraints.tone !== 'Default') {
+    constraintLines.push(`- Tone: ${constraints.tone}`);
   }
-  if (options?.length && options.length !== 'Default') {
-    additions.push(`Output Length: ${options.length}`);
+  if (constraints?.length && constraints.length !== 'Default') {
+    constraintLines.push(`- Output Length: ${constraints.length}`);
   }
-  if (options?.format && options.format !== 'Default') {
-    additions.push(`Output Format: ${options.format}`);
-  }
-
-  if (additions.length > 0) {
-    output += `\n\n---\n**Constraints & Formatting:**\n- ${additions.join('\n- ')}`;
+  if (constraints?.format && constraints.format !== 'Default') {
+    constraintLines.push(`- Output Format: ${constraints.format}`);
   }
 
-  return output;
+  if (constraintLines.length > 0) {
+    result += `\n\n---\n**Constraints & Formatting:**\n${constraintLines.join('\n')}`;
+  }
+
+  return result;
 }
-
-// Backward compatibility exports
-export const extractVariables = parsePromptVariables;
-export const replaceVariables = replacePromptVariables;
