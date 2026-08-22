@@ -21,7 +21,7 @@ const TONES = ['Default', 'Professional', 'Persuasive', 'Concise', 'Technical', 
 const FORMATS = ['Default', 'Markdown', 'Bullet Points', 'Table', 'JSON', 'Step-by-Step', 'Plain Text'];
 const LENGTHS = ['Default', 'Short', 'Medium', 'Detailed'];
 
-// Custom Dark Dropdown Component (Replaces native white Android selects)
+// Custom Dark Charcoal Dropdown (No native white OS popups)
 function CustomSelect({
   label,
   options,
@@ -52,7 +52,7 @@ function CustomSelect({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full bg-[#0A0D12] border border-zinc-800 hover:border-emerald-500/50 rounded-xl px-3.5 py-2.5 text-xs text-zinc-200 flex items-center justify-between transition focus:outline-none focus:border-emerald-500"
+        className="w-full bg-zinc-950 border border-zinc-800 hover:border-emerald-500/50 rounded-xl px-3.5 py-2.5 text-xs text-zinc-200 flex items-center justify-between transition focus:outline-none focus:border-emerald-500"
       >
         <span className={value !== 'Default' ? 'text-emerald-400 font-semibold' : 'text-zinc-300'}>
           {value}
@@ -61,7 +61,7 @@ function CustomSelect({
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto bg-[#12161F] border border-zinc-700/80 rounded-xl p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto bg-zinc-900 border border-zinc-700/80 rounded-xl p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
           {options.map((opt) => {
             const isSelected = opt === value;
             return (
@@ -75,7 +75,7 @@ function CustomSelect({
                 className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between transition ${
                   isSelected
                     ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                    : 'text-zinc-300 hover:bg-[#0A0D12] hover:text-white'
+                    : 'text-zinc-300 hover:bg-zinc-950 hover:text-white'
                 }`}
               >
                 <span>{opt}</span>
@@ -145,7 +145,7 @@ export default function PromptCustomizer({
       
       {/* VARIABLE INPUTS SECTION */}
       {detectedVariables.length > 0 && (
-        <div className="bg-[#12161F] border border-zinc-800 rounded-2xl p-5 md:p-6 space-y-4">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 md:p-6 space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
             <div className="flex items-center gap-2">
               <Sliders className="w-4 h-4 text-emerald-400" />
@@ -176,7 +176,7 @@ export default function PromptCustomizer({
                       placeholder={`Enter ${v.label.toLowerCase()}...`}
                       value={currentVal}
                       onChange={(e) => handleInputChange(v.key, e.target.value)}
-                      className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition font-mono"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition font-mono"
                     />
                   ) : (
                     <input
@@ -184,7 +184,7 @@ export default function PromptCustomizer({
                       placeholder={`Enter ${v.label.toLowerCase()}...`}
                       value={currentVal}
                       onChange={(e) => handleInputChange(v.key, e.target.value)}
-                      className="w-full bg-[#0A0D12] border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition"
                     />
                   )}
                 </div>
@@ -194,8 +194,8 @@ export default function PromptCustomizer({
         </div>
       )}
 
-      {/* OUTPUT CONSTRAINTS (Pure Dark & Neon Green Custom Selectors) */}
-      <div className="bg-[#12161F]/90 border border-zinc-800 rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* OUTPUT CONSTRAINTS (Dark Charcoal & Emerald Dropdowns) */}
+      <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
         <CustomSelect
           label="Output Tone"
           options={TONES}
@@ -217,7 +217,7 @@ export default function PromptCustomizer({
       </div>
 
       {/* LIVE GENERATED PROMPT PREVIEW */}
-      <div className="bg-[#12161F] border border-zinc-800 rounded-2xl p-5 md:p-6 space-y-4">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 md:p-6 space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
           <div className="flex items-center gap-2">
             <FileCode className="w-4 h-4 text-emerald-400" />
@@ -241,7 +241,7 @@ export default function PromptCustomizer({
           </button>
         </div>
 
-        <div className="p-4 rounded-xl bg-[#0A0D12] border border-zinc-800 text-xs md:text-sm text-zinc-200 font-mono leading-relaxed whitespace-pre-wrap select-all max-h-96 overflow-y-auto">
+        <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-xs md:text-sm text-zinc-200 font-mono leading-relaxed whitespace-pre-wrap select-all max-h-96 overflow-y-auto">
           {generatedPrompt}
         </div>
       </div>
