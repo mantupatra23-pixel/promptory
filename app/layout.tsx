@@ -4,9 +4,12 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.promptory.xyz'),
   title: 'Promptory | Curated Battle-Tested AI System Prompts',
   description: 'Discover tested, high-converting system prompts and chained workflows for ChatGPT, Claude, Gemini, and DeepSeek.',
-  metadataBase: new URL('https://www.promptory.xyz'),
+  alternates: {
+    canonical: 'https://www.promptory.xyz',
+  },
   icons: {
     icon: [
       { url: '/logo.png', type: 'image/png' },
