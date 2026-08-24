@@ -22,79 +22,61 @@ export async function GET(req: NextRequest) {
             backgroundColor: '#0A0E14',
             padding: '60px 70px',
             fontFamily: 'sans-serif',
-            position: 'relative',
-            border: '2px solid #1F2937',
           }}
         >
-          {/* Neon Green Glow Accent */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '-120px',
-              right: '-120px',
-              width: '450px',
-              height: '450px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(10, 14, 20, 0) 70%)',
-            }}
-          />
-
-          {/* Header Branding */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <div
                 style={{
-                  width: '20px',
-                  height: '20px',
+                  width: '24px',
+                  height: '24px',
                   borderRadius: '50%',
                   backgroundColor: '#10B981',
-                  boxShadow: '0 0 15px #10B981',
                 }}
               />
               <span
                 style={{
                   color: '#FFFFFF',
                   fontSize: '32px',
-                  fontWeight: 800,
-                  letterSpacing: '-0.5px',
+                  fontWeight: 'bold',
                 }}
               >
                 Promptory
               </span>
             </div>
-            <span
+            <div
               style={{
                 color: '#6EE7B7',
-                backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
+                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                border: '1px solid rgba(16, 185, 129, 0.4)',
                 padding: '8px 18px',
-                borderRadius: '9999px',
+                borderRadius: '20px',
                 fontSize: '18px',
                 fontWeight: 600,
               }}
             >
               System Prompt & Workflow
-            </span>
+            </div>
           </div>
 
-          {/* Main Title Area */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', maxWidth: '1000px' }}>
-            <h1
+          {/* Title */}
+          <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+            <div
               style={{
-                fontSize: title.length > 50 ? '48px' : '56px',
-                fontWeight: 900,
+                fontSize: title.length > 50 ? '46px' : '54px',
+                fontWeight: 'bold',
                 color: '#FFFFFF',
                 lineHeight: 1.2,
-                letterSpacing: '-1px',
               }}
             >
               {title}
-            </h1>
+            </div>
           </div>
 
-          {/* Footer Metadata Badges */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', gap: '12px' }}>
+          {/* Badges Footer */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <div style={{ display: 'flex', gap: '14px' }}>
               <div
                 style={{
                   backgroundColor: '#111827',
@@ -103,8 +85,7 @@ export async function GET(req: NextRequest) {
                   padding: '8px 18px',
                   borderRadius: '8px',
                   fontSize: '18px',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
+                  fontWeight: 'bold',
                 }}
               >
                 🤖 {model}
@@ -117,8 +98,7 @@ export async function GET(req: NextRequest) {
                   padding: '8px 18px',
                   borderRadius: '8px',
                   fontSize: '18px',
-                  fontWeight: 600,
-                  textTransform: 'capitalize',
+                  fontWeight: 'bold',
                 }}
               >
                 💼 {role}
@@ -143,6 +123,6 @@ export async function GET(req: NextRequest) {
       }
     );
   } catch (e: any) {
-    return new Response('Failed to generate dynamic OG Image', { status: 500 });
+    return new Response(`OG generation error: ${e?.message}`, { status: 500 });
   }
 }
