@@ -4,118 +4,145 @@ import { NextRequest } from 'next/server';
 export const runtime = 'edge';
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const title = searchParams.get('title') || 'Production AI System Prompt';
-  const model = searchParams.get('model') || 'ChatGPT';
-  const score = searchParams.get('score') || '98';
+  try {
+    const { searchParams } = new URL(req.url);
+    const title = searchParams.get('title') || 'Battle-Tested AI System Prompt';
+    const model = searchParams.get('model') || 'ChatGPT';
+    const role = searchParams.get('role') || 'Developer';
 
-  return new ImageResponse(
-    (
-      <div
-        style={{
-          height: '100%',
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          backgroundColor: '#0A0D12',
-          padding: '60px 70px',
-          fontFamily: 'sans-serif',
-          border: '8px solid #10b98120',
-        }}
-      >
-        {/* TOP BRAND & BADGES */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            height: '100%',
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            backgroundColor: '#0A0E14',
+            padding: '60px 70px',
+            fontFamily: 'sans-serif',
+            position: 'relative',
+            border: '2px solid #1F2937',
+          }}
+        >
+          {/* Neon Green Glow Accent */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '-120px',
+              right: '-120px',
+              width: '450px',
+              height: '450px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(10, 14, 20, 0) 70%)',
+            }}
+          />
+
+          {/* Header Branding */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  backgroundColor: '#10B981',
+                  boxShadow: '0 0 15px #10B981',
+                }}
+              />
+              <span
+                style={{
+                  color: '#FFFFFF',
+                  fontSize: '32px',
+                  fontWeight: 800,
+                  letterSpacing: '-0.5px',
+                }}
+              >
+                Promptory
+              </span>
+            </div>
+            <span
               style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                backgroundColor: '#10b98120',
-                border: '1px solid #10b981',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#10b981',
-                fontSize: '20px',
-                fontWeight: 'bold',
+                color: '#6EE7B7',
+                backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                padding: '8px 18px',
+                borderRadius: '9999px',
+                fontSize: '18px',
+                fontWeight: 600,
               }}
             >
-              &gt;_
-            </div>
-            <span style={{ fontSize: '28px', fontWeight: 'bold', color: '#f4f4f5' }}>
-              Prompt<span style={{ color: '#10b981' }}>ory</span>
+              System Prompt & Workflow
             </span>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <div
+          {/* Main Title Area */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', maxWidth: '1000px' }}>
+            <h1
               style={{
-                padding: '8px 16px',
-                borderRadius: '20px',
-                backgroundColor: '#10b98115',
-                border: '1px solid #10b98140',
-                color: '#10b981',
-                fontSize: '16px',
-                fontWeight: 'bold',
+                fontSize: title.length > 50 ? '48px' : '56px',
+                fontWeight: 900,
+                color: '#FFFFFF',
+                lineHeight: 1.2,
+                letterSpacing: '-1px',
               }}
             >
-              {model}
+              {title}
+            </h1>
+          </div>
+
+          {/* Footer Metadata Badges */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div
+                style={{
+                  backgroundColor: '#111827',
+                  border: '1px solid #374151',
+                  color: '#E5E7EB',
+                  padding: '8px 18px',
+                  borderRadius: '8px',
+                  fontSize: '18px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                }}
+              >
+                🤖 {model}
+              </div>
+              <div
+                style={{
+                  backgroundColor: '#111827',
+                  border: '1px solid #374151',
+                  color: '#E5E7EB',
+                  padding: '8px 18px',
+                  borderRadius: '8px',
+                  fontSize: '18px',
+                  fontWeight: 600,
+                  textTransform: 'capitalize',
+                }}
+              >
+                💼 {role}
+              </div>
             </div>
+
             <div
               style={{
-                padding: '8px 16px',
-                borderRadius: '20px',
-                backgroundColor: '#27272a',
-                color: '#e4e4e7',
-                fontSize: '16px',
-                fontWeight: 'bold',
+                color: '#9CA3AF',
+                fontSize: '20px',
+                fontWeight: 500,
               }}
             >
-              Score: {score}/100
+              promptory.xyz
             </div>
           </div>
         </div>
-
-        {/* PROMPT TITLE */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <span style={{ fontSize: '18px', color: '#10b981', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 'bold' }}>
-            Verified System Prompt
-          </span>
-          <div
-            style={{
-              fontSize: '46px',
-              fontWeight: '900',
-              color: '#fafafa',
-              lineHeight: '1.2',
-              letterSpacing: '-1px',
-            }}
-          >
-            {title}
-          </div>
-        </div>
-
-        {/* BOTTOM METADATA */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderTop: '1px solid #27272a',
-            paddingTop: '24px',
-            color: '#71717a',
-            fontSize: '18px',
-          }}
-        >
-          <span>Battle-tested prompt template & live variable generator</span>
-          <span style={{ color: '#10b981', fontWeight: 'bold' }}>www.promptory.xyz</span>
-        </div>
-      </div>
-    ),
-    {
-      width: 1200,
-      height: 630,
-    }
-  );
+      ),
+      {
+        width: 1200,
+        height: 630,
+      }
+    );
+  } catch (e: any) {
+    return new Response('Failed to generate dynamic OG Image', { status: 500 });
+  }
 }

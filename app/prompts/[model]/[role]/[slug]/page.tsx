@@ -19,24 +19,50 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { model, role, slug } = params;
+
   const { data: prompt } = await supabase
     .from('prompts')
-    .select('title, description, model:models(name), profession:professions(name)')
-    .eq('slug', params.slug)
+    .select('title, description, model:models(name, slug), profession:professions(name, slug)')
+    .eq('slug', slug)
     .maybeSingle();
 
-  if (!prompt) {
-    return { title: 'Prompt Not Found | Promptory' };
-  }
+  const modelName = (prompt?.model as any)?.name || model.toUpperCase();
+  const roleName = (prompt?.profession as any)?.name || role.replace(/-/g, ' ');
+  const title = prompt?.title || slug.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+  const description =
+    prompt?.description ||
+    `Battle-tested ${modelName} prompt for ${roleName}. Customize parameters and launch in 1-click on Promptory.`;
 
-  const modelName = (prompt.model as any)?.name || 'AI';
-  const roleName = (prompt.profession as any)?.name || 'Professional';
+  const canonicalUrl = `https://www.promptory.xyz/prompts/${model}/${role}/${slug}`;
+  const ogImageUrl = `https://www.promptory.xyz/api/og?title=${encodeURIComponent(title)}&model=${encodeURIComponent(modelName)}&role=${encodeURIComponent(roleName)}`;
 
   return {
-    title: `${prompt.title} — Verified ${modelName} Prompt for ${roleName}s | Promptory`,
-    description: prompt.description || `Battle-tested ${modelName} prompt for ${roleName}. Customize variables and launch in 1-click.`,
+    title: `${title} — Verified ${modelName} Prompt for ${roleName}s | Promptory`,
+    description,
     alternates: {
-      canonical: `https://www.promptory.xyz/prompts/${params.model}/${params.role}/${params.slug}`,
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: `${title} | Promptory`,
+      description,
+      url: canonicalUrl,
+      siteName: 'Promptory',
+      type: 'article',
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${title} | Promptory`,
+      description,
+      images: [ogImageUrl],
     },
   };
 }
@@ -82,10 +108,11 @@ export default async function PromptDetailPage({ params }: Props) {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-      
       {/* Breadcrumbs */}
       <nav className="flex items-center gap-1.5 text-xs text-slate-400 mb-6 flex-wrap">
-        <Link href="/" className="hover:text-emerald-400 transition">Home</Link>
+        <Link href="/" className="hover:text-emerald-400 transition">
+          Home
+        </Link>
         <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
         <Link href={`/directory?model=${modelSlug}`} className="hover:text-emerald-400 capitalize transition">
           {modelName}
@@ -143,12 +170,31 @@ export default async function PromptDetailPage({ params }: Props) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
-            { step: '01', title: 'Configure Custom Variables', desc: 'Fill in the dynamic inputs above with your specific context and task requirements.' },
-            { step: '02', title: 'Select Tone & Output Format', desc: 'Adjust output constraints (e.g. Markdown, Table, Technical, Concise) to match your workflow specifications.' },
-            { step: '03', title: 'Launch in 1-Click or Copy', desc: 'Tap the "Copy Final Prompt" button or click any AI App Launcher (ChatGPT, Claude, Gemini, DeepSeek) to auto-copy and launch.' },
-            { step: '04', title: 'Execute & Iterate', desc: `Paste into the chat interface. Because the prompt is deterministic (Score: ${prompt.quality_score || 95}/100), you will receive high-accuracy results immediately.` },
+            {
+              step: '01',
+              title: 'Configure Custom Variables',
+              desc: 'Fill in the dynamic inputs above with your specific context and task requirements.',
+            },
+            {
+              step: '02',
+              title: 'Select Tone & Output Format',
+              desc: 'Adjust output constraints (e.g. Markdown, Table, Technical, Concise) to match your workflow specifications.',
+            },
+            {
+              step: '03',
+              title: 'Launch in 1-Click or Copy',
+              desc: 'Tap the "Copy Final Prompt" button or click any AI App Launcher (ChatGPT, Claude, Gemini, DeepSeek) to auto-copy and launch.',
+            },
+            {
+              step: '04',
+              title: 'Execute & Iterate',
+              desc: `Paste into the chat interface. Because the prompt is deterministic (Score: ${prompt.quality_score || 95}/100), you will receive high-accuracy results immediately.`,
+            },
           ].map((item) => (
-            <div key={item.step} className="p-4 rounded-2xl bg-[#161B22] border border-[#30363D] space-y-1.5 shadow-sm">
+            <div
+              key={item.step}
+              className="p-4 rounded-2xl bg-[#161B22] border border-[#30363D] space-y-1.5 shadow-sm"
+            >
               <span className="text-[11px] font-bold text-emerald-400 font-mono">Step {item.step}</span>
               <h3 className="text-xs sm:text-sm font-bold text-white">{item.title}</h3>
               <p className="text-xs text-slate-400 leading-relaxed">{item.desc}</p>
@@ -163,16 +209,23 @@ export default async function PromptDetailPage({ params }: Props) {
           <HelpCircle className="w-5 h-5 text-cyan-400" />
           <div>
             <h2 className="text-lg font-bold text-white">Frequently Asked Questions</h2>
-            <p className="text-xs text-slate-400">Dynamic guidance and operational advice for &apos;{prompt.title}&apos;</p>
+            <p className="text-xs text-slate-400">
+              Dynamic guidance and operational advice for &apos;{prompt.title}&apos;
+            </p>
           </div>
         </div>
 
         <div className="space-y-3">
           {faqs.map((faq, i) => (
-            <details key={i} className="group bg-[#161B22] border border-[#30363D] rounded-2xl p-4 transition open:border-emerald-500/40">
+            <details
+              key={i}
+              className="group bg-[#161B22] border border-[#30363D] rounded-2xl p-4 transition open:border-emerald-500/40"
+            >
               <summary className="text-xs sm:text-sm font-bold text-slate-200 cursor-pointer list-none flex items-center justify-between">
                 <span>{faq.q}</span>
-                <span className="text-emerald-400 font-mono text-xs ml-2 group-open:rotate-180 transition-transform">▼</span>
+                <span className="text-emerald-400 font-mono text-xs ml-2 group-open:rotate-180 transition-transform">
+                  ▼
+                </span>
               </summary>
               <p className="text-xs text-slate-400 mt-2.5 pt-2.5 border-t border-[#30363D] leading-relaxed">
                 {faq.a}
@@ -188,7 +241,6 @@ export default async function PromptDetailPage({ params }: Props) {
         modelSlug={modelSlug}
         professionSlug={roleSlug}
       />
-
     </div>
   );
 }
