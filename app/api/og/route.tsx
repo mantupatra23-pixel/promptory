@@ -19,27 +19,34 @@ export async function GET(req: NextRequest) {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            backgroundColor: '#0A0E14',
-            padding: '60px 70px',
-            fontFamily: 'sans-serif',
+            backgroundColor: '#0D1117',
+            padding: '60px',
           }}
         >
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          {/* Top Bar Header */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center' }}>
               <div
                 style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '10px',
                   backgroundColor: '#10B981',
+                  marginRight: '14px',
                 }}
               />
               <span
                 style={{
                   color: '#FFFFFF',
-                  fontSize: '32px',
-                  fontWeight: 'bold',
+                  fontSize: '34px',
+                  fontWeight: 800,
                 }}
               >
                 Promptory
@@ -47,58 +54,74 @@ export async function GET(req: NextRequest) {
             </div>
             <div
               style={{
+                display: 'flex',
                 color: '#6EE7B7',
-                backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                border: '1px solid rgba(16, 185, 129, 0.4)',
+                backgroundColor: '#064E3B',
                 padding: '8px 18px',
                 borderRadius: '20px',
                 fontSize: '18px',
-                fontWeight: 600,
+                fontWeight: 700,
               }}
             >
-              System Prompt & Workflow
+              Verified System Prompt
             </div>
           </div>
 
-          {/* Title */}
-          <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+          {/* Main Title */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%',
+            }}
+          >
             <div
               style={{
-                fontSize: title.length > 50 ? '46px' : '54px',
-                fontWeight: 'bold',
-                color: '#FFFFFF',
-                lineHeight: 1.2,
+                fontSize: title.length > 50 ? '42px' : '52px',
+                fontWeight: 900,
+                color: '#F0F6FC',
+                lineHeight: 1.25,
               }}
             >
               {title}
             </div>
           </div>
 
-          {/* Badges Footer */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-            <div style={{ display: 'flex', gap: '14px' }}>
+          {/* Bottom Badges & Domain */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center' }}>
               <div
                 style={{
-                  backgroundColor: '#111827',
-                  border: '1px solid #374151',
-                  color: '#E5E7EB',
+                  display: 'flex',
+                  backgroundColor: '#161B22',
+                  border: '1px solid #30363D',
+                  color: '#58A6FF',
                   padding: '8px 18px',
                   borderRadius: '8px',
                   fontSize: '18px',
-                  fontWeight: 'bold',
+                  fontWeight: 700,
+                  marginRight: '12px',
                 }}
               >
                 🤖 {model}
               </div>
               <div
                 style={{
-                  backgroundColor: '#111827',
-                  border: '1px solid #374151',
-                  color: '#E5E7EB',
+                  display: 'flex',
+                  backgroundColor: '#161B22',
+                  border: '1px solid #30363D',
+                  color: '#7EE787',
                   padding: '8px 18px',
                   borderRadius: '8px',
                   fontSize: '18px',
-                  fontWeight: 'bold',
+                  fontWeight: 700,
                 }}
               >
                 💼 {role}
@@ -107,9 +130,10 @@ export async function GET(req: NextRequest) {
 
             <div
               style={{
-                color: '#9CA3AF',
-                fontSize: '20px',
-                fontWeight: 500,
+                display: 'flex',
+                color: '#8B949E',
+                fontSize: '22px',
+                fontWeight: 600,
               }}
             >
               promptory.xyz
@@ -123,6 +147,6 @@ export async function GET(req: NextRequest) {
       }
     );
   } catch (e: any) {
-    return new Response(`OG generation error: ${e?.message}`, { status: 500 });
+    return new Response(`OG image generation failed: ${e?.message}`, { status: 500 });
   }
 }
