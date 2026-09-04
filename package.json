@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "classify:dry": "node scripts/classify_existing_prompts.mjs",
+    "classify:apply": "node scripts/classify_existing_prompts.mjs --apply",
+    "taxonomy:validate": "node scripts/validate_taxonomy.mjs",
+    "duplicates": "node scripts/detect_prompt_duplicates.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

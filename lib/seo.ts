@@ -1,47 +1,62 @@
-// lib/seo.ts
-
 /**
- * Normalizes cluttered internal titles into clean, search-intent-aligned titles.
- * Transforms: "Pytest & Playwright Performance Audit & Architecture Optimizer"
- * Into: "Pytest & Playwright Performance Testing Prompt"
+ * Normalizes cluttered internal titles into clean, search-intent-aligned titles
+ * without altering canonical database slugs or record IDs.
  */
 export function generateIntentTitle(rawTitle: string, taskSlug?: string): string {
   if (!rawTitle) return 'AI System Prompt';
-  
+
   let clean = rawTitle
     .replace(/\s*\|\s*Promptory.*$/i, '')
     .replace(/\s*—\s*Verified.*$/i, '')
-    .replace(/& Architecture Optimizer/gi, '')
-    .replace(/Architecture Optimizer/gi, '')
+    .replace(/\s*—\s*Production.*$/i, '')
+    .replace(/& Architecture Optimizer/gi, 'Optimization')
+    .replace(/Architecture Optimizer/gi, 'Optimization')
+    .replace(/Performance Audit & Architecture Optimizer/gi, 'Performance Optimization')
     .trim();
 
-  // If already natural, keep it
-  if (/prompt$/i.test(clean)) return clean;
+  // Strip unverified superlatives and hype terms
+  clean = clean
+    .replace(/\b(Ultimate|Revolutionary|100% Accurate|Zero[- ]Hallucination|Guaranteed)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  const taskIntentMap: Record<string, string> = {
-    'database': 'Optimization Prompt',
-    'debugging': 'Debugging Prompt',
-    'code-review': 'Code Review Prompt',
-    'testing': 'Testing Prompt',
-    'performance': 'Performance Optimization Prompt',
-    'security': 'Security Audit Prompt',
-    'seo': 'SEO Prompt',
-    'email': 'Email Prompt',
-    'content-writing': 'Writing Prompt',
-  };
-
-  const suffix = (taskSlug && taskIntentMap[taskSlug]) ? taskIntentMap[taskSlug] : 'Prompt';
-
-  // Prevent doubling terms like "Optimization Optimization Prompt"
+  // If the title already ends with or naturally contains "Prompt", return as is
   if (clean.toLowerCase().includes('prompt')) {
     return clean;
   }
 
-  return `${clean} ${suffix}`.replace(/\s+/g, ' ');
+  const taskSuffixMap: Record<string, string> = {
+    database: 'Optimization Prompt',
+    debugging: 'Debugging Prompt',
+    'code-review': 'Code Review Prompt',
+    testing: 'Testing Prompt',
+    performance: 'Performance Optimization Prompt',
+    security: 'Security Audit Prompt',
+    seo: 'SEO Prompt',
+    email: 'Outreach Prompt',
+    'content-writing': 'Writing Prompt',
+  };
+
+  const suffix = (taskSlug && taskSuffixMap[taskSlug]) ? taskSuffixMap[taskSlug] : 'Prompt';
+  return `${clean} ${suffix}`.replace(/\s+/g, ' ').trim();
 }
 
 /**
- * Generates specific, context-rich FAQs based on the task domain.
+ * Strips unverified claims from descriptions, titles, and generated copy.
+ */
+export function sanitizeClaims(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/\bzero[- ]hallucination\b/gi, 'deterministic')
+    .replace(/\b100%\s*accurate\b/gi, 'high-precision')
+    .replace(/\bguaranteed ranking\b/gi, 'search-optimized')
+    .replace(/\bguarantees security\b/gi, 'supports security audits')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Generates task-specific, realistic FAQs matching visible page content.
  */
 export function generateTopicFaqs(
   title: string,
@@ -50,27 +65,29 @@ export function generateTopicFaqs(
   roleName: string,
   taskSlug: string
 ): Array<{ question: string; answer: string }> {
+  const cleanTitle = sanitizeClaims(title);
+
   const baseFaqs = [
     {
-      question: `What specific inputs does this ${title} require?`,
-      answer: `To maximize output quality, provide complete contextual code snippets, schema definitions, log traces, and any specific architectural constraints directly into the dynamic parameters.`,
+      question: `What specific inputs does this ${cleanTitle} require?`,
+      answer: `Provide your exact code snippets, runtime schemas, or domain variables into the dynamic parameters. Supplying concrete technical context produces direct, actionable results.`,
     },
     {
-      question: `Can I run this prompt using AI models other than ${modelName}?`,
-      answer: `Yes. While optimized and benchmarked for ${modelName}'s system instruction handling, the structural constraints and negative rules transfer cleanly to Claude 3.5 Sonnet, DeepSeek-R1, and GPT-4o.`,
+      question: `Can I execute this prompt with AI models other than ${modelName}?`,
+      answer: `Yes. While calibrated for ${modelName}'s system instruction handling, the structural constraints, negative rules, and parameters operate reliably in Claude 3.5 Sonnet, DeepSeek-R1, and GPT-4o.`,
     },
   ];
 
   if (taskSlug === 'database' || taskSlug === 'performance') {
     return [
       {
-        question: `What performance bottlenecks does this audit analyze?`,
-        answer: `It evaluates execution query plans (such as EXPLAIN ANALYZE), missing multi-column indexes, costly sequential scans, N+1 ORM patterns, and memory locking bottlenecks.`,
+        question: `What performance diagnostics does this prompt analyze?`,
+        answer: `It evaluates EXPLAIN query plans, sequential scan risks, missing multi-column indexes, N+1 ORM patterns, and table locking bottlenecks.`,
       },
       ...baseFaqs,
       {
-        question: `Is it safe to run against production database schemas?`,
-        answer: `Yes. The prompt only reviews query design, schema definitions, and read-only diagnostic plans. Never input sensitive credential secrets or unmasked PII into the model.`,
+        question: `Should suggested database changes be tested before production deployment?`,
+        answer: `Always benchmark query rewrites and index creation scripts in a staging environment under realistic workload concurrency before migrating production databases.`,
       },
     ];
   }
@@ -78,13 +95,13 @@ export function generateTopicFaqs(
   if (taskSlug === 'code-review' || taskSlug === 'debugging') {
     return [
       {
-        question: `How does this prompt avoid AI hallucinations during code review?`,
-        answer: `It enforces strict boundary constraints requiring line-by-line verification, flagging only provable syntax errors, race conditions, edge-case null references, and performance regressions.`,
+        question: `How does this prompt structure code inspection?`,
+        answer: `It specifies boundary constraints requiring line-by-line verification, highlighting verifiable syntax regressions, unhandled exceptions, race conditions, and edge-case null states.`,
       },
       ...baseFaqs,
       {
         question: `Does this prompt support typed languages like TypeScript, Rust, or Go?`,
-        answer: `Yes. The system constraints adapt to strict static typing, memory lifetimes, concurrency models, and framework-specific idiomatic conventions.`,
+        answer: `Yes. The system constraints adapt to strict static typing, memory lifetimes, concurrency models, and framework-specific idiomatic standards.`,
       },
     ];
   }
@@ -92,8 +109,8 @@ export function generateTopicFaqs(
   if (taskSlug === 'seo' || taskSlug === 'content-writing') {
     return [
       {
-        question: `How does this prompt address search intent and Google quality guidelines?`,
-        answer: `It focuses on entity depth, practical structure, original technical insight, and semantic coverage while prohibiting keyword stuffing and filler introductions.`,
+        question: `How does this prompt address search intent and quality guidelines?`,
+        answer: `It enforces entity depth, practical structure, and technical coverage while eliminating repetitive keyword stuffing and generic introductory boilerplate.`,
       },
       ...baseFaqs,
     ];
@@ -102,46 +119,46 @@ export function generateTopicFaqs(
   return [
     {
       question: `Why is this prompt structured with negative constraints?`,
-      answer: `Negative constraints eliminate conversational preamble, apologies, and generic intros, ensuring the model delivers direct, deterministic code and actionable answers.`,
+      answer: `Negative constraints remove conversational preambles, apologies, and generic intros, ensuring the model delivers direct, deterministic code and actionable answers.`,
     },
     ...baseFaqs,
   ];
 }
 
 /**
- * Generates unique 4-step execution guides adapted per task domain.
+ * 4-step pragmatic task execution workflows adapted per task domain.
  */
 export function generateContextualSteps(taskSlug: string): Array<{ title: string; detail: string }> {
   switch (taskSlug) {
     case 'database':
     case 'performance':
       return [
-        { title: 'Extract Query Plan', detail: 'Generate EXPLAIN (ANALYZE, BUFFERS) or gather your slow query logs.' },
-        { title: 'Populate Context', detail: 'Paste table schema DDL, index configurations, and row volume estimates.' },
-        { title: 'Execute In Model', detail: 'Run the prompt in your target LLM workspace or API playground.' },
-        { title: 'Benchmark & Verify', detail: 'Implement proposed indexes or query rewrites in staging and re-benchmark.' },
+        { title: 'Gather Query Metrics', detail: 'Extract your query syntax along with EXPLAIN (ANALYZE, BUFFERS) execution outputs.' },
+        { title: 'Supply Table Schema', detail: 'Paste table DDL, row counts, and current index configurations into parameters.' },
+        { title: 'Execute In Model', detail: 'Launch prompt into Claude, ChatGPT, or DeepSeek-R1 via 1-click launcher.' },
+        { title: 'Benchmark In Staging', detail: 'Validate proposed query optimizations under simulated workload before merging.' },
       ];
     case 'code-review':
     case 'debugging':
       return [
-        { title: 'Isolate Issue', detail: 'Collect the problematic function, stack trace, and expected behavior.' },
-        { title: 'Supply Constraints', detail: 'Define framework version, runtime constraints, and typed interfaces.' },
-        { title: 'Generate Audit', detail: 'Run prompt to receive categorized bug analysis and zero-hallucination fixes.' },
-        { title: 'Apply Unit Tests', detail: 'Incorporate edge-case tests provided by the audit before merging code.' },
+        { title: 'Isolate Problem Area', detail: 'Collect the problematic function, stack trace, and observed runtime behavior.' },
+        { title: 'State Technical Bounds', detail: 'Define framework version, typing interfaces, and memory limits.' },
+        { title: 'Run Analysis', detail: 'Receive line-by-line diagnostic audits with explicit reasoning and fixes.' },
+        { title: 'Verify With Tests', detail: 'Run automated regression unit tests before merging changes into main.' },
       ];
     case 'seo':
       return [
-        { title: 'Input Query & Target', detail: 'Specify primary search intent, target audience, and existing URL.' },
+        { title: 'Input Target Query', detail: 'Specify primary search intent, target audience, and existing URL.' },
         { title: 'Define Entities', detail: 'List core technical entities and semantic topic clusters to cover.' },
-        { title: 'Synthesize Outline', detail: 'Generate structural briefs, structured data schemas, and internal links.' },
-        { title: 'Publish & Validate', detail: 'Audit output against Rich Results Test before publishing.' },
+        { title: 'Generate Brief', detail: 'Synthesize structural briefs, structured data schemas, and internal links.' },
+        { title: 'Validate Output', detail: 'Audit output against Google Rich Results standards before publishing.' },
       ];
     default:
       return [
-        { title: 'Copy Prompt', detail: 'Click Copy Prompt or open the interactive variable customizer.' },
-        { title: 'Insert Parameters', detail: 'Replace bracketed variables with your repository or project context.' },
-        { title: 'Send to AI Model', detail: 'Paste into Claude, ChatGPT, Gemini, or execute via automated API scripts.' },
-        { title: 'Review Output', detail: 'Inspect generated architecture against your production requirements.' },
+        { title: 'Configure Variables', detail: 'Replace bracketed parameters in the interactive builder with your project details.' },
+        { title: 'Select Format', detail: 'Choose output constraints like Markdown, Structured Table, or Technical Brief.' },
+        { title: 'Run in Workspace', detail: 'Copy the prompt or launch directly into your target AI model interface.' },
+        { title: 'Inspect Output', detail: 'Review AI response against your system acceptance criteria and deploy.' },
       ];
   }
 }
