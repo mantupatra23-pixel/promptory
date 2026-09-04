@@ -38,8 +38,9 @@ export function sanitizeClaims(text: string): string {
   return text
     .replace(/\b100%\s*Quality\s*Audited\b/gi, '303 Quality-Scored Prompts')
     .replace(/\bQuality\s*Audited\b/gi, 'Quality-Scored')
-    .replace(/\bzero[- ]hallucination\b/gi, 'structured')
-    .replace(/\bzero\s+hallucination\b/gi, 'structured context')
+    .replace(/\btested\s+system\s+prompts?\b/gi, 'curated AI prompts and workflow templates')
+    .replace(/\btested\s+prompts?\b/gi, 'curated prompts')
+    .replace(/\bzero[- ]hallucination\b/gi, 'structured context')
     .replace(/\beliminate\s+(ai\s+)?hallucinations?\b/gi, 'mitigate inaccurate generations')
     .replace(/\b100%\s*accurate\b/gi, 'high-precision')
     .replace(/\bbattle[- ]tested\b/gi, 'practical')
@@ -52,32 +53,48 @@ export function sanitizeClaims(text: string): string {
     .replace(/\bhigh[- ]authority\b/gi, 'curated')
     .replace(/\bhigh[- ]ranking\b/gi, 'search-aligned')
     .replace(/\bdeterministic\b/gi, 'structured')
+    .replace(/\baudited\s+and\s+deterministic\b/gi, 'structured and reviewed')
     .replace(/\bverified\s+gpt\s+prompt\b/gi, 'prompt')
+    .replace(/\bAll prompts verified under open developer licensing\.?\b/gi, 'Promptory publishes reusable AI prompt templates and workflow resources.')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function removeRepeatedPhrases(text: string): string {
+  if (!text) return '';
+
+  // Collapse consecutive duplicated words (e.g. "Optimization Optimization" -> "Optimization")
+  let result = text.replace(/\b(\w+)(?:\s+\1\b)+/gi, '$1');
+
+  // Collapse duplicated multi-word clusters
+  result = result.replace(/\b(Performance Optimization)\s+(?:Performance Optimization|Optimization)\b/gi, '$1');
+  result = result.replace(/\b(Query Optimization)\s+(?:Query Optimization|Optimization)\b/gi, '$1');
+  result = result.replace(/\b(Testing & Performance)\s+(?:Testing & Performance|Performance|Testing)\b/gi, '$1');
+  result = result.replace(/\b(Code Review)\s+(?:Code Review|Review)\b/gi, '$1');
+  result = result.replace(/\b(Prompt)\s+Prompt\b/gi, 'Prompt');
+
+  return result.replace(/\s+/g, ' ').trim();
 }
 
 export function generateSeoTitle(rawTitle: string, taskSlug?: string): string {
   if (!rawTitle) return 'AI System Prompt';
 
+  // 1. Strip branding & legacy suffixes
   let clean = rawTitle
     .replace(/\s*\|\s*Promptory.*$/i, '')
     .replace(/\s*—\s*Verified.*$/i, '')
     .replace(/\s*—\s*Production.*$/i, '')
-    .replace(/& Architecture Optimizer/gi, 'Optimization')
-    .replace(/Architecture Optimizer/gi, 'Optimization')
-    .replace(/Performance Audit & Architecture Optimizer/gi, 'Testing & Performance')
-    .replace(/High-Volume Query Optimization & Index Planner/gi, 'Query Optimization & Index Tuning')
+    .replace(/Performance Audit & Architecture Optimizer/gi, 'Testing & Performance Prompt')
+    .replace(/& Architecture Optimizer/gi, 'Optimization Prompt')
+    .replace(/Architecture Optimizer/gi, 'Optimization Prompt')
+    .replace(/High-Volume Query Optimization & Index Planner/gi, 'Query Optimization & Index Tuning Prompt')
     .trim();
 
   clean = sanitizeClaims(clean);
 
-  if (clean.toLowerCase().endsWith('prompt')) {
-    return clean;
-  }
-
+  // 2. Map task intent suffix only if specific intent is missing
   const taskSuffixMap: Record<string, string> = {
-    database: 'Optimization Prompt',
+    database: 'Query Optimization Prompt',
     debugging: 'Debugging Prompt',
     'code-review': 'Code Review Prompt',
     testing: 'Testing Prompt',
@@ -91,8 +108,15 @@ export function generateSeoTitle(rawTitle: string, taskSlug?: string): string {
     automation: 'Automation Prompt',
   };
 
-  const suffix = (taskSlug && taskSuffixMap[taskSlug]) ? taskSuffixMap[taskSlug] : 'Prompt';
-  return `${clean} ${suffix}`.replace(/\s+/g, ' ').trim();
+  const hasIntent = /\b(prompt|optimization|testing|audit|review|debugging|outreach|generator)\b/i.test(clean);
+
+  if (!hasIntent && taskSlug && taskSuffixMap[taskSlug]) {
+    clean = `${clean} ${taskSuffixMap[taskSlug]}`;
+  } else if (!clean.toLowerCase().includes('prompt')) {
+    clean = `${clean} Prompt`;
+  }
+
+  return removeRepeatedPhrases(clean);
 }
 
 export function calculateContentQualityScore(prompt: any, content: string): number {
@@ -105,9 +129,9 @@ export function calculateContentQualityScore(prompt: any, content: string): numb
   if (Array.isArray(prompt.faqs) && prompt.faqs.length > 0) score += 10;
   if (prompt.task_id || prompt.task_slug) score += 10;
 
-  const textToCheck = `${prompt.title} ${prompt.description} ${content}`;
-  if (/\b(guaranteed|zero-hallucination|100% accurate)\b/i.test(textToCheck)) {
-    score -= 20;
+  const combined = `${prompt.title} ${prompt.description} ${content}`;
+  if (/\b(guaranteed|zero-hallucination|100% accurate|battle-tested)\b/i.test(combined)) {
+    score -= 25;
   }
 
   return Math.max(0, Math.min(100, score));

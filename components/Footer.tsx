@@ -26,7 +26,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Curated AI prompt directory and workflow templates for software engineers, founders, and technical operators.
+              Open curated AI prompt repository and workflow templates for engineers, founders and technical teams.
             </p>
           </div>
 
@@ -158,7 +158,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-[#30363D] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <div>
-            &copy; {new Date().getFullYear()} Promptory. Publishing reusable AI prompt templates and workflows.
+            &copy; 2026 Promptory. Promptory publishes reusable AI prompt templates and workflow resources.
           </div>
           <div className="flex items-center gap-1 text-slate-400">
             <span>Built with</span>

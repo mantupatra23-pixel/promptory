@@ -134,14 +134,7 @@ export default async function HomePage() {
         </h1>
 
         <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto mb-8 leading-relaxed">
-          Discover curated, tested system prompts and automation recipes built for engineers, marketers, and operators.
-        </p>
-
-        {/* HERO SEARCH */}
-        <HeroSearch />
-
-        {/* Metrics Bar */}
-        <div className="grid grid-cols-3 max-w-lg mx-auto mt-10 pt-6 border-t border-[#30363D] text-center">
+          Discover curated AI prompts and workflow templates built for engineers, marketers, founders and operators."grid grid-cols-3 max-w-lg mx-auto mt-10 pt-6 border-t border-[#30363D] text-center">
           <div>
             <div className="text-xl sm:text-2xl font-extrabold text-white">{totalPromptsCount}</div>
             <div className="text-[11px] text-slate-400 font-medium">Total Prompts</div>
@@ -232,7 +225,7 @@ export default async function HomePage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-bold text-white">Featured & High-Score Prompts</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Tested prompts loaded dynamically from Supabase</p>
+            <p className="text-xs text-slate-400 mt-0.5">Curated prompts loaded dynamically from Supabase</p>
           </div>
           <Link href="/directory" className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
             <span>View All ({totalPromptsCount}) Prompts</span>

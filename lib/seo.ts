@@ -1,83 +1,7 @@
-/**
- * Normalizes internal workflow titles into clean, search-intent-aligned titles
- * without modifying canonical database slugs or record IDs.
- */
-export function generateIntentTitle(rawTitle: string, taskSlug?: string): string {
-  if (!rawTitle) return 'AI System Prompt';
+import { sanitizeClaims, generateSeoTitle } from './prompts/normalizePrompt';
 
-  let clean = rawTitle
-    .replace(/\s*\|\s*Promptory.*$/i, '')
-    .replace(/\s*—\s*Verified.*$/i, '')
-    .replace(/\s*—\s*Production.*$/i, '')
-    .replace(/& Architecture Optimizer/gi, 'Optimization')
-    .replace(/Architecture Optimizer/gi, 'Optimization')
-    .replace(/Performance Audit & Architecture Optimizer/gi, 'Testing & Performance')
-    .replace(/High-Volume Query Optimization & Index Planner/gi, 'Query Optimization & Index Tuning')
-    .trim();
+export { sanitizeClaims, generateSeoTitle, generateSeoTitle as generateIntentTitle };
 
-  // Strip unsupported superlatives and hype phrases
-  clean = clean
-    .replace(/\b(Ultimate|Revolutionary|100% Accurate|Zero[- ]Hallucination|Guaranteed)\b/gi, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  // If already contains "Prompt", return normalized text
-  if (clean.toLowerCase().endsWith('prompt')) {
-    return clean;
-  }
-
-  const taskSuffixMap: Record<string, string> = {
-    database: 'Optimization Prompt',
-    debugging: 'Debugging Prompt',
-    'code-review': 'Code Review Prompt',
-    testing: 'Testing Prompt',
-    performance: 'Performance Optimization Prompt',
-    security: 'Security Audit Prompt',
-    seo: 'SEO Prompt',
-    email: 'Outreach Prompt',
-    'email-outreach': 'Outreach Prompt',
-    'content-writing': 'Writing Prompt',
-    marketing: 'Marketing Prompt',
-    automation: 'Automation Prompt',
-  };
-
-  const suffix = (taskSlug && taskSuffixMap[taskSlug]) ? taskSuffixMap[taskSlug] : 'Prompt';
-  return `${clean} ${suffix}`.replace(/\s+/g, ' ').trim();
-}
-
-// Alias for compatibility with normalizePrompt
-export const generateSeoTitle = generateIntentTitle;
-
-/**
- * Strips unverified claims from descriptions, titles, and generated copy.
- */
-export function sanitizeClaims(text: string): string {
-  if (!text) return '';
-  return text
-    .replace(/\b100%\s*Quality\s*Audited\b/gi, '303 Quality-Scored Prompts')
-    .replace(/\bQuality\s*Audited\b/gi, 'Quality-Scored')
-    .replace(/\bzero[- ]hallucination\b/gi, 'structured')
-    .replace(/\bzero\s+hallucination\b/gi, 'structured context')
-    .replace(/\beliminate\s+(ai\s+)?hallucinations?\b/gi, 'mitigate inaccurate generations')
-    .replace(/\b100%\s*accurate\b/gi, 'high-precision')
-    .replace(/\bbattle[- ]tested\b/gi, 'practical')
-    .replace(/\bproduction[- ]tested\b/gi, 'production-focused')
-    .replace(/\bproduction[- ]proven\b/gi, 'production-focused')
-    .replace(/\bguaranteed\s+ranking\b/gi, 'search-optimized')
-    .replace(/\bguarantees?\s+security\b/gi, 'supports security audits')
-    .replace(/\bguaranteed\b/gi, 'recommended')
-    .replace(/\bhigh[- ]authority\s+ranking\b/gi, 'search visibility')
-    .replace(/\bhigh[- ]authority\b/gi, 'curated')
-    .replace(/\bhigh[- ]ranking\b/gi, 'search-aligned')
-    .replace(/\bdeterministic\b/gi, 'structured')
-    .replace(/\bverified\s+gpt\s+prompt\b/gi, 'prompt')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-/**
- * Generates task-specific, realistic FAQs that match visible page content.
- */
 export function generateTopicFaqs(
   title: string,
   description: string,
@@ -99,7 +23,7 @@ export function generateTopicFaqs(
       },
       {
         question: `Should I test recommended indexes before production deployment?`,
-        answer: `Always benchmark proposed index additions and rewritten queries in a staging environment under realistic traffic before migrating production databases.`,
+        answer: `Always benchmark proposed index additions and rewritten queries in a staging environment under realistic traffic before migrating production schemas.`,
       },
       {
         question: `Can I use this workflow with another AI model?`,
@@ -214,9 +138,6 @@ export function generateTopicFaqs(
   ];
 }
 
-/**
- * 4-step pragmatic task execution workflows adapted per task domain.
- */
 export function generateContextualSteps(taskSlug: string): Array<{ title: string; detail: string }> {
   switch (taskSlug) {
     case 'database':

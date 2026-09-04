@@ -1,89 +1,105 @@
 import React from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import PromptCard from './PromptCard';
 import { Sparkles, ArrowRight } from 'lucide-react';
-import { searchPrompts } from '@/lib/searchEngine';
+import { normalizePrompt } from '@/lib/prompts/normalizePrompt';
 
-interface Props {
-  currentId: string | number;
-  modelSlug?: string;
-  professionSlug?: string;
+interface RelatedPromptsProps {
+  currentId: string;
+  modelSlug: string;
+  professionSlug: string;
+  taskSlug?: string;
+  tags?: string[];
 }
 
-export default async function RelatedPrompts({ currentId, modelSlug = 'all', professionSlug = 'all' }: Props) {
-  const { data: allPrompts } = await supabase
+export default async function RelatedPrompts({
+  currentId,
+  modelSlug,
+  professionSlug,
+  taskSlug,
+  tags = [],
+}: RelatedPromptsProps) {
+  // Query prompts sharing the same task first, excluding the current prompt
+  let query = supabase
     .from('prompts')
-    .select('*, model:models(*), profession:professions(*)')
-    .limit(100);
+    .select('*, model:models(*), profession:professions(*), task:tasks(*)')
+    .neq('id', currentId)
+    .eq('status', 'published');
 
-  if (!allPrompts || allPrompts.length === 0) return null;
+  if (taskSlug) {
+    query = query.eq('task_slug', taskSlug);
+  }
 
-  // Filter out the active prompt
-  const otherPrompts = allPrompts.filter((p: any) => String(p.id) !== String(currentId));
+  const { data: primaryBatch } = await query.order('quality_score', { ascending: false }).limit(6);
 
-  // 1. First priority: Match by same Profession / Role
-  let relatedCandidates = otherPrompts.filter((p: any) => {
-    const pRole = (p.profession?.slug || p.role || '').toLowerCase();
-    return pRole === professionSlug.toLowerCase();
-  });
+  let related = primaryBatch || [];
 
-  // 2. If fewer than 3, expand search to role keywords + model
-  if (relatedCandidates.length < 3) {
-    const searchQuery = professionSlug.replace(/-/g, ' ');
-    const { results } = searchPrompts(otherPrompts, searchQuery);
-    
-    // Merge unique candidates
-    const seenIds = new Set(relatedCandidates.map((p) => String(p.id)));
-    for (const res of results) {
-      if (!seenIds.has(String(res.id))) {
-        relatedCandidates.push(res);
-        seenIds.add(String(res.id));
-      }
-      if (relatedCandidates.length >= 3) break;
+  // If fewer than 6, query by same profession and model to backfill
+  if (related.length < 6) {
+    const existingIds = [currentId, ...related.map((r) => r.id)];
+    const { data: fallbackBatch } = await supabase
+      .from('prompts')
+      .select('*, model:models(*), profession:professions(*), task:tasks(*)')
+      .not('id', 'in', `(${existingIds.join(',')})`)
+      .eq('status', 'published')
+      .order('quality_score', { ascending: false })
+      .limit(6 - related.length);
+
+    if (fallbackBatch) {
+      related = [...related, ...fallbackBatch];
     }
   }
 
-  // 3. Fallback to highest quality prompts if still under 3
-  if (relatedCandidates.length < 3) {
-    const seenIds = new Set(relatedCandidates.map((p) => String(p.id)));
-    for (const p of otherPrompts) {
-      if (!seenIds.has(String(p.id))) {
-        relatedCandidates.push(p);
-        seenIds.add(String(p.id));
-      }
-      if (relatedCandidates.length >= 3) break;
-    }
-  }
+  if (related.length === 0) return null;
 
-  const relatedList = relatedCandidates.slice(0, 3);
-  if (relatedList.length === 0) return null;
+  const normalizedRelated = related.map(normalizePrompt);
 
   return (
-    <div className="mt-14 pt-10 border-t border-[#30363D]">
+    <section className="mt-14 pt-10 border-t border-[#30363D]">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Similar Workflows</span>
-          </div>
-          <h2 className="text-xl font-bold text-white">Related Prompts & Workflows</h2>
+          <h2 className="text-xl font-bold text-white">Related Technical Workflows</h2>
+          <p className="text-xs text-slate-400 mt-0.5">Explore semantically matched prompts in this domain</p>
         </div>
-
-        <Link
-          href={`/directory?role=${professionSlug !== 'all' ? professionSlug : ''}`}
-          className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
-        >
-          <span>Explore All</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {relatedList.map((prompt: any) => (
-          <PromptCard key={prompt.id} prompt={prompt} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {normalizedRelated.map((p) => (
+          <Link
+            key={p.id}
+            href={`/prompts/${p.model.slug}/${p.profession.slug}/${p.slug}`}
+            className="group p-5 bg-[#161B22] border border-[#30363D] hover:border-emerald-500/40 rounded-xl transition flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between text-xs mb-2.5">
+                <span className="font-mono text-[11px] text-emerald-400 font-semibold uppercase">
+                  {p.model.name}
+                </span>
+                <span className="text-slate-400 text-xs capitalize bg-[#21262D] px-2 py-0.5 rounded border border-[#30363D]">
+                  {p.task.name}
+                </span>
+              </div>
+              <h3 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors line-clamp-2 mb-1.5">
+                {p.seoTitle}
+              </h3>
+              <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                {p.description}
+              </p>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-[#30363D]/60 flex items-center justify-between text-xs text-slate-400">
+              <span className="flex items-center gap-1 text-emerald-400">
+                <Sparkles className="w-3 h-3" />
+                Score {p.qualityScore}/100
+              </span>
+              <span className="text-slate-300 group-hover:text-emerald-400 flex items-center gap-1 font-medium transition-colors">
+                View Prompt
+                <ArrowRight className="w-3 h-3" />
+              </span>
+            </div>
+          </Link>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
