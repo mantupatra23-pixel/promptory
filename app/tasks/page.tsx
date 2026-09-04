@@ -7,14 +7,14 @@ import { Layers, ArrowRight } from 'lucide-react';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'AI Prompts by Task & Workflow | Promptory',
+  title: 'AI Prompts by Task & Category | Promptory',
   description:
     'Browse production AI prompts organized by engineering task: debugging, database optimization, code reviews, security, and automated testing.',
   alternates: {
     canonical: 'https://www.promptory.xyz/tasks',
   },
   openGraph: {
-    title: 'AI Prompts by Task & Workflow | Promptory',
+    title: 'AI Prompts by Task & Category | Promptory',
     description:
       'Browse production AI prompts organized by engineering task: debugging, database optimization, code reviews, and testing.',
     url: 'https://www.promptory.xyz/tasks',
@@ -31,17 +31,24 @@ export default async function TasksIndexPage() {
 
   const { data: prompts } = await supabase
     .from('prompts')
-    .select('task_id')
+    .select('task_id, task_slug')
     .eq('status', 'published');
 
   const countMap = new Map<string, number>();
   (prompts || []).forEach((p) => {
+    if (p.task_slug) {
+      countMap.set(p.task_slug, (countMap.get(p.task_slug) || 0) + 1);
+    }
     if (p.task_id) {
       countMap.set(p.task_id, (countMap.get(p.task_id) || 0) + 1);
     }
   });
 
-  const activeTasks = (tasks || []).filter((t) => (countMap.get(t.id) || 0) > 0);
+  const activeTasks = (tasks || []).filter(
+    (t) => (countMap.get(t.id) || 0) > 0 || (countMap.get(t.slug) || 0) > 0
+  );
+
+  const displayTasks = activeTasks.length > 0 ? activeTasks : (tasks || []);
 
   const breadcrumbsSchema = {
     '@context': 'https://schema.org',
@@ -87,16 +94,16 @@ export default async function TasksIndexPage() {
             AI Prompts by Task
           </h1>
           <p className="text-slate-300 text-sm max-w-2xl leading-relaxed">
-            Discover deterministic system instructions structured around real-world software development, architecture, and business execution goals.
+            Discover prompt instructions structured around real-world software development, architecture, debugging, and business goals.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {activeTasks.map((t) => {
-            const count = countMap.get(t.id) || 0;
+          {displayTasks.map((t) => {
+            const count = countMap.get(t.id) || countMap.get(t.slug) || 0;
             return (
               <Link
-                key={t.id}
+                key={t.id || t.slug}
                 href={`/tasks/${t.slug}`}
                 className="group p-6 rounded-2xl bg-[#161B22] border border-[#30363D] hover:border-emerald-500/40 transition-all flex flex-col justify-between"
               >
