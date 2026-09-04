@@ -8,7 +8,7 @@ import RelatedPrompts from '@/components/RelatedPrompts';
 import ShareButton from '@/components/ShareButton';
 import { Sparkles, ChevronRight, ShieldCheck, HelpCircle } from 'lucide-react';
 
-export const revalidate = 3600; // 1 hour ISR cache
+export const revalidate = 3600;
 
 interface Props {
   params: {
@@ -18,7 +18,6 @@ interface Props {
   };
 }
 
-// Canonical prompt body resolution across all schema versions
 function getCanonicalPromptBody(prompt: any): string {
   if (!prompt) return '';
   return (
@@ -29,20 +28,16 @@ function getCanonicalPromptBody(prompt: any): string {
   );
 }
 
-// Search-intent title normalizer
 function cleanSearchIntentTitle(rawTitle: string): string {
   if (!rawTitle) return 'AI System Prompt';
-  let clean = rawTitle
+  return rawTitle
     .replace(/\s*\|\s*Promptory.*$/i, '')
     .replace(/\s*—\s*Verified.*$/i, '')
     .replace(/& Architecture Optimizer/gi, 'Optimizer')
     .trim();
-
-  return clean;
 }
 
-// Dynamic contextual FAQs generator based on task/topic
-function buildContextualFaqs(title: string, modelName: string, roleName: string, description: string) {
+function buildContextualFaqs(title: string, modelName: string, roleName: string) {
   const isCoding = /code|test|pytest|fastapi|react|rust|postgres|query|debug|api|security/i.test(title);
 
   if (isCoding) {
@@ -77,7 +72,7 @@ function buildContextualFaqs(title: string, modelName: string, roleName: string,
     },
     {
       q: `What parameters are required to customize this template?`,
-      a: `All dynamic variables marked in brackets (e.g., [VARIABLE]) are automatically converted into interactive input fields in the customizer above.`,
+      a: `All dynamic variables marked in brackets are automatically converted into interactive input fields in the customizer above.`,
     },
     {
       q: `Is this workflow tailored for ${roleName}s?`,
@@ -86,7 +81,6 @@ function buildContextualFaqs(title: string, modelName: string, roleName: string,
   ];
 }
 
-// Contextual step-by-step execution guide
 function getContextualSteps(title: string, modelName: string) {
   const isCoding = /code|test|pytest|fastapi|react|rust|postgres|query|debug|api|security/i.test(title);
 
@@ -198,7 +192,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PromptDetailPage({ params }: Props) {
   const { data: prompt } = await supabase
     .from('prompts')
-    .select('*, model:models(*), profession:professions(*)')
+    .select('*, model:models(*), profession:professions(*), task:tasks(*)')
     .eq('slug', params.slug)
     .maybeSingle();
 
@@ -209,50 +203,32 @@ export default async function PromptDetailPage({ params }: Props) {
   const actualModelSlug = prompt.model?.slug || params.model;
   const actualRoleSlug = prompt.profession?.slug || params.role;
 
-  // Strict P0 Canonical Guard: 308 Permanent Redirect if URL parameters mismatch canonical database record
+  // 308 Permanent Redirect for canonical URL integrity
   if (params.model !== actualModelSlug || params.role !== actualRoleSlug) {
     permanentRedirect(`/prompts/${actualModelSlug}/${actualRoleSlug}/${prompt.slug}`);
   }
 
   const modelName = prompt.model?.name || params.model.toUpperCase();
   const roleName = prompt.profession?.name || params.role.replace(/-/g, ' ');
+  const taskName = prompt.task?.name || 'Coding';
+  const taskSlug = prompt.task?.slug || prompt.task_slug || 'coding';
+
   const cleanTitle = cleanSearchIntentTitle(prompt.title);
   const promptBody = getCanonicalPromptBody(prompt);
 
-  const faqs = buildContextualFaqs(cleanTitle, modelName, roleName, prompt.description || '');
+  const faqs = buildContextualFaqs(cleanTitle, modelName, roleName);
   const howToSteps = getContextualSteps(cleanTitle, modelName);
-
   const canonicalUrl = `https://www.promptory.xyz/prompts/${actualModelSlug}/${actualRoleSlug}/${prompt.slug}`;
 
-  // Structured Data (JSON-LD)
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: 'https://www.promptory.xyz',
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: modelName,
-        item: `https://www.promptory.xyz/models/${actualModelSlug}`,
-      },
-      {
-        '@type': 'ListItem',
-        position: 3,
-        name: roleName,
-        item: `https://www.promptory.xyz/roles/${actualRoleSlug}`,
-      },
-      {
-        '@type': 'ListItem',
-        position: 4,
-        name: cleanTitle,
-        item: canonicalUrl,
-      },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.promptory.xyz' },
+      { '@type': 'ListItem', position: 2, name: 'Tasks', item: 'https://www.promptory.xyz/tasks' },
+      { '@type': 'ListItem', position: 3, name: taskName, item: `https://www.promptory.xyz/tasks/${taskSlug}` },
+      { '@type': 'ListItem', position: 4, name: modelName, item: `https://www.promptory.xyz/models/${actualModelSlug}` },
+      { '@type': 'ListItem', position: 5, name: cleanTitle, item: canonicalUrl },
     ],
   };
 
@@ -311,12 +287,12 @@ export default async function PromptDetailPage({ params }: Props) {
             Home
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
-          <Link href={`/models/${actualModelSlug}`} className="hover:text-emerald-400 capitalize transition">
-            {modelName}
+          <Link href="/tasks" className="hover:text-emerald-400 transition">
+            Tasks
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
-          <Link href={`/roles/${actualRoleSlug}`} className="hover:text-emerald-400 capitalize transition">
-            {roleName}
+          <Link href={`/tasks/${taskSlug}`} className="hover:text-emerald-400 transition">
+            {taskName}
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
           <span className="text-slate-200 font-medium truncate max-w-[220px]">{cleanTitle}</span>
@@ -327,8 +303,14 @@ export default async function PromptDetailPage({ params }: Props) {
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
               <Link
-                href={`/models/${actualModelSlug}`}
+                href={`/tasks/${taskSlug}`}
                 className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:border-emerald-400/50 transition"
+              >
+                Task: {taskName}
+              </Link>
+              <Link
+                href={`/models/${actualModelSlug}`}
+                className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase bg-[#21262D] text-slate-300 border border-[#30363D] hover:text-white transition"
               >
                 {modelName}
               </Link>
@@ -356,7 +338,7 @@ export default async function PromptDetailPage({ params }: Props) {
           </p>
         </div>
 
-        {/* Interactive Prompt Builder & Launcher */}
+        {/* Interactive Customizer */}
         <PromptCustomizer
           initialPrompt={promptBody}
           promptTitle={cleanTitle}
@@ -364,11 +346,11 @@ export default async function PromptDetailPage({ params }: Props) {
           exampleInput={prompt.example_input}
         />
 
-        {/* Contextual How to Use Section */}
+        {/* How to Use Section */}
         <section className="mt-14 pt-10 border-t border-[#30363D] space-y-6">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-lg font-bold text-white">How to Execute This {modelName} Workflow</h2>
+            <h2 className="text-lg font-bold text-white">How to Execute This {taskName} Workflow</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -385,7 +367,7 @@ export default async function PromptDetailPage({ params }: Props) {
           </div>
         </section>
 
-        {/* Dynamic Contextual FAQ Section */}
+        {/* Dynamic Contextual FAQ */}
         <section className="mt-14 pt-10 border-t border-[#30363D] space-y-4">
           <div className="flex items-center gap-2 mb-2">
             <HelpCircle className="w-5 h-5 text-emerald-400" />
@@ -417,7 +399,7 @@ export default async function PromptDetailPage({ params }: Props) {
           </div>
         </section>
 
-        {/* High Equity Internal Linking to Related Prompts */}
+        {/* Related Prompts Grid */}
         <RelatedPrompts
           currentId={prompt.id}
           modelSlug={actualModelSlug}
