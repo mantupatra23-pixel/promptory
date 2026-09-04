@@ -2,6 +2,7 @@ export interface NormalizedPrompt {
   id: string;
   slug: string;
   title: string;
+  displayTitle: string;
   seoTitle: string;
   description: string;
   content: string;
@@ -35,32 +36,45 @@ export interface NormalizedPrompt {
 export function sanitizeClaims(text: string): string {
   if (!text) return '';
   return text
-    .replace(/\b100%\s*Quality\s*Audited\b/gi, 'Quality-Scored')
+    .replace(/\b100%\s*Quality\s*Audited\b/gi, '303 Quality-Scored Prompts')
+    .replace(/\bQuality\s*Audited\b/gi, 'Quality-Scored')
     .replace(/\bzero[- ]hallucination\b/gi, 'structured')
+    .replace(/\bzero\s+hallucination\b/gi, 'structured context')
+    .replace(/\beliminate\s+(ai\s+)?hallucinations?\b/gi, 'mitigate inaccurate generations')
     .replace(/\b100%\s*accurate\b/gi, 'high-precision')
     .replace(/\bbattle[- ]tested\b/gi, 'practical')
     .replace(/\bproduction[- ]tested\b/gi, 'production-focused')
-    .replace(/\bguaranteed ranking\b/gi, 'search-optimized')
+    .replace(/\bproduction[- ]proven\b/gi, 'production-focused')
+    .replace(/\bguaranteed\s+ranking\b/gi, 'search-optimized')
+    .replace(/\bguarantees?\s+security\b/gi, 'supports security audits')
     .replace(/\bguaranteed\b/gi, 'recommended')
-    .replace(/\beliminate hallucinations\b/gi, 'mitigate hallucinations')
+    .replace(/\bhigh[- ]authority\s+ranking\b/gi, 'search visibility')
+    .replace(/\bhigh[- ]authority\b/gi, 'curated')
+    .replace(/\bhigh[- ]ranking\b/gi, 'search-aligned')
+    .replace(/\bdeterministic\b/gi, 'structured')
+    .replace(/\bverified\s+gpt\s+prompt\b/gi, 'prompt')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-export function generateSeoTitle(title: string, taskSlug?: string): string {
-  if (!title) return 'AI System Prompt';
-  let clean = title
+export function generateSeoTitle(rawTitle: string, taskSlug?: string): string {
+  if (!rawTitle) return 'AI System Prompt';
+
+  let clean = rawTitle
     .replace(/\s*\|\s*Promptory.*$/i, '')
     .replace(/\s*—\s*Verified.*$/i, '')
     .replace(/\s*—\s*Production.*$/i, '')
     .replace(/& Architecture Optimizer/gi, 'Optimization')
     .replace(/Architecture Optimizer/gi, 'Optimization')
-    .replace(/Performance Audit & Architecture Optimizer/gi, 'Performance Optimization')
+    .replace(/Performance Audit & Architecture Optimizer/gi, 'Testing & Performance')
+    .replace(/High-Volume Query Optimization & Index Planner/gi, 'Query Optimization & Index Tuning')
     .trim();
 
   clean = sanitizeClaims(clean);
 
-  if (/prompt$/i.test(clean)) return clean;
+  if (clean.toLowerCase().endsWith('prompt')) {
+    return clean;
+  }
 
   const taskSuffixMap: Record<string, string> = {
     database: 'Optimization Prompt',
@@ -71,23 +85,32 @@ export function generateSeoTitle(title: string, taskSlug?: string): string {
     security: 'Security Audit Prompt',
     seo: 'SEO Prompt',
     'email-outreach': 'Outreach Prompt',
+    email: 'Outreach Prompt',
     'content-writing': 'Writing Prompt',
+    marketing: 'Marketing Prompt',
+    automation: 'Automation Prompt',
   };
 
   const suffix = (taskSlug && taskSuffixMap[taskSlug]) ? taskSuffixMap[taskSlug] : 'Prompt';
-  return clean.toLowerCase().includes('prompt') ? clean : `${clean} ${suffix}`.replace(/\s+/g, ' ');
+  return `${clean} ${suffix}`.replace(/\s+/g, ' ').trim();
 }
 
 export function calculateContentQualityScore(prompt: any, content: string): number {
   let score = 0;
-  if (prompt.title && prompt.title.length >= 20) score += 15;
-  if (prompt.description && prompt.description.length >= 80) score += 15;
-  if (content && content.length >= 350) score += 25;
+  if (prompt.title && prompt.title.length >= 20 && !prompt.title.includes('Optimizer Optimizer')) score += 15;
+  if (prompt.description && prompt.description.length >= 75) score += 15;
+  if (content && content.length >= 300) score += 25;
   if (Array.isArray(prompt.variables) && prompt.variables.length > 0) score += 15;
   if (Array.isArray(prompt.use_cases) && prompt.use_cases.length > 0) score += 10;
   if (Array.isArray(prompt.faqs) && prompt.faqs.length > 0) score += 10;
   if (prompt.task_id || prompt.task_slug) score += 10;
-  return Math.min(100, score);
+
+  const textToCheck = `${prompt.title} ${prompt.description} ${content}`;
+  if (/\b(guaranteed|zero-hallucination|100% accurate)\b/i.test(textToCheck)) {
+    score -= 20;
+  }
+
+  return Math.max(0, Math.min(100, score));
 }
 
 export function normalizePrompt(raw: any): NormalizedPrompt {
@@ -98,7 +121,7 @@ export function normalizePrompt(raw: any): NormalizedPrompt {
     ''
   );
 
-  const rawTitle = raw.title || 'AI Prompt';
+  const rawTitle = raw.title || 'AI System Prompt';
   const taskSlug = raw.task?.slug || raw.task_slug || 'coding';
   const seoTitle = generateSeoTitle(rawTitle, taskSlug);
 
@@ -106,9 +129,12 @@ export function normalizePrompt(raw: any): NormalizedPrompt {
     id: raw.id,
     slug: raw.slug,
     title: sanitizeClaims(rawTitle),
+    displayTitle: sanitizeClaims(rawTitle),
     seoTitle,
-    description: sanitizeClaims(raw.description || ''),
-    content,
+    description: sanitizeClaims(
+      raw.description || `Practical ${raw.model?.name || 'AI'} system prompt for ${raw.profession?.name || 'engineers'}.`
+    ),
+    content: sanitizeClaims(content),
     model: {
       id: raw.model?.id || raw.model_id || '',
       name: raw.model?.name || 'AI Model',

@@ -11,7 +11,8 @@ export function generateIntentTitle(rawTitle: string, taskSlug?: string): string
     .replace(/\s*—\s*Production.*$/i, '')
     .replace(/& Architecture Optimizer/gi, 'Optimization')
     .replace(/Architecture Optimizer/gi, 'Optimization')
-    .replace(/Performance Audit & Architecture Optimizer/gi, 'Performance Optimization')
+    .replace(/Performance Audit & Architecture Optimizer/gi, 'Testing & Performance')
+    .replace(/High-Volume Query Optimization & Index Planner/gi, 'Query Optimization & Index Tuning')
     .trim();
 
   // Strip unsupported superlatives and hype phrases
@@ -21,7 +22,7 @@ export function generateIntentTitle(rawTitle: string, taskSlug?: string): string
     .trim();
 
   // If already contains "Prompt", return normalized text
-  if (clean.toLowerCase().includes('prompt')) {
+  if (clean.toLowerCase().endsWith('prompt')) {
     return clean;
   }
 
@@ -36,11 +37,16 @@ export function generateIntentTitle(rawTitle: string, taskSlug?: string): string
     email: 'Outreach Prompt',
     'email-outreach': 'Outreach Prompt',
     'content-writing': 'Writing Prompt',
+    marketing: 'Marketing Prompt',
+    automation: 'Automation Prompt',
   };
 
   const suffix = (taskSlug && taskSuffixMap[taskSlug]) ? taskSuffixMap[taskSlug] : 'Prompt';
   return `${clean} ${suffix}`.replace(/\s+/g, ' ').trim();
 }
+
+// Alias for compatibility with normalizePrompt
+export const generateSeoTitle = generateIntentTitle;
 
 /**
  * Strips unverified claims from descriptions, titles, and generated copy.
@@ -48,15 +54,23 @@ export function generateIntentTitle(rawTitle: string, taskSlug?: string): string
 export function sanitizeClaims(text: string): string {
   if (!text) return '';
   return text
-    .replace(/\b100%\s*Quality\s*Audited\b/gi, 'Quality-Scored')
+    .replace(/\b100%\s*Quality\s*Audited\b/gi, '303 Quality-Scored Prompts')
+    .replace(/\bQuality\s*Audited\b/gi, 'Quality-Scored')
     .replace(/\bzero[- ]hallucination\b/gi, 'structured')
+    .replace(/\bzero\s+hallucination\b/gi, 'structured context')
+    .replace(/\beliminate\s+(ai\s+)?hallucinations?\b/gi, 'mitigate inaccurate generations')
     .replace(/\b100%\s*accurate\b/gi, 'high-precision')
     .replace(/\bbattle[- ]tested\b/gi, 'practical')
     .replace(/\bproduction[- ]tested\b/gi, 'production-focused')
-    .replace(/\bguaranteed ranking\b/gi, 'search-optimized')
-    .replace(/\bguarantees security\b/gi, 'supports security audits')
+    .replace(/\bproduction[- ]proven\b/gi, 'production-focused')
+    .replace(/\bguaranteed\s+ranking\b/gi, 'search-optimized')
+    .replace(/\bguarantees?\s+security\b/gi, 'supports security audits')
     .replace(/\bguaranteed\b/gi, 'recommended')
-    .replace(/\beliminate hallucinations\b/gi, 'mitigate hallucinations')
+    .replace(/\bhigh[- ]authority\s+ranking\b/gi, 'search visibility')
+    .replace(/\bhigh[- ]authority\b/gi, 'curated')
+    .replace(/\bhigh[- ]ranking\b/gi, 'search-aligned')
+    .replace(/\bdeterministic\b/gi, 'structured')
+    .replace(/\bverified\s+gpt\s+prompt\b/gi, 'prompt')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -76,41 +90,58 @@ export function generateTopicFaqs(
   if (taskSlug === 'database' || taskSlug === 'performance') {
     return [
       {
-        question: `What specific inputs should I provide for ${cleanTitle}?`,
-        answer: `Paste your slow SQL query, table DDL, existing indexes, and EXPLAIN (ANALYZE, BUFFERS) execution output directly into the customizer parameters.`,
+        question: `What information should I provide for ${cleanTitle}?`,
+        answer: `Provide your slow SQL query, table DDL, row counts, existing index configurations, and EXPLAIN (ANALYZE, BUFFERS) query plan outputs.`,
       },
       {
-        question: `Does this prompt evaluate query execution plans?`,
-        answer: `Yes. It focuses on identifying costly sequential scans, N+1 patterns, unindexed foreign keys, and memory-locking bottlenecks.`,
+        question: `Can this prompt analyze query plans and execution bottlenecks?`,
+        answer: `Yes. It focuses on identifying costly sequential scans, N+1 query patterns, unindexed foreign keys, and memory locking issues.`,
       },
       {
-        question: `Should I benchmark recommendations before production?`,
-        answer: `Always benchmark proposed index additions and query rewrites in a staging environment under realistic traffic before migrating production schemas.`,
+        question: `Should I test recommended indexes before production deployment?`,
+        answer: `Always benchmark proposed index additions and rewritten queries in a staging environment under realistic traffic before migrating production databases.`,
       },
       {
-        question: `Can I run this with models other than ${modelName}?`,
-        answer: `Yes. The prompt instructions and negative constraints work across Claude 3.5 Sonnet, DeepSeek-R1, and GPT-4o.`,
+        question: `Can I use this workflow with another AI model?`,
+        answer: `Yes. While structured around ${modelName}'s system instruction handling, the imperative rules operate reliably in Claude 3.5 Sonnet, DeepSeek-R1, and GPT-4o.`,
       },
     ];
   }
 
-  if (taskSlug === 'code-review' || taskSlug === 'debugging') {
+  if (taskSlug === 'code-review') {
     return [
       {
-        question: `What code context should I provide to the AI?`,
-        answer: `Provide the isolated function, stack trace, typing interfaces, runtime environment, and expected behavior.`,
+        question: `What code context should I provide for this review?`,
+        answer: `Provide the isolated function or module, static typing interfaces, framework version, runtime constraints, and expected behavior.`,
       },
       {
-        question: `How does this prompt structure code inspection?`,
-        answer: `It enforces line-by-line verification focusing on unhandled edge cases, race conditions, memory leaks, and style violations.`,
+        question: `What issues can this prompt help identify?`,
+        answer: `It highlights boundary regressions, race conditions, memory leaks, unhandled exceptions, and framework idiomatic anti-patterns.`,
       },
       {
-        question: `Does it guarantee zero bugs in generated fixes?`,
-        answer: `No. AI models can introduce subtle logic regressions. Always validate recommendations using automated unit tests before merging.`,
+        question: `Can it review large pull requests?`,
+        answer: `For optimal accuracy, break large pull requests into logical functions or files rather than pasting multi-thousand-line diffs at once.`,
       },
       {
-        question: `Can this prompt review typed languages like TypeScript or Rust?`,
-        answer: `Yes. It explicitly adapts to static type checking, memory ownership patterns, and framework conventions.`,
+        question: `How should I verify recommendations?`,
+        answer: `Validate all proposed refactors against existing automated unit and regression test suites before merging into the main branch.`,
+      },
+    ];
+  }
+
+  if (taskSlug === 'debugging') {
+    return [
+      {
+        question: `What debugging inputs produce the best diagnostic output?`,
+        answer: `Provide the observed stack trace, error logs, problematic function code, and any reproducible trigger conditions.`,
+      },
+      {
+        question: `How does this prompt approach root-cause analysis?`,
+        answer: `It isolates the fault mechanism, identifies environmental assumptions, and generates targeted remediations with minimal changes.`,
+      },
+      {
+        question: `Does this prompt replace runtime debuggers or APM tools?`,
+        answer: `No. It serves as an analytical assistant. Combine its analysis with APM tracing tools and reproduction unit tests.`,
       },
     ];
   }
@@ -119,14 +150,14 @@ export function generateTopicFaqs(
     return [
       {
         question: `What test frameworks are supported?`,
-        answer: `It generates test suites for Pytest, Playwright, Jest, Vitest, and standard testing libraries based on your stack parameters.`,
+        answer: `It scaffolds test suites for Pytest, Playwright, Jest, Vitest, and standard testing libraries based on your configured parameters.`,
       },
       {
         question: `Does this prompt cover edge cases and failure modes?`,
         answer: `Yes. It instructs the model to scaffold happy-path assertions, boundary conditions, null inputs, and expected network exceptions.`,
       },
       {
-        question: `How should I run the generated test code?`,
+        question: `How should I execute the generated tests?`,
         answer: `Paste the generated test file into your repository test directory and execute your test runner locally or in CI.`,
       },
     ];
@@ -135,11 +166,11 @@ export function generateTopicFaqs(
   if (taskSlug === 'security') {
     return [
       {
-        question: `What vulnerabilities does this audit check for?`,
-        answer: `It inspects authentication flows, JWT validation, SQL injection attack vectors, CORS configurations, and sensitive secret exposure risks.`,
+        question: `What security vectors does this audit evaluate?`,
+        answer: `It reviews authentication flows, token expiration, SQL injection vulnerabilities, CORS settings, input sanitization, and secret leaks.`,
       },
       {
-        question: `Does this prompt replace dynamic vulnerability scanners?`,
+        question: `Does this audit replace professional penetration testing?`,
         answer: `No. It functions as a static structural code review assistant. Use automated DAST/SAST scanners alongside this audit.`,
       },
     ];
@@ -148,23 +179,36 @@ export function generateTopicFaqs(
   if (taskSlug === 'seo') {
     return [
       {
-        question: `What inputs produce the best SEO brief?`,
-        answer: `Provide the target query, primary entity concepts, search intent, audience profile, and existing ranking URLs.`,
+        question: `What information should I provide for an SEO workflow?`,
+        answer: `Supply your primary search query intent, target audience profile, topical cluster themes, and competitor reference URLs.`,
       },
       {
         question: `Does this prompt guarantee top search engine rankings?`,
-        answer: `No. Search rankings depend on domain authority, crawl performance, and search satisfaction. This prompt structures content to satisfy user intent.`,
+        answer: `No. Rankings depend on domain authority, crawl performance, and search satisfaction. This prompt structures content to satisfy user intent.`,
+      },
+    ];
+  }
+
+  if (taskSlug === 'email' || taskSlug === 'email-outreach') {
+    return [
+      {
+        question: `What information should I supply for outbound copy?`,
+        answer: `Provide your target audience persona, specific value proposition, proof metrics, and a low-friction call to action.`,
+      },
+      {
+        question: `Should I send generated cold outreach without review?`,
+        answer: `Always review and personalize generated emails with prospect-specific details before sending.`,
       },
     ];
   }
 
   return [
     {
-      question: `What parameters are required to customize this template?`,
-      answer: `Fill in the dynamic brackets in the customizer above with your project context and workflow requirements.`,
+      question: `What inputs are required to customize this template?`,
+      answer: `Fill in the dynamic brackets in the customizer above with your specific repository or operational details.`,
     },
     {
-      question: `Can this workflow be used with other AI models?`,
+      question: `Can this workflow be executed on multiple AI models?`,
       answer: `Yes. You can copy the configured prompt or launch it across Claude, ChatGPT, DeepSeek, and Gemini via the 1-click launcher.`,
     },
   ];
@@ -178,46 +222,60 @@ export function generateContextualSteps(taskSlug: string): Array<{ title: string
     case 'database':
     case 'performance':
       return [
-        { title: 'Extract Query & Execution Metrics', detail: 'Gather your slow SQL query and run EXPLAIN (ANALYZE, BUFFERS) in staging.' },
-        { title: 'Supply Table Schema & Indexes', detail: 'Paste table DDL, row counts, and current index definitions into parameters.' },
-        { title: 'Generate Optimization Strategy', detail: 'Run the prompt in your target model to evaluate rewrites and indexing plans.' },
-        { title: 'Benchmark Under Load', detail: 'Apply recommendations to staging and compare latency, buffer reads, and write cost.' },
+        { title: 'Provide Query & Schema', detail: 'Paste your slow SQL query, table DDL, row counts, and existing index definitions.' },
+        { title: 'Add EXPLAIN / Target', detail: 'Include EXPLAIN ANALYZE execution output and define your latency SLA target.' },
+        { title: 'Generate Plan', detail: 'Run the prompt to receive query rewrite suggestions and indexing recommendations.' },
+        { title: 'Benchmark In Staging', detail: 'Apply recommendations to a staging replica and compare execution times under workload.' },
       ];
     case 'code-review':
+      return [
+        { title: 'Paste Code & Context', detail: 'Provide the function or module along with framework and language versions.' },
+        { title: 'Define Constraints', detail: 'Specify architecture conventions, memory boundaries, and typing standards.' },
+        { title: 'Run the Review', detail: 'Generate line-by-line inspection highlighting regressions, security risks, and style.' },
+        { title: 'Validate With Tests', detail: 'Verify suggested improvements against automated unit tests before merging.' },
+      ];
     case 'debugging':
       return [
-        { title: 'Isolate Function & Stack Trace', detail: 'Collect the problematic code snippet, observed exception, and expected behavior.' },
-        { title: 'Define Runtime Constraints', detail: 'Specify framework version, typing bounds, and memory constraints.' },
-        { title: 'Run Line-by-Line Audit', detail: 'Execute the prompt to receive categorized bug analysis and remediation logic.' },
-        { title: 'Verify With Unit Tests', detail: 'Implement automated regression tests to verify the fix before merging.' },
+        { title: 'Isolate Error Trace', detail: 'Collect the exception message, stack trace, runtime logs, and trigger inputs.' },
+        { title: 'Supply Code Context', detail: 'Provide the function boundary where the failure manifests.' },
+        { title: 'Generate Analysis', detail: 'Execute the prompt to identify root-cause mechanics and targeted fixes.' },
+        { title: 'Write Regression Test', detail: 'Add a targeted automated test to ensure the bug cannot regress in production.' },
       ];
     case 'testing':
       return [
-        { title: 'Input Component Interface', detail: 'Paste your component or API contract and specify test framework conventions.' },
-        { title: 'Specify Critical Paths', detail: 'Outline core assertions, external service mocks, and failure scenarios.' },
-        { title: 'Generate Test Suite', detail: 'Run the prompt to produce isolated unit, integration, or e2e assertions.' },
-        { title: 'Run in Local Test Runner', detail: 'Execute tests locally and check coverage before integrating into CI.' },
+        { title: 'Provide Code & Context', detail: 'Paste the interface contract, component code, or endpoint specification.' },
+        { title: 'Define Framework', detail: 'Specify your target testing framework (e.g., Pytest, Playwright, Jest).' },
+        { title: 'Generate Test Cases', detail: 'Scaffold assertions covering happy paths, edge cases, and unexpected errors.' },
+        { title: 'Run and Review Tests', detail: 'Execute test suites locally and verify code coverage before deployment.' },
       ];
     case 'security':
       return [
-        { title: 'Provide Code Surface', detail: 'Supply endpoints, data access logic, and authentication middleware.' },
-        { title: 'Set Compliance Criteria', detail: 'State required standards like OWASP Top 10, role-based access control, or token expiries.' },
-        { title: 'Synthesize Threat Audit', detail: 'Run analysis to isolate attack vectors, unauthorized leaks, and misconfigurations.' },
-        { title: 'Patch & Re-Verify', detail: 'Implement mitigations and verify using integration penetration tests.' },
+        { title: 'Define Attack Surface', detail: 'Supply API routes, authentication middleware, and input ingestion handlers.' },
+        { title: 'Set Compliance Criteria', detail: 'Specify required standards such as OWASP Top 10, sanitized inputs, or RBAC.' },
+        { title: 'Synthesize Threat Audit', detail: 'Run analysis to isolate injection risks, broken auth, and sensitive data leaks.' },
+        { title: 'Apply and Patch', detail: 'Implement remediation logic and verify against automated security regression tests.' },
       ];
     case 'seo':
       return [
-        { title: 'Input Target Query & Audience', detail: 'Specify target search query, audience persona, and primary intent.' },
-        { title: 'Define Technical Entities', detail: 'List key entities, topical clusters, and competitor structural gaps.' },
-        { title: 'Synthesize Content Architecture', detail: 'Generate structural briefs, metadata recommendations, and internal link plans.' },
-        { title: 'Validate Against Guidelines', detail: 'Review output to ensure people-first utility without keyword stuffing.' },
+        { title: 'Provide Topic & Audience', detail: 'Specify primary keyword intent, audience persona, and existing page URL.' },
+        { title: 'Define Search Intent', detail: 'Map out informational vs. transactional search intent and entity concepts.' },
+        { title: 'Generate Content Structure', detail: 'Synthesize structural briefs, metadata tags, and internal link suggestions.' },
+        { title: 'Validate Against SERP', detail: 'Audit output against top-ranking search results to ensure technical completeness.' },
+      ];
+    case 'email':
+    case 'email-outreach':
+      return [
+        { title: 'Provide Prospect Context', detail: 'Enter prospect industry, role pain points, and target outcome.' },
+        { title: 'Define Offer & Goal', detail: 'Specify your core value proposition and a low-friction single call-to-action.' },
+        { title: 'Generate Outreach', detail: 'Execute the prompt to produce concise, relevant outreach copy.' },
+        { title: 'Personalize Before Sending', detail: 'Review output and insert verified individual personalization before delivery.' },
       ];
     default:
       return [
-        { title: 'Configure Custom Variables', detail: 'Fill in the parameter inputs with your specific project context.' },
-        { title: 'Select Format & Constraints', detail: 'Adjust output constraints (e.g., Markdown, Structured Table) to match your workflow.' },
-        { title: 'Launch in AI Workspace', detail: 'Copy prompt or launch directly into your preferred AI model interface.' },
-        { title: 'Review & Verify Output', detail: 'Audit AI deliverables against production requirements before deploying.' },
+        { title: 'Configure Variables', detail: 'Fill in the bracketed inputs with your specific project details.' },
+        { title: 'Set Constraints', detail: 'Choose output constraints (e.g., Markdown, Structured Table) to match your workflow.' },
+        { title: 'Launch in Workspace', detail: 'Copy prompt or launch directly into your preferred AI model interface.' },
+        { title: 'Review & Verify', detail: 'Audit AI deliverables against production requirements before deploying.' },
       ];
   }
 }

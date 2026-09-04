@@ -12,7 +12,9 @@
     "duplicates": "node scripts/detect_prompt_duplicates.mjs",
     "audit:prompts": "node scripts/audit-prompts.mjs",
     "classify:preview": "node scripts/classify-prompts.mjs",
-    "test:seo": "node tests/seo/content-quality.test.mjs"
+    "test:seo": "node tests/seo/content-quality.test.mjs",
+    "audit:duplicates": "node scripts/detect-prompt-duplicates.mjs",
+    "audit:final": "node scripts/final-seo-audit.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

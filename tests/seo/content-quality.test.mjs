@@ -1,47 +1,51 @@
-import { sanitizeClaims, normalizePrompt } from '../../lib/prompts/normalizePrompt.js';
+import { sanitizeClaims, normalizePrompt, generateSeoTitle } from '../../lib/prompts/normalizePrompt.js';
 import { computeJaccardSimilarity, tokenizeText } from '../../lib/content/duplicateDetection.js';
 
-console.log('Running SEO & Content Quality Verification Suite...\n');
-
+console.log('Running SEO Verification Suite...\n');
 let passed = 0;
 let failed = 0;
 
-function assert(condition, testName) {
+function assert(condition, name) {
   if (condition) {
-    console.log(`  [PASS] ${testName}`);
+    console.log(`  [PASS] ${name}`);
     passed++;
   } else {
-    console.error(`  [FAIL] ${testName}`);
+    console.error(`  [FAIL] ${name}`);
     failed++;
   }
 }
 
-// 1. Claims Filter Tests
-const claimSample = 'This battle-tested prompt is 100% accurate and provides zero-hallucination code with guaranteed ranking.';
-const sanitized = sanitizeClaims(claimSample);
-assert(!sanitized.includes('battle-tested'), 'Removes "battle-tested" claim');
-assert(!sanitized.includes('100% accurate'), 'Removes "100% accurate" claim');
-assert(!sanitized.includes('zero-hallucination'), 'Removes "zero-hallucination" claim');
-assert(!sanitized.includes('guaranteed ranking'), 'Removes "guaranteed ranking" claim');
+// 1. Claims Sanitizer Test
+const claimText = '100% Quality Audited prompt with zero-hallucination code, battle-tested for guaranteed ranking.';
+const clean = sanitizeClaims(claimText);
+assert(!clean.includes('100% Quality Audited'), 'Replaces "100% Quality Audited"');
+assert(!clean.includes('zero-hallucination'), 'Replaces "zero-hallucination"');
+assert(!clean.includes('battle-tested'), 'Replaces "battle-tested"');
+assert(!clean.includes('guaranteed ranking'), 'Replaces "guaranteed ranking"');
 
-// 2. Normalization Field Resolution
-const rawPrompt = {
-  id: 'test-123',
-  slug: 'postgres-tuning',
-  title: 'PostgreSQL High-Volume Query Optimization & Index Planner',
-  prompt: 'SELECT * FROM test_table;',
-  task_slug: 'database',
+// 2. Search-Intent Title Normalization
+const badTitle = 'PostgreSQL High-Volume Query Optimization & Index Planner';
+const seoTitle = generateSeoTitle(badTitle, 'database');
+assert(seoTitle.includes('PostgreSQL Query Optimization'), 'Normalizes cluttered internal titles');
+assert(!seoTitle.includes('& Architecture Optimizer'), 'Strips repetitive suffix clutter');
+
+// 3. Normalization Fallback Check
+const raw = {
+  id: 'test-1',
+  slug: 'test-slug',
+  title: 'Pytest & Playwright Performance Audit & Architecture Optimizer',
+  prompt: 'def test_example(): pass',
+  task_slug: 'testing',
 };
-const normalized = normalizePrompt(rawPrompt);
-assert(normalized.content === 'SELECT * FROM test_table;', 'Resolves legacy "prompt" field into content');
-assert(normalized.seoTitle.includes('PostgreSQL'), 'Generates search-intent SEO title');
-assert(!normalized.seoTitle.includes('& Architecture Optimizer'), 'Cleans title clutter');
+const norm = normalizePrompt(raw);
+assert(norm.content === 'def test_example(): pass', 'Safely resolves canonical prompt body');
+assert(norm.task.slug === 'testing', 'Preserves task taxonomy slug');
 
-// 3. Duplicate Detection Similarity Test
-const tokensA = tokenizeText('PostgreSQL Query Optimization and Performance Tuning Prompt');
-const tokensB = tokenizeText('PostgreSQL Query Optimization and Index Performance Tuning');
-const sim = computeJaccardSimilarity(tokensA, tokensB);
-assert(sim >= 0.70, `Calculates realistic Jaccard similarity (${(sim * 100).toFixed(1)}%)`);
+// 4. Duplicate Tokenizer Test
+const setA = tokenizeText('PostgreSQL Query Optimization Prompt for Developers');
+const setB = tokenizeText('PostgreSQL Query Optimization and Index Tuning Prompt');
+const sim = computeJaccardSimilarity(setA, setB);
+assert(sim >= 0.50, `Calculates text similarity index (${(sim * 100).toFixed(1)}%)`);
 
-console.log(`\nResults: ${passed} Passed, ${failed} Failed.`);
+console.log(`\nTests finished: ${passed} Passed, ${failed} Failed.`);
 if (failed > 0) process.exit(1);

@@ -1,4 +1,3 @@
-// app/robots.ts
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
@@ -9,10 +8,12 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
         disallow: [
           '/api/',
-          '/saved',
+          '/admin/',
+          '/saved/',
           '/submit',
-          '/admin',
-          '/*?*q=', // Disallow crawling infinite search query strings
+          '/*?*q=',
+          '/*?*model=',
+          '/*?*role=',
         ],
       },
     ],
