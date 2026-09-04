@@ -1,8 +1,10 @@
 import React from 'react';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
 import PromptCard from '@/components/PromptCard';
 import HeroSearch from '@/components/HeroSearch';
+import { sanitizeClaims, generateSeoTitle } from '@/lib/seo';
 import { 
   Sparkles, 
   TrendingUp, 
@@ -13,10 +15,32 @@ import {
   Megaphone, 
   Rocket, 
   Home as HomeIcon, 
-  Search as SearchIcon
+  Search as SearchIcon,
+  Layers,
+  Terminal,
+  Database,
+  Bug,
+  ShieldCheck
 } from 'lucide-react';
 
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: 'Promptory — Curated AI Prompts & Workflow Templates',
+  description:
+    'Discover curated AI prompts and workflow templates built for engineers, marketers, founders and operators across Claude 3.5, DeepSeek-R1, and ChatGPT.',
+  alternates: {
+    canonical: 'https://www.promptory.xyz',
+  },
+  openGraph: {
+    title: 'Promptory — Curated AI Prompts & Workflow Templates',
+    description:
+      'Discover curated AI prompts and workflow templates built for engineers, marketers, founders and operators.',
+    url: 'https://www.promptory.xyz',
+    siteName: 'Promptory',
+    type: 'website',
+  },
+};
 
 const MODEL_LOGOS: Record<string, { icon: React.ReactNode; color: string; bg: string }> = {
   chatgpt: {
@@ -84,17 +108,29 @@ const ROLE_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
 };
 
 export default async function HomePage() {
-  const [promptsRes, modelsRes, professionsRes] = await Promise.allSettled([
-    supabase.from('prompts').select('*, model:models(*), profession:professions(*)').order('quality_score', { ascending: false }),
+  const [promptsRes, modelsRes, professionsRes, tasksRes] = await Promise.allSettled([
+    supabase
+      .from('prompts')
+      .select('*, model:models(*), profession:professions(*), task:tasks(*)')
+      .eq('status', 'published')
+      .order('quality_score', { ascending: false }),
     supabase.from('models').select('*').order('name'),
     supabase.from('professions').select('*').order('name'),
+    supabase.from('tasks').select('*').order('name'),
   ]);
 
-  const prompts = promptsRes.status === 'fulfilled' && promptsRes.value.data ? promptsRes.value.data : [];
+  const rawPrompts = promptsRes.status === 'fulfilled' && promptsRes.value.data ? promptsRes.value.data : [];
   const dbModels = modelsRes.status === 'fulfilled' && modelsRes.value.data ? modelsRes.value.data : [];
   const dbProfessions = professionsRes.status === 'fulfilled' && professionsRes.value.data ? professionsRes.value.data : [];
+  const dbTasks = tasksRes.status === 'fulfilled' && tasksRes.value.data ? tasksRes.value.data : [];
 
-  const totalPromptsCount = prompts.length;
+  const totalPromptsCount = rawPrompts.length;
+
+  const prompts = rawPrompts.map((p: any) => ({
+    ...p,
+    title: generateSeoTitle(p.title, p.task_slug || p.task?.slug),
+    description: sanitizeClaims(p.description || ''),
+  }));
 
   const modelsList = dbModels.length > 0 ? dbModels : [
     { id: '1', name: 'ChatGPT', slug: 'chatgpt', description: 'OpenAI GPT-4o & reasoning models' },
@@ -123,7 +159,7 @@ export default async function HomePage() {
       <section className="text-center py-10 md:py-16">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-6">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>{totalPromptsCount} Production Prompts Live</span>
+          <span>303 Quality-Scored Prompts</span>
         </div>
 
         <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-tight mb-4">
@@ -134,21 +170,65 @@ export default async function HomePage() {
         </h1>
 
         <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto mb-8 leading-relaxed">
-          Discover curated AI prompts and workflow templates built for engineers, marketers, founders and operators."grid grid-cols-3 max-w-lg mx-auto mt-10 pt-6 border-t border-[#30363D] text-center">
+          Discover curated AI prompts and workflow templates built for engineers, marketers, founders and operators.
+        </p>
+
+        <HeroSearch />
+
+        <div className="grid grid-cols-3 max-w-lg mx-auto mt-10 pt-6 border-t border-[#30363D] text-center">
           <div>
             <div className="text-xl sm:text-2xl font-extrabold text-white">{totalPromptsCount}</div>
             <div className="text-[11px] text-slate-400 font-medium">Total Prompts</div>
           </div>
           <div className="border-x border-[#30363D]">
-            <div className="text-xl sm:text-2xl font-extrabold text-emerald-400">6</div>
+            <div className="text-xl sm:text-2xl font-extrabold text-emerald-400">{modelsList.length}</div>
             <div className="text-[11px] text-slate-400 font-medium">AI Models</div>
           </div>
           <div>
-            <div className="text-xl sm:text-2xl font-extrabold text-cyan-400">100%</div>
-            <div className="text-[11px] text-slate-400 font-medium">Quality Audited</div>
+            <div className="text-xl sm:text-2xl font-extrabold text-cyan-400">303</div>
+            <div className="text-[11px] text-slate-400 font-medium">Quality-Scored Prompts</div>
           </div>
         </div>
+      </section>
 
+      {/* EXPLORE BY TASK */}
+      <section className="mb-14 border-t border-[#30363D] pt-10">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <Layers className="w-4 h-4 text-emerald-400" /> Explore by Task
+          </h2>
+          <Link href="/tasks" className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+            <span>View All Tasks</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            { name: 'Coding', slug: 'coding', icon: Terminal },
+            { name: 'Debugging', slug: 'debugging', icon: Bug },
+            { name: 'Database', slug: 'database', icon: Database },
+            { name: 'Testing', slug: 'testing', icon: ShieldCheck },
+            { name: 'Performance', slug: 'performance', icon: Cpu },
+            { name: 'SEO', slug: 'seo', icon: SearchIcon },
+          ].map((t) => {
+            const Icon = t.icon;
+            return (
+              <Link
+                key={t.slug}
+                href={`/tasks/${t.slug}`}
+                className="flex flex-col items-center justify-center p-4 rounded-xl bg-[#161B22] hover:bg-[#1C2128] border border-[#30363D] hover:border-emerald-500/50 transition group text-center"
+              >
+                <span className="text-emerald-400 mb-1.5 group-hover:scale-110 transition-transform">
+                  <Icon className="w-4 h-4" />
+                </span>
+                <span className="text-xs font-semibold text-slate-200 group-hover:text-white transition-colors">
+                  {t.name}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
       </section>
 
       {/* EXPLORE BY AI MODEL */}
