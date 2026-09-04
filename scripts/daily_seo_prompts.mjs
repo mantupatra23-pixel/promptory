@@ -1,52 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import { sanitizeClaims, calculateContentQualityScore } from '../lib/prompts/normalizePrompt.js';
+import { computeJaccardSimilarity, tokenizeText } from '../lib/content/duplicateDetection.js';
+
 dotenv.config({ path: '.env.local' });
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY
+);
+
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
-
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !GROQ_API_KEY) {
-  console.error('[FATAL] Missing required credentials in environment.');
-  process.exit(1);
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 const isDryRun = process.argv.includes('--dry-run');
-
-// Targeted Topic Queue with priority scores
-const TOPIC_QUEUE = [
-  {
-    topic: 'PostgreSQL Connection Pooling and Max Clients Tuning',
-    task_slug: 'database',
-    model_slug: 'deepseek',
-    role_slug: 'software-developer',
-  },
-  {
-    topic: 'FastAPI Background Tasks and Celery Worker Concurrency',
-    task_slug: 'performance',
-    model_slug: 'chatgpt',
-    role_slug: 'software-developer',
-  },
-  {
-    topic: 'Next.js 14 App Router Dynamic Route Hydration Audit',
-    task_slug: 'code-review',
-    model_slug: 'claude',
-    role_slug: 'software-developer',
-  },
-  {
-    topic: 'Vitest Unit Testing for TypeScript Microservices',
-    task_slug: 'testing',
-    model_slug: 'claude',
-    role_slug: 'software-developer',
-  },
-  {
-    topic: 'NextAuth JWT Session Expiry and Cookie Tampering Audit',
-    task_slug: 'security',
-    model_slug: 'deepseek',
-    role_slug: 'software-developer',
-  },
-];
 
 const MODEL_ALIASES = {
   chatgpt: 'chatgpt',
@@ -65,71 +31,71 @@ const ROLE_ALIASES = {
   marketer: 'marketer',
 };
 
-function createBaseSlug(title) {
+function createCleanSlug(title) {
   return title
     .toLowerCase()
     .replace(/[^\w\s-]/g, '')
     .trim()
     .replace(/\s+/g, '-')
-    .slice(0, 60);
+    .slice(0, 55);
 }
 
-function filterUnsupportedClaims(text) {
-  if (!text) return '';
-  return text
-    .replace(/\bzero[- ]hallucination\b/gi, 'deterministic')
-    .replace(/\b100%\s*accurate\b/gi, 'production-focused')
-    .replace(/\bguaranteed ranking\b/gi, 'search-optimized')
-    .trim();
-}
+async function runGenerator() {
+  console.log(`\n=== PROMPTORY QUALITY-GATED TOPIC GENERATOR ===`);
+  console.log(`Mode: ${isDryRun ? 'DRY RUN' : 'PRODUCTION'}\n`);
 
-async function runDailyGeneration() {
-  console.log(`\n=== PROMPTORY QUALITY-GATED DAILY GENERATOR ===`);
-  console.log(`Execution Mode: ${isDryRun ? 'DRY RUN (Validation only)' : 'PRODUCTION'}\n`);
+  const topicQueuePath = 'data/seo-topic-queue.json';
+  if (!fs.existsSync(topicQueuePath)) {
+    console.error('Topic queue data/seo-topic-queue.json not found.');
+    process.exit(1);
+  }
+
+  const queue = JSON.parse(fs.readFileSync(topicQueuePath, 'utf8'));
 
   const { data: dbModels } = await supabase.from('models').select('id, slug');
   const { data: dbRoles } = await supabase.from('professions').select('id, slug');
   const { data: dbTasks } = await supabase.from('tasks').select('id, slug');
+  const { data: existingPrompts } = await supabase.from('prompts').select('id, slug, title, prompt_template, prompt');
 
   const modelMap = new Map((dbModels || []).map((m) => [m.slug, m.id]));
   const roleMap = new Map((dbRoles || []).map((r) => [r.slug, r.id]));
   const taskMap = new Map((dbTasks || []).map((t) => [t.slug, t.id]));
 
-  let insertedCount = 0;
+  let published = 0;
 
-  for (const item of TOPIC_QUEUE) {
-    if (insertedCount >= 3) break;
+  for (const item of queue) {
+    if (published >= 3) break;
 
-    // 1. Check existing topic coverage
-    const { data: existing } = await supabase
-      .from('prompts')
-      .select('id, title')
-      .or(`title.ilike.%${item.topic}%,slug.ilike.%${createBaseSlug(item.topic)}%`)
-      .limit(1);
+    const baseSlug = createCleanSlug(item.topic);
 
-    if (existing && existing.length > 0) {
-      console.log(`[SKIP] Topic already covered in directory: "${item.topic}"`);
+    // 1. Topic Collision Check
+    const exists = (existingPrompts || []).some(
+      (p) => p.slug === baseSlug || p.title.toLowerCase().includes(item.topic.toLowerCase())
+    );
+
+    if (exists) {
+      console.log(`[SKIP] Topic exists in directory: "${item.topic}"`);
       continue;
     }
 
-    console.log(`[EVALUATING] Candidate topic: "${item.topic}"`);
+    console.log(`[GENERATING] Processing queue topic: "${item.topic}"`);
 
-    const promptSystemInstruction = `
-You are a software engineer building production AI system prompts.
-Target Task: ${item.task_slug}
-Target Model: ${item.model_slug}
+    const instruction = `
+You are a software engineer creating an AI system prompt.
 Topic: ${item.topic}
+Task: ${item.task}
+Technology: ${item.technology}
 
 Provide unescaped JSON matching:
 {
-  "title": "Natural search intent title (50-65 chars)",
-  "description": "Pragmatic technical summary without hype (120-160 chars)",
-  "prompt_template": "Complete structured prompt: ROLE, OBJECTIVE, INPUT CONTEXT, CONSTRAINTS, STEP-BY-STEP PROCESS, and OUTPUT FORMAT.",
+  "title": "${item.topic} Prompt",
+  "description": "Factual description without marketing hype (120-160 chars)",
+  "prompt_template": "Complete structured prompt: ROLE, OBJECTIVE, CONTEXT, CONSTRAINTS, PROCESS, OUTPUT FORMAT.",
   "variables": [{ "name": "VAR_NAME", "label": "Label", "placeholder": "Example" }],
-  "use_cases": ["Specific use case 1", "Specific use case 2"],
-  "limitations": ["Practical limitation 1", "Practical limitation 2"],
-  "tags": ["tag1", "tag2", "tag3"],
-  "faqs": [{ "question": "Technical question?", "answer": "Factual answer." }]
+  "use_cases": ["Practical use case 1", "Practical use case 2"],
+  "limitations": ["Clear limitation 1", "Clear limitation 2"],
+  "tags": ["${item.technology.toLowerCase()}", "${item.task}"],
+  "faqs": [{ "question": "Question 1?", "answer": "Factual technical answer without claims." }]
 }
 `;
 
@@ -142,68 +108,71 @@ Provide unescaped JSON matching:
         },
         body: JSON.stringify({
           model: 'llama-3.3-70b-versatile',
-          messages: [{ role: 'system', content: promptSystemInstruction }],
+          messages: [{ role: 'system', content: instruction }],
           temperature: 0.2,
           response_format: { type: 'json_object' },
         }),
       });
 
-      if (!response.ok) {
-        console.error(`[GROQ API ERROR] Status ${response.status}`);
-        continue;
-      }
+      if (!response.ok) continue;
 
       const rawJson = await response.json();
       const generated = JSON.parse(rawJson.choices[0].message.content);
 
-      // Quality Gate Checks
-      if (!generated.title || !generated.description || !generated.prompt_template) {
-        console.warn(`[REJECTED] Incomplete JSON structure.`);
+      const title = sanitizeClaims(generated.title);
+      const description = sanitizeClaims(generated.description);
+      const promptBody = sanitizeClaims(generated.prompt_template);
+
+      // 2. Duplicate Body Check
+      const newTokens = tokenizeText(promptBody.slice(0, 1200));
+      let isNearDuplicate = false;
+
+      for (const ep of (existingPrompts || [])) {
+        const epBody = ep.prompt_template || ep.prompt || '';
+        const epTokens = tokenizeText(epBody.slice(0, 1200));
+        if (computeJaccardSimilarity(newTokens, epTokens) >= 0.85) {
+          isNearDuplicate = true;
+          break;
+        }
+      }
+
+      if (isNearDuplicate) {
+        console.warn(`[REJECTED] Generated prompt is near-duplicate of existing prompt.`);
         continue;
       }
 
-      if (generated.prompt_template.length < 250) {
-        console.warn(`[REJECTED] Prompt body too brief (${generated.prompt_template.length} characters).`);
+      // 3. Quality Gate
+      const score = calculateContentQualityScore(generated, promptBody);
+      if (score < 70) {
+        console.warn(`[REJECTED] Quality score ${score}/100 below gate threshold.`);
         continue;
       }
 
-      // Validate taxonomy slugs against DB
-      const canonicalModelSlug = MODEL_ALIASES[item.model_slug] || item.model_slug;
-      const canonicalRoleSlug = ROLE_ALIASES[item.role_slug] || item.role_slug;
-      const modelId = modelMap.get(canonicalModelSlug);
-      const professionId = roleMap.get(canonicalRoleSlug);
-      const taskId = taskMap.get(item.task_slug);
+      const modelId = modelMap.get('deepseek');
+      const professionId = roleMap.get(ROLE_ALIASES[item.audience] || 'software-developer');
+      const taskId = taskMap.get(item.task);
 
       if (!modelId || !professionId || !taskId) {
-        console.error(`[REJECTED] Unresolved foreign key for Model/Role/Task.`);
+        console.error(`[REJECTED] Unresolved foreign key.`);
         continue;
       }
-
-      const cleanTitle = filterUnsupportedClaims(generated.title.trim());
-      const cleanDesc = filterUnsupportedClaims(generated.description.trim());
-      const cleanBody = filterUnsupportedClaims(generated.prompt_template.trim());
-      const baseSlug = createBaseSlug(cleanTitle);
 
       if (isDryRun) {
-        console.log(`  [DRY RUN PASS] Validated: "${cleanTitle}" -> /prompts/${canonicalModelSlug}/${canonicalRoleSlug}/${baseSlug}`);
-        insertedCount++;
+        console.log(`  [DRY RUN PASS] Score: ${score}/100 | Slug: ${baseSlug} | Task: ${item.task}`);
+        published++;
         continue;
       }
 
-      // Check collision
-      const { data: slugCheck } = await supabase.from('prompts').select('id').eq('slug', baseSlug);
-      const finalSlug = (slugCheck && slugCheck.length > 0) ? `${baseSlug}-2` : baseSlug;
-
       const { error: insertErr } = await supabase.from('prompts').insert({
-        title: cleanTitle,
-        slug: finalSlug,
-        description: cleanDesc,
-        prompt_template: cleanBody,
+        title,
+        slug: baseSlug,
+        description,
+        prompt_template: promptBody,
         model_id: modelId,
         profession_id: professionId,
         task_id: taskId,
-        task_slug: item.task_slug,
-        tags: generated.tags || [item.task_slug],
+        task_slug: item.task,
+        tags: generated.tags || [item.task],
         variables: generated.variables || [],
         use_cases: generated.use_cases || [],
         limitations: generated.limitations || [],
@@ -213,18 +182,16 @@ Provide unescaped JSON matching:
         updated_at: new Date().toISOString(),
       });
 
-      if (insertErr) {
-        console.error(`[INSERT ERROR] ${insertErr.message}`);
-      } else {
-        console.log(`[SUCCESS] Published: /prompts/${canonicalModelSlug}/${canonicalRoleSlug}/${finalSlug}`);
-        insertedCount++;
+      if (!insertErr) {
+        console.log(`[PUBLISHED] /prompts/deepseek/${item.audience}/${baseSlug}`);
+        published++;
       }
     } catch (err) {
-      console.error('[ERROR] Generation exception:', err.message);
+      console.error('Exception during generation:', err.message);
     }
   }
 
-  console.log(`\nRun finished. Total prompts processed: ${insertedCount}`);
+  console.log(`Run complete. Published: ${published}`);
 }
 
-runDailyGeneration();
+runGenerator();

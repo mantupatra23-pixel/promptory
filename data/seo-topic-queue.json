@@ -1,0 +1,42 @@
+[
+  {
+    "topic": "PostgreSQL Connection Pooling and Max Clients Tuning",
+    "primary_intent": "database optimization",
+    "task": "database",
+    "technology": "PostgreSQL",
+    "audience": "software-developer",
+    "priority": 10
+  },
+  {
+    "topic": "FastAPI Async Worker Concurrency and Memory Profiling",
+    "primary_intent": "backend performance",
+    "task": "performance",
+    "technology": "FastAPI",
+    "audience": "software-developer",
+    "priority": 9
+  },
+  {
+    "topic": "React 19 Server Components Data Fetching Waterfall Review",
+    "primary_intent": "code review",
+    "task": "code-review",
+    "technology": "React",
+    "audience": "software-developer",
+    "priority": 9
+  },
+  {
+    "topic": "Playwright Flaky Integration Test Diagnosis and Mocking",
+    "primary_intent": "automated testing",
+    "task": "testing",
+    "technology": "Playwright",
+    "audience": "software-developer",
+    "priority": 8
+  },
+  {
+    "topic": "NextAuth JWT Session Expiry and CSRF Security Audit",
+    "primary_intent": "application security",
+    "task": "security",
+    "technology": "Next.js",
+    "audience": "software-developer",
+    "priority": 10
+  }
+]

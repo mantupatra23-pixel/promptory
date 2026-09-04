@@ -7,9 +7,12 @@
     "build": "next build",
     "start": "next start",
     "classify:dry": "node scripts/classify_existing_prompts.mjs",
-    "classify:apply": "node scripts/classify_existing_prompts.mjs --apply",
+    "classify:apply": "node scripts/classify-prompts.mjs --apply",
     "taxonomy:validate": "node scripts/validate_taxonomy.mjs",
-    "duplicates": "node scripts/detect_prompt_duplicates.mjs"
+    "duplicates": "node scripts/detect_prompt_duplicates.mjs",
+    "audit:prompts": "node scripts/audit-prompts.mjs",
+    "classify:preview": "node scripts/classify-prompts.mjs",
+    "test:seo": "node tests/seo/content-quality.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

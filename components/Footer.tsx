@@ -9,7 +9,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 mb-10">
           
-          {/* Col 1: Brand */}
+          {/* Brand & Mission */}
           <div className="col-span-2 md:col-span-3 lg:col-span-1 space-y-3">
             <Link href="/" className="flex items-center gap-2.5 group">
               <div className="relative w-7 h-7 rounded-lg overflow-hidden shadow-sm">
@@ -26,11 +26,11 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Open curated system prompt repository and chained AI workflow synthesizer. Audited and deterministic for production systems.
+              Curated AI prompt directory and workflow templates for software engineers, founders, and technical operators.
             </p>
           </div>
 
-          {/* Col 2: AI Tasks (SEO Dimension) */}
+          {/* AI Tasks */}
           <div>
             <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">AI Tasks</h4>
             <ul className="space-y-2 text-xs text-slate-400">
@@ -62,7 +62,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Col 3: AI Models (Canonical Hubs) */}
+          {/* AI Models */}
           <div>
             <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">AI Models</h4>
             <ul className="space-y-2 text-xs text-slate-400">
@@ -89,7 +89,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Col 4: Roles & Domains (Canonical Hubs) */}
+          {/* Roles & Disciplines */}
           <div>
             <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Engineering Roles</h4>
             <ul className="space-y-2 text-xs text-slate-400">
@@ -116,7 +116,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Col 5: Platform & Legal */}
+          {/* Platform & Legal */}
           <div>
             <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Platform & Legal</h4>
             <ul className="space-y-2 text-xs text-slate-400">
@@ -158,12 +158,12 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-[#30363D] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <div>
-            &copy; {new Date().getFullYear()} Promptory. All prompts verified under open developer licensing.
+            &copy; {new Date().getFullYear()} Promptory. Publishing reusable AI prompt templates and workflows.
           </div>
           <div className="flex items-center gap-1 text-slate-400">
             <span>Built with</span>
             <Heart className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400" />
-            <span>for AI Engineers</span>
+            <span>for Developers</span>
           </div>
         </div>
       </div>
