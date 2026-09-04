@@ -15,9 +15,10 @@ interface PageProps {
   };
 }
 
-export const revalidate = 3600;
+export const revalidate = 60;
 
 async function getTaskData(taskSlug: string) {
+  // 1. Fetch Task metadata
   const { data: task } = await supabase
     .from('tasks')
     .select('id, name, slug, description, updated_at')
@@ -26,19 +27,23 @@ async function getTaskData(taskSlug: string) {
 
   if (!task) return null;
 
-  // Query by task_id OR task_slug to ensure zero false 404s
-  const { data: rawPrompts } = await supabase
+  // 2. Correct Supabase relation syntax: model:models(*), profession:professions(*)
+  const { data: rawPrompts, error } = await supabase
     .from('prompts')
-    .select(`
-      id, slug, title, description, prompt_template, prompt, content, quality_score, updated_at, task_id, task_slug,
-      models:model_id (id, name, slug),
-      professions:profession_id (id, name, slug)
-    `)
+    .select('*, model:models(*), profession:professions(*)')
     .or(`task_id.eq.${task.id},task_slug.eq.${task.slug}`)
-    .eq('status', 'published')
     .order('quality_score', { ascending: false });
 
-  const prompts = (rawPrompts || []).map(normalizePrompt);
+  if (error) {
+    console.error('[TASK FETCH ERROR]', error.message);
+  }
+
+  // Filter out any explicitly draft or rejected prompts (allows published and unassigned status)
+  const validRaw = (rawPrompts || []).filter(
+    (p) => p.status !== 'draft' && p.status !== 'rejected'
+  );
+
+  const prompts = validRaw.map(normalizePrompt);
 
   return {
     task,
@@ -55,17 +60,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const { task, totalCount } = data;
   const canonicalUrl = `https://www.promptory.xyz/tasks/${task.slug}`;
-  const isThin = totalCount < 3;
 
   return {
     title: `AI ${task.name} Prompts & Workflows | Promptory`,
     description: `Browse ${totalCount} tested AI system prompts for ${task.name.toLowerCase()}. Verified for Claude 3.5, ChatGPT, and DeepSeek-R1.`,
     alternates: {
       canonical: canonicalUrl,
-    },
-    robots: {
-      index: !isThin,
-      follow: true,
     },
     openGraph: {
       title: `AI ${task.name} Prompts | Promptory`,
@@ -157,10 +157,10 @@ export default async function TaskDetailPage({ params, searchParams }: PageProps
           <span className="text-slate-200 font-medium">{task.name}</span>
         </nav>
 
-        {/* Header */}
+        {/* Task Header */}
         <div className="border border-[#30363D] bg-[#161B22]/70 rounded-2xl p-6 sm:p-8 mb-10">
           <div className="flex flex-wrap items-center gap-2 mb-3">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
               {totalCount} Verified Prompts
             </span>
             <span className="px-2.5 py-0.5 rounded-full text-xs bg-[#21262D] text-slate-300 border border-[#30363D]">
@@ -175,7 +175,7 @@ export default async function TaskDetailPage({ params, searchParams }: PageProps
             {task.description}
           </p>
 
-          {/* Filter Pills */}
+          {/* Model / Role Filter Pills */}
           {(modelMap.size > 0 || roleMap.size > 0) && (
             <div className="mt-6 pt-5 border-t border-[#30363D]/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
               {modelMap.size > 0 && (
@@ -231,7 +231,7 @@ export default async function TaskDetailPage({ params, searchParams }: PageProps
           )}
         </div>
 
-        {/* Prompt Grid */}
+        {/* Prompt Cards Grid */}
         <div className="mb-14">
           <h2 className="text-xl font-bold text-white mb-6 flex items-center justify-between">
             <span>{task.name} Workflows</span>
@@ -246,48 +246,52 @@ export default async function TaskDetailPage({ params, searchParams }: PageProps
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPrompts.map((p) => (
-                <Link
-                  key={p.id}
-                  href={`/prompts/${p.model.slug}/${p.profession.slug}/${p.slug}`}
-                  className="group p-6 rounded-2xl bg-[#161B22] border border-[#30363D] hover:border-emerald-500/40 transition-all flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between text-xs mb-3">
-                      <span className="px-2 py-0.5 rounded font-mono text-[11px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold uppercase">
-                        {p.model.name}
-                      </span>
-                      <span className="text-slate-400 capitalize text-xs bg-[#21262D] px-2 py-0.5 rounded border border-[#30363D]">
-                        {p.profession.name}
-                      </span>
+              {filteredPrompts.map((p) => {
+                const modelSlug = p.model?.slug || 'chatgpt';
+                const roleSlug = p.profession?.slug || 'software-developer';
+                return (
+                  <Link
+                    key={p.id}
+                    href={`/prompts/${modelSlug}/${roleSlug}/${p.slug}`}
+                    className="group p-6 rounded-2xl bg-[#161B22] border border-[#30363D] hover:border-emerald-500/40 transition-all flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between text-xs mb-3">
+                        <span className="px-2 py-0.5 rounded font-mono text-[11px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold uppercase">
+                          {p.model?.name || 'AI'}
+                        </span>
+                        <span className="text-slate-400 capitalize text-xs bg-[#21262D] px-2 py-0.5 rounded border border-[#30363D]">
+                          {p.profession?.name || 'Developer'}
+                        </span>
+                      </div>
+
+                      <h3 className="text-base font-bold text-white group-hover:text-emerald-300 transition-colors mb-2 line-clamp-2">
+                        {p.seoTitle}
+                      </h3>
+
+                      <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
+                        {p.description}
+                      </p>
                     </div>
 
-                    <h3 className="text-base font-bold text-white group-hover:text-emerald-300 transition-colors mb-2 line-clamp-2">
-                      {p.seoTitle}
-                    </h3>
-
-                    <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
-                      {p.description}
-                    </p>
-                  </div>
-
-                  <div className="mt-5 pt-3 border-t border-[#30363D]/80 flex items-center justify-between text-xs text-slate-400">
-                    <span className="flex items-center gap-1 text-emerald-400 font-medium">
-                      <Sparkles className="w-3 h-3" />
-                      Score {p.qualityScore}/100
-                    </span>
-                    <span className="text-slate-300 group-hover:text-emerald-400 flex items-center gap-1 font-medium transition-colors">
-                      Open Prompt
-                      <ArrowRight className="w-3 h-3" />
-                    </span>
-                  </div>
-                </Link>
-              ))}
+                    <div className="mt-5 pt-3 border-t border-[#30363D]/80 flex items-center justify-between text-xs text-slate-400">
+                      <span className="flex items-center gap-1 text-emerald-400 font-medium">
+                        <Sparkles className="w-3 h-3" />
+                        Score {p.qualityScore}/100
+                      </span>
+                      <span className="text-slate-300 group-hover:text-emerald-400 flex items-center gap-1 font-medium transition-colors">
+                        Open Prompt
+                        <ArrowRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* Task-Specific FAQs */}
+        {/* Dynamic Task FAQs */}
         {faqs.length > 0 && (
           <section className="mb-14 pt-8 border-t border-[#30363D]">
             <div className="flex items-center gap-2 mb-4">
