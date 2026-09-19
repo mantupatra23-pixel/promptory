@@ -7,36 +7,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.promptory.xyz';
 
   const staticPages: MetadataRoute.Sitemap = [
-    {
-      url: baseUrl,
-      lastModified: new Date('2026-09-01T00:00:00.000Z'),
-      changeFrequency: 'daily',
-      priority: 1.0,
-    },
-    {
-      url: `${baseUrl}/directory`,
-      lastModified: new Date('2026-09-01T00:00:00.000Z'),
-      changeFrequency: 'daily',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/tasks`,
-      lastModified: new Date('2026-09-01T00:00:00.000Z'),
-      changeFrequency: 'daily',
-      priority: 0.85,
-    },
-    {
-      url: `${baseUrl}/workflows`,
-      lastModified: new Date('2026-08-15T00:00:00.000Z'),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/about`,
-      lastModified: new Date('2026-08-01T00:00:00.000Z'),
-      changeFrequency: 'monthly',
-      priority: 0.5,
-    },
+    { url: baseUrl, lastModified: new Date('2026-09-01T00:00:00.000Z'), changeFrequency: 'daily', priority: 1.0 },
+    { url: `${baseUrl}/directory`, lastModified: new Date('2026-09-01T00:00:00.000Z'), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${baseUrl}/tasks`, lastModified: new Date('2026-09-01T00:00:00.000Z'), changeFrequency: 'daily', priority: 0.85 },
+    { url: `${baseUrl}/workflows`, lastModified: new Date('2026-08-15T00:00:00.000Z'), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/about`, lastModified: new Date('2026-08-01T00:00:00.000Z'), changeFrequency: 'monthly', priority: 0.5 },
   ];
 
   const { data: models } = await supabase.from('models').select('slug, updated_at');
@@ -56,10 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const { data: tasks } = await supabase.from('tasks').select('id, slug, updated_at');
-  const { data: promptTasks } = await supabase
-    .from('prompts')
-    .select('task_id')
-    .eq('status', 'published');
+  const { data: promptTasks } = await supabase.from('prompts').select('task_id').not('status', 'eq', 'rejected');
 
   const taskCountMap = new Map<string, number>();
   (promptTasks || []).forEach((p) => {
@@ -77,14 +49,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const { data: prompts } = await supabase
     .from('prompts')
-    .select(`
-      slug,
-      updated_at,
-      created_at,
-      models:model_id(slug),
-      professions:profession_id(slug)
-    `)
-    .eq('status', 'published')
+    .select(`slug, updated_at, created_at, models:model_id(slug), professions:profession_id(slug)`)
+    .not('status', 'eq', 'rejected')
     .limit(45000);
 
   const promptUrls: MetadataRoute.Sitemap = (prompts || []).map((p: any) => {

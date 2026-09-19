@@ -41,6 +41,7 @@ export function sanitizeClaims(text: string): string {
     .replace(/\btested\s+system\s+prompts?\b/gi, 'curated AI prompts and workflow templates')
     .replace(/\btested\s+prompts?\b/gi, 'curated prompts')
     .replace(/\bzero[- ]hallucination\b/gi, 'structured context')
+    .replace(/\bzero\s+hallucination\b/gi, 'structured context')
     .replace(/\beliminate\s+(ai\s+)?hallucinations?\b/gi, 'mitigate inaccurate generations')
     .replace(/\b100%\s*accurate\b/gi, 'high-precision')
     .replace(/\bbattle[- ]tested\b/gi, 'practical')
@@ -62,24 +63,18 @@ export function sanitizeClaims(text: string): string {
 
 function removeRepeatedPhrases(text: string): string {
   if (!text) return '';
-
-  // Collapse consecutive duplicated words (e.g. "Optimization Optimization" -> "Optimization")
   let result = text.replace(/\b(\w+)(?:\s+\1\b)+/gi, '$1');
-
-  // Collapse duplicated multi-word clusters
   result = result.replace(/\b(Performance Optimization)\s+(?:Performance Optimization|Optimization)\b/gi, '$1');
   result = result.replace(/\b(Query Optimization)\s+(?:Query Optimization|Optimization)\b/gi, '$1');
   result = result.replace(/\b(Testing & Performance)\s+(?:Testing & Performance|Performance|Testing)\b/gi, '$1');
   result = result.replace(/\b(Code Review)\s+(?:Code Review|Review)\b/gi, '$1');
   result = result.replace(/\b(Prompt)\s+Prompt\b/gi, 'Prompt');
-
   return result.replace(/\s+/g, ' ').trim();
 }
 
 export function generateSeoTitle(rawTitle: string, taskSlug?: string): string {
   if (!rawTitle) return 'AI System Prompt';
 
-  // 1. Strip branding & legacy suffixes
   let clean = rawTitle
     .replace(/\s*\|\s*Promptory.*$/i, '')
     .replace(/\s*—\s*Verified.*$/i, '')
@@ -92,7 +87,6 @@ export function generateSeoTitle(rawTitle: string, taskSlug?: string): string {
 
   clean = sanitizeClaims(clean);
 
-  // 2. Map task intent suffix only if specific intent is missing
   const taskSuffixMap: Record<string, string> = {
     database: 'Query Optimization Prompt',
     debugging: 'Debugging Prompt',
