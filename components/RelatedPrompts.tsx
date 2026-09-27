@@ -4,46 +4,60 @@ import { supabase } from '@/lib/supabase';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { normalizePrompt } from '@/lib/prompts/normalizePrompt';
 
-interface RelatedPromptsProps {
+export interface RelatedPromptsProps {
   currentId: string;
   modelSlug: string;
   professionSlug: string;
+  professionId?: string;
+  taskId?: string;
   taskSlug?: string;
-  tags?: string[];
+  promptTitle?: string;
 }
 
 export default async function RelatedPrompts({
   currentId,
   modelSlug,
   professionSlug,
+  professionId,
+  taskId,
   taskSlug,
+  promptTitle = '',
 }: RelatedPromptsProps) {
-  // 1. Strict semantic match: First find prompts sharing the exact same task OR role
-  let { data: primaryBatch } = await supabase
+  const isMarketingGrowth =
+    ['digital-marketer', 'marketer', 'seo-specialist', 'founder'].includes(professionSlug) ||
+    ['content-writing', 'email-outreach', 'seo', 'marketing', 'copywriting', 'client-follow-up'].includes(taskSlug || '') ||
+    /\b(marketing|content|email|seo|outreach|copywriting|sales|conversion|lead|client)\b/i.test(promptTitle);
+
+  const { data: candidates } = await supabase
     .from('prompts')
     .select('*, model:models(*), profession:professions(*), task:tasks(*)')
     .neq('id', currentId)
-    .or(`task_slug.eq.${taskSlug || 'coding'},profession_slug.eq.${professionSlug}`)
+    .not('status', 'eq', 'rejected')
     .order('quality_score', { ascending: false })
-    .limit(6);
+    .limit(40);
 
-  let related = primaryBatch || [];
+  const devKeywordRegex = /\b(rust|postgres|postgresql|graphql|pytest|playwright|docker|apollo|sql|database|axum|debugging|unit test)\b/i;
+  const marketingKeywordRegex = /\b(marketing|content|seo|email|outreach|copy|blog|social|sales|conversion)\b/i;
 
-  // 2. Fallback only if fewer than 3 related prompts exist
-  if (related.length < 3) {
-    const existingIds = [currentId, ...related.map((r) => r.id)];
-    const { data: fallbackBatch } = await supabase
-      .from('prompts')
-      .select('*, model:models(*), profession:professions(*), task:tasks(*)')
-      .not('id', 'in', `(${existingIds.join(',')})`)
-      .order('quality_score', { ascending: false })
-      .limit(6 - related.length);
+  const filtered = (candidates || []).filter((p: any) => {
+    const title = p.title || '';
+    const pRole = p.profession?.slug || '';
+    const pTask = p.task?.slug || '';
 
-    if (fallbackBatch) {
-      related = [...related, ...fallbackBatch];
+    if (isMarketingGrowth) {
+      if (devKeywordRegex.test(title)) return false;
+      return (
+        ['digital-marketer', 'marketer', 'seo-specialist', 'founder'].includes(pRole) ||
+        ['content-writing', 'email-outreach', 'seo', 'marketing', 'client-follow-up'].includes(pTask) ||
+        marketingKeywordRegex.test(title)
+      );
+    } else {
+      if (marketingKeywordRegex.test(title) && !devKeywordRegex.test(title)) return false;
+      return true;
     }
-  }
+  });
 
+  const related = filtered.slice(0, 6);
   if (related.length === 0) return null;
 
   const normalizedRelated = related.map(normalizePrompt);

@@ -78,7 +78,6 @@ export default async function PromptDetailPage({ params }: Props) {
 
   const prompt = normalizePrompt(rawPrompt);
 
-  // 308 permanent redirect if route params do not match canonical database slugs
   if (params.model !== prompt.model.slug || params.role !== prompt.profession.slug) {
     permanentRedirect(`/prompts/${prompt.model.slug}/${prompt.profession.slug}/${prompt.slug}`);
   }
@@ -234,7 +233,6 @@ export default async function PromptDetailPage({ params }: Props) {
           </div>
         </section>
 
-        {/* Semantically Isolated Related Workflows */}
         <RelatedPrompts
           currentId={prompt.id}
           modelSlug={prompt.model.slug}
