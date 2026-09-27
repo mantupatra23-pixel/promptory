@@ -10,7 +10,7 @@ import RelatedPrompts from '@/components/RelatedPrompts';
 import ShareButton from '@/components/ShareButton';
 import { Sparkles, ChevronRight, ShieldCheck, HelpCircle } from 'lucide-react';
 
-export const revalidate = 3600;
+export const revalidate = 60;
 
 interface Props {
   params: {

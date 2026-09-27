@@ -29,7 +29,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: 'Promptory — Curated AI Prompts & Workflow Templates',
   description:
-    'Promptory solves the challenge of finding high-quality, model-specific AI prompts by offering a curated library of 300+ quality-scored templates for engineers, marketers, and founders using Claude, DeepSeek, and ChatGPT.',
+    'Promptory is an open AI prompt engineering directory and workflow library for developers, marketers, and technical founders. It delivers tested system prompt templates with interactive parameter customization, zero registration friction, and instant 1-click execution across Claude 3.5, DeepSeek-R1, ChatGPT-4o, and Gemini.',
   alternates: {
     canonical: 'https://www.promptory.xyz',
   },
