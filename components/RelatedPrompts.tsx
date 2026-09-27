@@ -17,31 +17,25 @@ export default async function RelatedPrompts({
   modelSlug,
   professionSlug,
   taskSlug,
-  tags = [],
 }: RelatedPromptsProps) {
-  // Query prompts sharing the same task first, excluding the current prompt
-  let query = supabase
+  // 1. Strict semantic match: First find prompts sharing the exact same task OR role
+  let { data: primaryBatch } = await supabase
     .from('prompts')
     .select('*, model:models(*), profession:professions(*), task:tasks(*)')
     .neq('id', currentId)
-    .eq('status', 'published');
-
-  if (taskSlug) {
-    query = query.eq('task_slug', taskSlug);
-  }
-
-  const { data: primaryBatch } = await query.order('quality_score', { ascending: false }).limit(6);
+    .or(`task_slug.eq.${taskSlug || 'coding'},profession_slug.eq.${professionSlug}`)
+    .order('quality_score', { ascending: false })
+    .limit(6);
 
   let related = primaryBatch || [];
 
-  // If fewer than 6, query by same profession and model to backfill
-  if (related.length < 6) {
+  // 2. Fallback only if fewer than 3 related prompts exist
+  if (related.length < 3) {
     const existingIds = [currentId, ...related.map((r) => r.id)];
     const { data: fallbackBatch } = await supabase
       .from('prompts')
       .select('*, model:models(*), profession:professions(*), task:tasks(*)')
       .not('id', 'in', `(${existingIds.join(',')})`)
-      .eq('status', 'published')
       .order('quality_score', { ascending: false })
       .limit(6 - related.length);
 
@@ -59,7 +53,7 @@ export default async function RelatedPrompts({
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-white">Related Technical Workflows</h2>
-          <p className="text-xs text-slate-400 mt-0.5">Explore semantically matched prompts in this domain</p>
+          <p className="text-xs text-slate-400 mt-0.5">Semantically matched workflows in this domain</p>
         </div>
       </div>
 
@@ -76,7 +70,7 @@ export default async function RelatedPrompts({
                   {p.model.name}
                 </span>
                 <span className="text-slate-400 text-xs capitalize bg-[#21262D] px-2 py-0.5 rounded border border-[#30363D]">
-                  {p.task.name}
+                  {p.profession.name}
                 </span>
               </div>
               <h3 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors line-clamp-2 mb-1.5">
