@@ -13,7 +13,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/directory`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/tasks`, lastModified: now, changeFrequency: 'daily', priority: 0.85 },
     { url: `${baseUrl}/workflows`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${baseUrl}/compare/promptory-vs-promptbase`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/compare/promptory-vs-promptbase`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${baseUrl}/compare/promptory-vs-flowgpt`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${baseUrl}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
   ];
 
