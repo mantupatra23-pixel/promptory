@@ -6,15 +6,11 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: [
-          '/api/',
-          '/admin/',
-          '/saved/',
-          '/submit',
-          '/*?*q=',
-          '/*?*model=',
-          '/*?*role=',
-        ],
+        disallow: ['/api/'],
+      },
+      {
+        userAgent: ['GPTBot', 'ChatGPT-User', 'PerplexityBot', 'ClaudeBot', 'anthropic-ai', 'Google-Extended', 'Amazonbot'],
+        allow: '/',
       },
     ],
     sitemap: 'https://www.promptory.xyz/sitemap.xml',
