@@ -126,6 +126,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/benchmarks" className="hover:text-emerald-400 transition">
+                  Speed Benchmarks
+                </Link>
+              </li>
+              <li>
                 <Link href="/compare/promptory-vs-promptbase" className="hover:text-emerald-400 transition">
                   Promptory vs PromptBase
                 </Link>
