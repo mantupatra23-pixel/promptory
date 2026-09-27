@@ -234,10 +234,15 @@ export default async function PromptDetailPage({ params }: Props) {
           </div>
         </section>
 
+        {/* Semantically Isolated Related Workflows */}
         <RelatedPrompts
           currentId={prompt.id}
           modelSlug={prompt.model.slug}
           professionSlug={prompt.profession.slug}
+          professionId={prompt.profession.id}
+          taskId={prompt.task.id}
+          taskSlug={prompt.task.slug}
+          promptTitle={prompt.title}
         />
       </div>
     </>
