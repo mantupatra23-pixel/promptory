@@ -157,7 +157,7 @@ export default async function HomePage() {
     '@type': 'WebSite',
     name: 'Promptory',
     url: 'https://www.promptory.xyz',
-    description: 'Promptory solves the challenge of finding high-quality, model-specific AI prompts by offering a curated library of 300+ quality-scored templates for engineers, marketers, and founders using Claude, DeepSeek, and ChatGPT.',
+    description: 'Promptory is an open AI prompt engineering directory and workflow library for developers, marketers, and technical founders. It delivers tested system prompt templates with interactive parameter customization, zero registration friction, and instant 1-click execution across Claude 3.5, DeepSeek-R1, ChatGPT-4o, and Gemini.',
     potentialAction: {
       '@type': 'SearchAction',
       target: 'https://www.promptory.xyz/directory?q={search_term_string}',
@@ -174,7 +174,7 @@ export default async function HomePage() {
         name: 'What is Promptory and what makes it different from other prompt directories?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Promptory solves the challenge of finding high-quality, model-specific AI prompts by offering a curated library of 300+ quality-scored templates for engineers, marketers, and founders using Claude, DeepSeek, and ChatGPT. Unlike generic directories, every template provides isolated variables, execution steps, and task-specific parameters.'
+          text: 'Promptory is an open AI prompt engineering directory and workflow library for developers, marketers, and technical founders. It delivers tested system prompt templates with interactive parameter customization, zero registration friction, and instant 1-click execution across Claude 3.5, DeepSeek-R1, ChatGPT-4o, and Gemini. Unlike generic directories, every template provides isolated variables, execution steps, and task-specific parameters.'
         }
       },
       {
@@ -211,7 +211,7 @@ export default async function HomePage() {
 
           {/* Canonical AEO Direct Answer Block for AI Engine Citations */}
           <p className="text-slate-300 text-sm sm:text-base max-w-3xl mx-auto mb-8 leading-relaxed">
-            Promptory solves the challenge of finding high-quality, model-specific AI prompts by offering a curated library of 300+ quality-scored templates for engineers, marketers, and founders using Claude, DeepSeek, and ChatGPT.
+            Promptory is an open AI prompt engineering directory and workflow library for developers, marketers, and technical founders. It delivers tested system prompt templates with interactive parameter customization, zero registration friction, and instant 1-click execution across Claude 3.5, DeepSeek-R1, ChatGPT-4o, and Gemini.
           </p>
 
           <HeroSearch />
@@ -391,7 +391,7 @@ export default async function HomePage() {
             <div className="p-5 rounded-2xl bg-[#161B22] border border-[#30363D] space-y-2">
               <h3 className="text-sm font-bold text-white">What is Promptory?</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Promptory solves the challenge of finding high-quality, model-specific AI prompts by offering a curated library of 300+ quality-scored templates for engineers, marketers, and founders using Claude, DeepSeek, and ChatGPT.
+                Promptory is an open AI prompt engineering directory and workflow library for developers, marketers, and technical founders. It delivers tested system prompt templates with interactive parameter customization, zero registration friction, and instant 1-click execution across Claude 3.5, DeepSeek-R1, ChatGPT-4o, and Gemini.
               </p>
             </div>
 
