@@ -9,12 +9,18 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/api/'],
       },
       {
-        userAgent: ['GPTBot'],
-        allow: ['/', '/compare/', '/tools/'],
-      },
-      {
-        userAgent: ['PerplexityBot', 'ClaudeBot', 'Google-Extended', 'anthropic-ai'],
+        // AI Search Engines & Grounding Bots (ChatGPT Search, Perplexity, Claude, Google AI)
+        userAgent: [
+          'OAI-SearchBot',
+          'GPTBot',
+          'PerplexityBot',
+          'ClaudeBot',
+          'anthropic-ai',
+          'Google-Extended',
+          'Applebot-Extended',
+        ],
         allow: '/',
+        disallow: ['/api/'],
       },
     ],
     sitemap: 'https://www.promptory.xyz/sitemap.xml',
