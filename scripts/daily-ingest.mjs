@@ -21,7 +21,49 @@ function slugify(text) {
     .replace(/\-\-+/g, '-');
 }
 
-async function generatePromptPayload(model, role, task) {
+// Dynamically discover active Groq models for this API key
+async function resolveGroqModel() {
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/models', {
+      headers: { Authorization: `Bearer ${GROQ_API_KEY}` },
+    });
+    if (!res.ok) {
+      console.warn('⚠️ Could not fetch models list, using default.');
+      return 'llama3-8b-8192';
+    }
+    const data = await res.json();
+    const available = (data.data || []).map((m) => m.id);
+    console.log('📋 Groq Models available on your key:', available.join(', '));
+
+    // Priority preferences
+    const preferences = [
+      'llama-3.3-70b-versatile',
+      'llama-3.1-70b-versatile',
+      'llama-3.1-8b-instant',
+      'llama3-70b-8192',
+      'llama3-8b-8192',
+      'mixtral-8x7b-32768',
+      'gemma2-9b-it',
+      'gemma-7b-it',
+    ];
+
+    for (const pref of preferences) {
+      if (available.includes(pref)) {
+        console.log(`🎯 Auto-selected model: ${pref}`);
+        return pref;
+      }
+    }
+
+    const fallback = available.find((id) => !id.includes('whisper') && !id.includes('tts'));
+    console.log(`🎯 Fallback selected: ${fallback}`);
+    return fallback || 'llama3-8b-8192';
+  } catch (err) {
+    console.warn('⚠️ Model discovery fallback:', err.message);
+    return 'llama3-8b-8192';
+  }
+}
+
+async function generatePromptPayload(modelId, model, role, task) {
   const systemPrompt = `You are a Principal Prompt Engineer at Promptory.
 Generate a deterministic, production-grade AI system prompt blueprint.
 Return ONLY valid JSON matching this exact schema:
@@ -41,10 +83,10 @@ Return ONLY valid JSON matching this exact schema:
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${GROQ_API_KEY}`,
+      Authorization: `Bearer ${GROQ_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
+      model: modelId,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userQuery },
@@ -56,7 +98,7 @@ Return ONLY valid JSON matching this exact schema:
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`Groq API Error: ${errText}`);
+    throw new Error(`Groq API Error (${modelId}): ${errText}`);
   }
 
   const json = await res.json();
@@ -65,6 +107,8 @@ Return ONLY valid JSON matching this exact schema:
 
 async function runDailyIngest() {
   console.log('🚀 Starting Automated Prompt Ingestion...');
+
+  const activeModel = await resolveGroqModel();
 
   const [{ data: models, error: mErr }, { data: roles, error: rErr }, { data: tasks, error: tErr }] = await Promise.all([
     supabase.from('models').select('id, name, slug'),
@@ -85,9 +129,9 @@ async function runDailyIngest() {
     const randomRole = roles[Math.floor(Math.random() * roles.length)];
     const randomTask = tasks[Math.floor(Math.random() * tasks.length)];
 
-    console.log(`\n[${i + 1}/${BATCH_SIZE}] Generating: [${randomModel.name}] - [${randomRole.name}] - [${randomTask.name}]`);
+    console.log(`\n[${i + 1}/${BATCH_SIZE}] Generating for: ${randomModel.name} | ${randomRole.name} | ${randomTask.name}`);
 
-    const generated = await generatePromptPayload(randomModel, randomRole, randomTask);
+    const generated = await generatePromptPayload(activeModel, randomModel, randomRole, randomTask);
     const slug = `${slugify(generated.title)}-${Date.now().toString().slice(-4)}`;
 
     const { error: dbErr } = await supabase.from('prompts').insert({
@@ -95,10 +139,10 @@ async function runDailyIngest() {
       slug: slug,
       description: generated.description,
       content: generated.prompt_template,
-      example_input: generated.example_input,
       model_id: randomModel.id,
       profession_id: randomRole.id,
       task_id: randomTask.id,
+      task_slug: randomTask.slug,
       variables: generated.variables || [],
       use_cases: generated.use_cases || [],
       faqs: generated.faqs || [],
@@ -110,10 +154,10 @@ async function runDailyIngest() {
 
     if (dbErr) {
       console.error(`❌ DB Insert Error:`, dbErr.message);
-      process.exit(1); // Fail the job so you see the error immediately
+      process.exit(1);
     }
 
-    console.log(`✅ Ingested: "${generated.title}"`);
+    console.log(`✅ Ingested: "${generated.title}" (/prompts/${randomModel.slug}/${randomRole.slug}/${slug})`);
     addedCount++;
   }
 
