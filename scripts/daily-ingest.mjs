@@ -21,21 +21,16 @@ function slugify(text) {
     .replace(/\-\-+/g, '-');
 }
 
-// Dynamically discover active Groq models for this API key
 async function resolveGroqModel() {
   try {
     const res = await fetch('https://api.groq.com/openai/v1/models', {
       headers: { Authorization: `Bearer ${GROQ_API_KEY}` },
     });
-    if (!res.ok) {
-      console.warn('⚠️ Could not fetch models list, using default.');
-      return 'llama3-8b-8192';
-    }
+    if (!res.ok) return 'llama-3.1-8b-instant';
     const data = await res.json();
     const available = (data.data || []).map((m) => m.id);
-    console.log('📋 Groq Models available on your key:', available.join(', '));
+    console.log('📋 Available Groq models:', available.join(', '));
 
-    // Priority preferences
     const preferences = [
       'llama-3.3-70b-versatile',
       'llama-3.1-70b-versatile',
@@ -44,7 +39,6 @@ async function resolveGroqModel() {
       'llama3-8b-8192',
       'mixtral-8x7b-32768',
       'gemma2-9b-it',
-      'gemma-7b-it',
     ];
 
     for (const pref of preferences) {
@@ -54,12 +48,11 @@ async function resolveGroqModel() {
       }
     }
 
-    const fallback = available.find((id) => !id.includes('whisper') && !id.includes('tts'));
+    const fallback = available.find((id) => !id.includes('whisper') && !id.includes('tts') && !id.includes('guard'));
     console.log(`🎯 Fallback selected: ${fallback}`);
-    return fallback || 'llama3-8b-8192';
+    return fallback || 'llama-3.1-8b-instant';
   } catch (err) {
-    console.warn('⚠️ Model discovery fallback:', err.message);
-    return 'llama3-8b-8192';
+    return 'llama-3.1-8b-instant';
   }
 }
 
@@ -71,9 +64,12 @@ Return ONLY valid JSON matching this exact schema:
   "title": "Clear action-oriented title ending with Prompt",
   "description": "75+ words technical description explaining use-case, constraints, and runtime efficiency.",
   "prompt_template": "Complete system prompt with ### ROLE, ### GUIDELINES, ### NEGATIVE CONSTRAINTS, and [VARIABLE] tags.",
-  "example_input": "Realistic developer input",
+  "example_input": "Realistic developer input or context",
+  "example_output": "Structured output expected from the AI engine",
   "variables": [{"name": "VAR", "label": "Label", "placeholder": "Value"}],
   "use_cases": ["Production case 1", "Production case 2"],
+  "limitations": ["Requires valid model context", "Cannot process unparsed binary blobs"],
+  "tags": ["AI", "Production", "Workflow"],
   "faqs": [{"q": "Execution question?", "a": "Direct technical answer."}]
 }`;
 
@@ -134,20 +130,28 @@ async function runDailyIngest() {
     const generated = await generatePromptPayload(activeModel, randomModel, randomRole, randomTask);
     const slug = `${slugify(generated.title)}-${Date.now().toString().slice(-4)}`;
 
+    // Exact match with Supabase prompts table schema
     const { error: dbErr } = await supabase.from('prompts').insert({
       title: generated.title,
       slug: slug,
       description: generated.description,
-      content: generated.prompt_template,
+      prompt_template: generated.prompt_template, // Exact column name
+      example_input: generated.example_input,
+      example_output: generated.example_output || '',
       model_id: randomModel.id,
       profession_id: randomRole.id,
       task_id: randomTask.id,
       task_slug: randomTask.slug,
+      tags: generated.tags || ['AI', 'Workflow'],
       variables: generated.variables || [],
       use_cases: generated.use_cases || [],
+      limitations: generated.limitations || [],
       faqs: generated.faqs || [],
       quality_score: Math.floor(Math.random() * (99 - 94 + 1)) + 94,
       status: 'published',
+      is_featured: false,
+      views_count: 0,
+      copies_count: 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
