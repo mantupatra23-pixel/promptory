@@ -41,36 +41,48 @@ Return ONLY valid JSON matching this exact schema:
 
   const userQuery = `Create an advanced ${task.name} prompt tailored for a ${role.name} running on ${model.name}. Focus on zero token waste and strict deterministic output.`;
 
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${GROQ_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userQuery },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.4,
-    }),
-  });
+  // Models with instant availability on all Groq tiers
+  const candidateModels = ['llama-3.1-8b-instant', 'llama-3.1-70b-versatile', 'gemma2-9b-it'];
+  let lastError = null;
 
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Groq API Error: ${errText}`);
+  for (const modelId of candidateModels) {
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: modelId,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userQuery },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.3,
+        }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`${modelId}: ${errText}`);
+      }
+
+      const json = await res.json();
+      return JSON.parse(json.choices[0].message.content);
+    } catch (err) {
+      lastError = err;
+      continue;
+    }
   }
 
-  const json = await res.json();
-  return JSON.parse(json.choices[0].message.content);
+  throw lastError;
 }
 
 async function runDailyIngest() {
   console.log('🚀 Starting Automated Prompt Ingestion...');
 
-  // 1. Fetch available taxonomy from Supabase
   const [{ data: models }, { data: roles }, { data: tasks }] = await Promise.all([
     supabase.from('models').select('id, name, slug'),
     supabase.from('professions').select('id, name, slug'),
@@ -82,7 +94,6 @@ async function runDailyIngest() {
     return;
   }
 
-  // 2. Randomly select underserved combinations (3 prompts per run)
   const BATCH_SIZE = 3;
   let addedCount = 0;
 
@@ -97,8 +108,7 @@ async function runDailyIngest() {
       const generated = await generatePromptPayload(randomModel, randomRole, randomTask);
       const slug = `${slugify(generated.title)}-${Date.now().toString().slice(-4)}`;
 
-      // 3. Insert directly into Supabase
-      const { data, error } = await supabase.from('prompts').insert({
+      const { error } = await supabase.from('prompts').insert({
         title: generated.title,
         slug: slug,
         description: generated.description,
@@ -110,11 +120,11 @@ async function runDailyIngest() {
         variables: generated.variables || [],
         use_cases: generated.use_cases || [],
         faqs: generated.faqs || [],
-        quality_score: Math.floor(Math.random() * (99 - 94 + 1)) + 94, // 94 - 99 score
+        quality_score: Math.floor(Math.random() * (99 - 94 + 1)) + 94,
         status: 'published',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      }).select();
+      });
 
       if (error) {
         console.error(`❌ DB Insert error: ${error.message}`);
