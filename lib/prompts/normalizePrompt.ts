@@ -33,9 +33,9 @@ export interface NormalizedPrompt {
   updatedAt: string;
 }
 
-export function sanitizeClaims(text: string): string {
+export function sanitizeClaims(text: string, preserveNewlines = false): string {
   if (!text) return '';
-  return text
+  const result = text
     .replace(/\b100%\s*Quality\s*Audited\b/gi, '303 Quality-Scored Prompts')
     .replace(/\bQuality\s*Audited\b/gi, 'Quality-Scored')
     .replace(/\btested\s+system\s+prompts?\b/gi, 'curated AI prompts and workflow templates')
@@ -56,9 +56,16 @@ export function sanitizeClaims(text: string): string {
     .replace(/\bdeterministic\b/gi, 'structured')
     .replace(/\baudited\s+and\s+deterministic\b/gi, 'structured and reviewed')
     .replace(/\bverified\s+gpt\s+prompt\b/gi, 'prompt')
-    .replace(/\bAll prompts verified under open developer licensing\.?\b/gi, 'Promptory publishes reusable AI prompt templates and workflow resources.')
-    .replace(/\s+/g, ' ')
-    .trim();
+    .replace(/\bAll prompts verified under open developer licensing\.?\b/gi, 'Promptory publishes reusable AI prompt templates and workflow resources.');
+
+  if (preserveNewlines) {
+    return result
+      .replace(/[^\S\r\n]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  return result.replace(/\s+/g, ' ').trim();
 }
 
 function removeRepeatedPhrases(text: string): string {
@@ -132,12 +139,20 @@ export function calculateContentQualityScore(prompt: any, content: string): numb
 }
 
 export function normalizePrompt(raw: any): NormalizedPrompt {
-  const content = (
+  const rawContent = (
     raw.prompt_template?.trim() ||
     raw.prompt?.trim() ||
     raw.content?.trim() ||
     ''
   );
+
+  // Convert raw HTML linebreaks and styling to clean plain Markdown
+  const cleanContent = rawContent
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/?(strong|b)>/gi, '**')
+    .replace(/<\/?(em|i)>/gi, '*')
+    .replace(/<[^>]+>/g, '')
+    .trim();
 
   const rawTitle = raw.title || 'AI System Prompt';
   const taskSlug = raw.task?.slug || raw.task_slug || 'coding';
@@ -152,7 +167,7 @@ export function normalizePrompt(raw: any): NormalizedPrompt {
     description: sanitizeClaims(
       raw.description || `Practical ${raw.model?.name || 'AI'} system prompt for ${raw.profession?.name || 'engineers'}.`
     ),
-    content: sanitizeClaims(content),
+    content: sanitizeClaims(cleanContent, true),
     model: {
       id: raw.model?.id || raw.model_id || '',
       name: raw.model?.name || 'AI Model',
@@ -174,7 +189,7 @@ export function normalizePrompt(raw: any): NormalizedPrompt {
     limitations: Array.isArray(raw.limitations) ? raw.limitations : [],
     faqs: Array.isArray(raw.faqs) ? raw.faqs : [],
     qualityScore: raw.quality_score || 90,
-    contentQualityScore: calculateContentQualityScore(raw, content),
+    contentQualityScore: calculateContentQualityScore(raw, cleanContent),
     status: raw.status || 'published',
     createdAt: raw.created_at || new Date().toISOString(),
     updatedAt: raw.updated_at || raw.created_at || new Date().toISOString(),
