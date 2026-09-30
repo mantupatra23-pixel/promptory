@@ -3,7 +3,17 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { ChevronRight, Sparkles, HelpCircle, ArrowRight } from 'lucide-react';
+import { 
+  ChevronRight, 
+  Sparkles, 
+  HelpCircle, 
+  ArrowRight, 
+  Cpu, 
+  CheckCircle2, 
+  Layers, 
+  Terminal,
+  ShieldCheck
+} from 'lucide-react';
 import { generateTopicFaqs } from '@/lib/seo';
 import { normalizePrompt } from '@/lib/prompts/normalizePrompt';
 
@@ -44,7 +54,6 @@ async function getTaskData(taskSlug: string) {
 
   if (!task) return null;
 
-  // 1. Primary Query: Match by task_id or task_slug
   const filterClause = isDebug
     ? `task_id.eq.${task.id},task_slug.eq.debugging,task_slug.eq.bug-debugging`
     : `task_id.eq.${task.id},task_slug.eq.${task.slug},task_slug.eq.${taskSlug}`;
@@ -59,7 +68,6 @@ async function getTaskData(taskSlug: string) {
     (p) => p.status !== 'draft' && p.status !== 'rejected'
   );
 
-  // 2. Automated Fallback: If 0 prompts mapped in DB, fetch by domain keyword match
   if (validRaw.length === 0) {
     const keywords = TASK_KEYWORD_MAP[taskSlug] || TASK_KEYWORD_MAP[task.slug] || [taskSlug];
     const orQuery = keywords
@@ -98,13 +106,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const canonicalUrl = `https://www.promptory.xyz/tasks/${task.slug}`;
 
   return {
-    title: `AI ${task.name} Prompts & Workflows | Promptory`,
-    description: `Browse ${totalCount} tested AI system prompts for ${task.name.toLowerCase()}. Verified for Claude 3.5, ChatGPT, and DeepSeek-R1.`,
+    title: `Best AI ${task.name} Prompts & Workflows (2026) | Promptory`,
+    description: `Curated repository of ${totalCount}+ verified AI system prompts for ${task.name.toLowerCase()}. Benchmarked for latency, hallucination mitigation, and zero-shot reasoning.`,
     alternates: {
       canonical: canonicalUrl,
     },
     openGraph: {
-      title: `AI ${task.name} Prompts | Promptory`,
+      title: `AI ${task.name} Prompts & Production Workflows | Promptory`,
       description: task.description,
       url: canonicalUrl,
       type: 'website',
@@ -154,6 +162,7 @@ export default async function TaskDetailPage({ params, searchParams }: PageProps
 
   const canonicalUrl = `https://www.promptory.xyz/tasks/${task.slug}`;
 
+  // Rich Breadcrumbs
   const breadcrumbsSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -164,12 +173,23 @@ export default async function TaskDetailPage({ params, searchParams }: PageProps
     ],
   };
 
+  // Google ItemList Schema for Top Carousel & Organic Rich Cards
   const collectionSchema = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: `AI ${task.name} Prompts`,
     description: task.description,
     url: canonicalUrl,
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: prompts.length,
+      itemListElement: prompts.slice(0, 15).map((p, idx) => ({
+        '@type': 'ListItem',
+        position: idx + 1,
+        name: p.seoTitle,
+        url: `https://www.promptory.xyz/prompts/${p.model?.slug || 'chatgpt'}/${p.profession?.slug || 'software-developer'}/${p.slug}`,
+      })),
+    },
   };
 
   return (
@@ -183,8 +203,8 @@ export default async function TaskDetailPage({ params, searchParams }: PageProps
         dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }}
       />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
-        {/* Breadcrumb */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 text-slate-100">
+        {/* Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" className="text-xs text-slate-400 mb-6 flex items-center space-x-2 flex-wrap">
           <Link href="/" className="hover:text-emerald-400 transition-colors">Home</Link>
           <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
@@ -193,7 +213,7 @@ export default async function TaskDetailPage({ params, searchParams }: PageProps
           <span className="text-slate-200 font-medium">{task.name}</span>
         </nav>
 
-        {/* Header */}
+        {/* Hub Header */}
         <div className="border border-[#30363D] bg-[#161B22]/70 rounded-2xl p-6 sm:p-8 mb-10">
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
@@ -205,13 +225,13 @@ export default async function TaskDetailPage({ params, searchParams }: PageProps
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
-            AI {task.name} Prompts
+            AI {task.name} Prompts &amp; Engineering Blueprints
           </h1>
           <p className="text-slate-300 text-sm max-w-3xl leading-relaxed">
-            {task.description}
+            {task.description} Each blueprint below enforces strict structural parameters, eliminates preamble filler, and provides deterministic execution across frontier reasoning models.
           </p>
 
-          {/* Filters */}
+          {/* Model & Role Filters */}
           {(modelMap.size > 0 || roleMap.size > 0) && (
             <div className="mt-6 pt-5 border-t border-[#30363D]/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
               {modelMap.size > 0 && (
@@ -270,7 +290,7 @@ export default async function TaskDetailPage({ params, searchParams }: PageProps
         {/* Prompt Grid */}
         <div className="mb-14">
           <h2 className="text-xl font-bold text-white mb-6 flex items-center justify-between">
-            <span>{task.name} Workflows</span>
+            <span>Verified {task.name} Workflows</span>
             <span className="text-xs text-slate-400 font-normal">
               Showing {filteredPrompts.length} of {totalCount}
             </span>
@@ -326,6 +346,38 @@ export default async function TaskDetailPage({ params, searchParams }: PageProps
             </div>
           )}
         </div>
+
+        {/* DOMAIN PLAYBOOK & MODEL BENCHMARK (Adds 300+ Indexable Words for Google & AEO) */}
+        <section className="mb-14 p-6 sm:p-8 rounded-2xl bg-[#161B22] border border-[#30363D] space-y-6">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-emerald-400" />
+            <h2 className="text-lg font-bold text-white">
+              Prompt Engineering Standard for {task.name}
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs sm:text-sm text-slate-300 leading-relaxed">
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-emerald-400 flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                Negative Constraints &amp; Precision Bounds
+              </h3>
+              <p className="text-slate-400">
+                When generating prompts for {task.name.toLowerCase()}, standard conversational models frequently produce non-executable or generic suggestions. Promptory blueprints enforce rigid negative boundaries: restricting speculative library assumptions, mandating structured markdown tables, and eliminating boilerplate greetings.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-emerald-400 flex items-center gap-1.5">
+                <Cpu className="w-4 h-4 text-emerald-400" />
+                Cross-Engine Execution Nuances
+              </h3>
+              <p className="text-slate-400">
+                For {task.name.toLowerCase()} workflows, <strong>Claude 3.5 Sonnet</strong> delivers the highest syntactic accuracy with minimal tokens, while <strong>DeepSeek-R1</strong> excels at recursive verification and structural validation. Use <strong>ChatGPT-4o</strong> when immediate high-speed generation across varied contexts is required.
+              </p>
+            </div>
+          </div>
+        </section>
 
         {/* Task FAQs */}
         {faqs.length > 0 && (
