@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { PlusCircle, Bookmark, Workflow, Compass, Menu, X } from 'lucide-react';
+import { PlusCircle, Bookmark, Workflow, Compass, Menu, X, Zap } from 'lucide-react';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -65,10 +65,29 @@ export default function Navbar() {
             <Bookmark className="w-3.5 h-3.5" />
             <span>Saved</span>
           </Link>
+          <Link
+            href="/pricing"
+            className={`text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 border ${
+              pathname === '/pricing'
+                ? 'text-amber-300 bg-amber-500/15 border-amber-500/40'
+                : 'text-amber-400 bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-400/50'
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            <span>Pricing</span>
+          </Link>
         </nav>
 
         {/* Right Actions: Pinned Submit CTA & Mobile Menu */}
         <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href="/pricing"
+            className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-bold transition shrink-0"
+          >
+            <Zap className="w-3 h-3 fill-amber-400" />
+            <span>Pro</span>
+          </Link>
+
           <Link
             href="/submit"
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-md shadow-emerald-500/20 shrink-0"
@@ -83,7 +102,7 @@ export default function Navbar() {
             className="md:hidden p-2 rounded-xl text-slate-400 hover:text-white bg-[#21262D] border border-[#30363D] transition shrink-0"
             aria-label="Toggle navigation menu"
           >
-            {mobileMenuOpen ? <X className="w-4 h-4 text-emerald-400" /> : <Menu className="w-4 h-4" />}
+            {mobileMenuOpen ? <X className="w-4 h-4 text-emerald-400" /> : <Menu className="w-4 h-4 text-slate-300" />}
           </button>
         </div>
 
@@ -92,6 +111,22 @@ export default function Navbar() {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-[#30363D] bg-[#161B22] px-4 py-3 space-y-1.5 animate-in slide-in-from-top-2 duration-150 shadow-2xl">
+          <Link
+            href="/pricing"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition border ${
+              pathname === '/pricing'
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                : 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Zap className="w-4 h-4 fill-amber-400" />
+              <span>Pro Subscription (₹799/mo)</span>
+            </div>
+            <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-amber-500 text-black">Upgrade</span>
+          </Link>
+
           <Link
             href="/directory"
             onClick={() => setMobileMenuOpen(false)}
@@ -127,7 +162,7 @@ export default function Navbar() {
                 : 'text-slate-300 hover:bg-[#21262D] hover:text-white'
             }`}
           >
-            <Bookmark className="w-4 h-4 text-amber-400" />
+            <Bookmark className="w-4 h-4 text-slate-400" />
             <span>Saved Prompts</span>
           </Link>
         </div>
