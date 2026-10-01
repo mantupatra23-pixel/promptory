@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Play, Sparkles, Check, Copy, Loader2, Zap } from 'lucide-react';
 
 interface Props {
@@ -97,8 +99,35 @@ export default function PromptSimulator({ promptText }: Props) {
             </button>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#0D1117] border border-[#30363D] text-xs text-slate-200 font-mono whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto select-all">
-            {output}
+          <div className="p-4 rounded-xl bg-[#0D1117] border border-[#30363D] text-xs text-slate-200 leading-relaxed max-h-96 overflow-y-auto overflow-x-auto select-all">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                table: ({ ...props }) => (
+                  <div className="my-3 overflow-x-auto rounded-lg border border-slate-700/60">
+                    <table className="w-full text-left border-collapse text-[11px]" {...props} />
+                  </div>
+                ),
+                thead: ({ ...props }) => <thead className="bg-[#161B22] text-slate-200" {...props} />,
+                th: ({ ...props }) => (
+                  <th className="border-b border-slate-700 px-3 py-2 font-semibold text-cyan-300" {...props} />
+                ),
+                td: ({ ...props }) => (
+                  <td className="border-b border-slate-800/80 px-3 py-2 text-slate-300 align-top" {...props} />
+                ),
+                h1: ({ ...props }) => <h1 className="text-sm font-bold text-white mt-4 mb-2 pb-1 border-b border-slate-800" {...props} />,
+                h2: ({ ...props }) => <h2 className="text-xs font-bold text-cyan-400 mt-3 mb-1.5" {...props} />,
+                h3: ({ ...props }) => <h3 className="text-xs font-semibold text-emerald-400 mt-2 mb-1" {...props} />,
+                p: ({ ...props }) => <p className="mb-2 leading-relaxed text-slate-300" {...props} />,
+                ul: ({ ...props }) => <ul className="list-disc pl-4 space-y-1 mb-2 text-slate-300" {...props} />,
+                ol: ({ ...props }) => <ol className="list-decimal pl-4 space-y-1 mb-2 text-slate-300" {...props} />,
+                li: ({ ...props }) => <li className="pl-0.5" {...props} />,
+                strong: ({ ...props }) => <strong className="font-semibold text-slate-100" {...props} />,
+                hr: () => <hr className="border-slate-800 my-3" />
+              }}
+            >
+              {output}
+            </ReactMarkdown>
           </div>
         </div>
       )}
