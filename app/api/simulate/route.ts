@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server';
-import Groq from 'groq-sdk';
-
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    
+
+    // Multi-field fallback for prompt extraction
     const prompt = (
       body.prompt || 
       body.promptText || 
@@ -17,6 +13,7 @@ export async function POST(req: Request) {
       ''
     ).trim();
 
+    // Dynamic model selection with fallback
     const model = body.model || 'llama-3.3-70b-versatile';
 
     if (!prompt) {
@@ -36,36 +33,54 @@ export async function POST(req: Request) {
 
     const startTime = performance.now();
 
-    const response = await groq.chat.completions.create({
-      model: model,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an elite production AI execution engine. Provide deterministic, high-density, directly actionable technical output without introductory filler or sign-offs.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.2,
-      max_tokens: 4096,
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an elite production AI execution engine. Provide deterministic, high-density, directly actionable technical output without introductory filler or sign-offs.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.2,
+        max_tokens: 4096,
+      }),
     });
 
     const endTime = performance.now();
     const latencyMs = Math.round(endTime - startTime);
 
-    const msg = response.choices[0]?.message;
+    if (!groqResponse.ok) {
+      const errPayload = await groqResponse.text();
+      return NextResponse.json(
+        { error: `Groq Gateway Error (${groqResponse.status}): ${errPayload}` },
+        { status: groqResponse.status }
+      );
+    }
+
+    const data = await groqResponse.json();
+    const msg = data.choices?.[0]?.message;
     const output = (msg?.content && msg.content.trim()) 
       ? msg.content 
-      : 'Execution finished with no output returned.';
+      : (msg?.reasoning && msg.reasoning.trim()) 
+        ? msg.reasoning 
+        : 'Execution finished with no output returned.';
 
     return NextResponse.json({
       success: true,
       output: output,
       latency_ms: latencyMs,
       modelUsed: model,
-      usage: response.usage,
+      usage: data.usage,
     });
 
   } catch (error: any) {
