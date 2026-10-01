@@ -35,15 +35,10 @@ export async function POST(req: Request) {
         model: 'openai/gpt-oss-20b',
         messages: [
           {
-            role: 'system',
-            content: 'You are the ultra-fast execution preview engine for Promptory.xyz. Execute the user prompt strictly according to its instructions. If a JSON schema or specific format is requested, output valid JSON only with zero conversational preamble, zero apologies, and no markdown wrapping.'
-          },
-          {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.1,
         max_tokens: 1024,
       }),
     });
@@ -63,7 +58,12 @@ export async function POST(req: Request) {
     }
 
     const data = await groqResponse.json();
-    const output = data.choices?.[0]?.message?.content || 'No output produced by the runtime.';
+    const msg = data.choices?.[0]?.message;
+    const output = (msg?.content && msg.content.trim()) 
+      ? msg.content 
+      : (msg?.reasoning && msg.reasoning.trim()) 
+        ? msg.reasoning 
+        : 'No output produced by the runtime.';
 
     return NextResponse.json({
       success: true,
