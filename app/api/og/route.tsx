@@ -6,9 +6,10 @@ export const runtime = 'edge';
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const title = searchParams.get('title') || 'Battle-Tested AI System Prompt';
-    const model = searchParams.get('model') || 'ChatGPT';
-    const role = searchParams.get('role') || 'Developer';
+
+    const title = searchParams.get('title') || 'Production AI Prompt Engine';
+    const model = searchParams.get('model') || 'All Frontier Models';
+    const role = searchParams.get('role') || 'Engineering';
     const score = searchParams.get('score') || '98';
 
     return new ImageResponse(
@@ -20,147 +21,150 @@ export async function GET(req: NextRequest) {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            backgroundColor: '#0A0E14',
-            padding: '60px 70px',
+            backgroundColor: '#0A0D12',
+            padding: '56px 64px',
             fontFamily: 'sans-serif',
-            border: '8px solid #10B981',
+            position: 'relative',
           }}
         >
-          {/* Top Bar Header */}
+          {/* Subtle Ambient Neon Glow */}
           <div
             style={{
+              position: 'absolute',
+              top: '-120px',
+              right: '-120px',
+              width: '420px',
+              height: '420px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(16,185,129,0.18) 0%, rgba(10,13,18,0) 70%)',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              width: '100%',
             }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center' }}>
+          />
+
+          {/* Top Brand Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <div
                 style={{
-                  width: '22px',
-                  height: '22px',
-                  borderRadius: '11px',
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
                   backgroundColor: '#10B981',
-                  marginRight: '14px',
-                }}
-              />
-              <span
-                style={{
-                  color: '#FFFFFF',
-                  fontSize: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#000',
                   fontWeight: 900,
-                  letterSpacing: '-1px',
+                  fontSize: '20px',
                 }}
               >
+                P
+              </div>
+              <span style={{ fontSize: '26px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.5px' }}>
                 Promptory
               </span>
             </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  color: '#10B981',
-                  backgroundColor: '#064E3B',
-                  border: '1px solid #10B981',
-                  padding: '8px 20px',
-                  borderRadius: '24px',
-                  fontSize: '18px',
-                  fontWeight: 800,
-                  marginRight: '12px',
-                }}
-              >
-                ★ Score {score}/100
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  color: '#E5E7EB',
-                  backgroundColor: '#161B22',
-                  border: '1px solid #30363D',
-                  padding: '8px 18px',
-                  borderRadius: '24px',
-                  fontSize: '18px',
-                  fontWeight: 700,
-                }}
-              >
-                Verified AI Prompt
-              </div>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 18px',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(16,185,129,0.12)',
+                border: '1px solid rgba(16,185,129,0.3)',
+                color: '#34D399',
+                fontSize: '15px',
+                fontWeight: 700,
+              }}
+            >
+              <span>Quality Score {score}/100</span>
             </div>
           </div>
 
-          {/* Main Title */}
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-              margin: '20px 0',
-            }}
-          >
-            <div
+          {/* Main Title & Description */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', maxWidth: '1020px', zIndex: 10 }}>
+            <h1
               style={{
-                fontSize: title.length > 45 ? '46px' : '58px',
-                fontWeight: 900,
-                color: '#FFFFFF',
-                lineHeight: 1.2,
+                fontSize: title.length > 55 ? '46px' : '56px',
+                fontWeight: 800,
+                color: '#F8FAFC',
+                lineHeight: 1.15,
                 letterSpacing: '-1.5px',
+                margin: 0,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
               }}
             >
               {title}
-            </div>
+            </h1>
+
+            <p style={{ fontSize: '20px', color: '#94A3B8', margin: 0, lineHeight: 1.4 }}>
+              Production-grade system prompt engineered with zero-hallucination boundary constraints and deterministic outputs.
+            </p>
           </div>
 
-          {/* Bottom Badges & Footer */}
+          {/* Bottom Telemetry & Tags */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              width: '100%',
+              paddingTop: '28px',
+              borderTop: '1px solid #1E293B',
+              zIndex: 10,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
               <div
                 style={{
                   display: 'flex',
+                  alignItems: 'center',
+                  padding: '6px 16px',
+                  borderRadius: '8px',
                   backgroundColor: '#161B22',
                   border: '1px solid #30363D',
-                  color: '#38BDF8',
-                  padding: '10px 22px',
-                  borderRadius: '10px',
-                  fontSize: '20px',
-                  fontWeight: 800,
-                  marginRight: '14px',
+                  color: '#E2E8F0',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
                 }}
               >
-                🤖 {model}
+                Model: {model}
               </div>
+
               <div
                 style={{
                   display: 'flex',
+                  alignItems: 'center',
+                  padding: '6px 16px',
+                  borderRadius: '8px',
                   backgroundColor: '#161B22',
                   border: '1px solid #30363D',
-                  color: '#34D399',
-                  padding: '10px 22px',
-                  borderRadius: '10px',
-                  fontSize: '20px',
-                  fontWeight: 800,
+                  color: '#E2E8F0',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  textTransform: 'capitalize',
                 }}
               >
-                💼 {role}
+                Role: {role}
               </div>
             </div>
 
             <div
               style={{
-                color: '#9CA3AF',
-                fontSize: '24px',
-                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                color: '#64748B',
+                fontSize: '14px',
+                fontFamily: 'monospace',
               }}
             >
-              promptory.xyz
+              <span style={{ color: '#34D399' }}>npx promptory-cli</span> &bull; promptory.xyz
             </div>
           </div>
         </div>
@@ -171,6 +175,8 @@ export async function GET(req: NextRequest) {
       }
     );
   } catch (e: any) {
-    return new Response(`OG error: ${e?.message}`, { status: 500 });
+    return new Response(`Failed to generate OG image: ${e.message}`, {
+      status: 500,
+    });
   }
 }
