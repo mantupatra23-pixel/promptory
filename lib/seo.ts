@@ -151,3 +151,6 @@ export function generateTopicFaqs(
     },
   ];
 }
+
+// Re-export helpers required by app/page.tsx
+export { sanitizeClaims, generateSeoTitle } from './prompts/normalizePrompt';
