@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { Copy, Check, RotateCcw, Sliders, FileCode, ChevronDown, GitFork, Download } from 'lucide-react';
 import { parsePromptVariables, replacePromptVariables } from '@/lib/variableParser';
 import AIBridge from './AIBridge';
 import PromptExportModal from './PromptExportModal';
 import PromptSimulator from './PromptSimulator';
+import PromptRemixModal from './PromptRemixModal';
 
 export interface Props {
   initialPrompt?: string;
@@ -101,7 +101,6 @@ export default function PromptCustomizer({
   modelName = 'ChatGPT',
   exampleInput,
 }: Props) {
-  const router = useRouter();
   const baseTemplate = initialPrompt || template || prompt || '';
   const effectiveTitle = promptTitle || title || 'Custom System Prompt';
   const detectedVariables = useMemo(() => parsePromptVariables(baseTemplate), [baseTemplate]);
@@ -112,6 +111,7 @@ export default function PromptCustomizer({
   const [selectedLength, setSelectedLength] = useState('Default');
   const [copied, setCopied] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showRemixModal, setShowRemixModal] = useState(false);
 
   useEffect(() => {
     if (exampleInput && typeof exampleInput === 'object') {
@@ -144,15 +144,6 @@ export default function PromptCustomizer({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {}
-  };
-
-  const handleRemix = () => {
-    const params = new URLSearchParams({
-      fork_title: `[Remix] ${effectiveTitle}`,
-      fork_template: baseTemplate,
-      fork_model: modelName.toLowerCase(),
-    });
-    router.push(`/submit?${params.toString()}`);
   };
 
   return (
@@ -222,7 +213,7 @@ export default function PromptCustomizer({
 
           <div className="flex items-center gap-2 flex-wrap">
             <button
-              onClick={handleRemix}
+              onClick={() => setShowRemixModal(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#21262D] hover:bg-[#30363D] text-slate-200 text-xs font-semibold transition border border-[#30363D]"
             >
               <GitFork className="w-3.5 h-3.5 text-cyan-400" />
@@ -273,6 +264,15 @@ export default function PromptCustomizer({
         onClose={() => setShowExportModal(false)}
         promptTitle={effectiveTitle}
         compiledPrompt={generatedPrompt}
+        modelName={modelName}
+      />
+
+      {/* INTERACTIVE REMIX / FORK PLAYGROUND MODAL */}
+      <PromptRemixModal
+        isOpen={showRemixModal}
+        onClose={() => setShowRemixModal(false)}
+        initialPrompt={generatedPrompt}
+        promptTitle={effectiveTitle}
         modelName={modelName}
       />
 
