@@ -42,7 +42,7 @@ export async function POST(req: Request) {
             content: prompt
           }
         ],
-        max_tokens: 2048,
+        max_tokens: 3500,
       }),
     });
 
