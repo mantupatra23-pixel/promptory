@@ -35,10 +35,10 @@ export default function PromptExportModal({
 
   // 0. CLI (npx) Terminal Command
   const cliSnippet = `# Pull directly into your local project root as .cursorrules
-npx promptory add ${derivedSlug} --cursor
+npx promptory-cli add ${derivedSlug} --cursor
 
 # Or pull as a standalone Markdown prompt file
-npx promptory add ${derivedSlug} --raw`;
+npx promptory-cli add ${derivedSlug} --raw`;
 
   // 1. .cursorrules content
   const cursorRulesContent = `# Cursor System Rules: ${promptTitle}
@@ -125,7 +125,7 @@ print(response.choices[0].message.content)
   const handleCopy = async () => {
     try {
       const textToCopy = activeTab === 'cli' 
-        ? `npx promptory add ${derivedSlug} --cursor` 
+        ? `npx promptory-cli add ${derivedSlug} --cursor` 
         : getActiveContent();
       await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
