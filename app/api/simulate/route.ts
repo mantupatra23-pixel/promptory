@@ -32,7 +32,7 @@ export async function POST(req: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'openai/gpt-oss-20b',
         messages: [
           {
             role: 'system',
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
       output,
       latency: `${latencyMs}ms`,
       latencyMs,
-      model: 'Llama 3.1 8B Instant (Groq Runtime)'
+      model: 'GPT-OSS 20B (Groq Runtime)'
     });
 
   } catch (error: any) {
