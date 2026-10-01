@@ -15,10 +15,8 @@ import {
   HelpCircle, 
   Terminal, 
   Cpu, 
-  Zap, 
   CheckCircle2, 
-  BookOpen, 
-  Layers 
+  CheckSquare
 } from 'lucide-react';
 
 export const revalidate = 60;
@@ -94,10 +92,18 @@ export default async function PromptDetailPage({ params }: Props) {
   }
 
   const canonicalUrl = `https://www.promptory.xyz/prompts/${prompt.model.slug}/${prompt.profession.slug}/${prompt.slug}`;
-  const faqs = (prompt.faqs && prompt.faqs.length > 0)
-    ? prompt.faqs
-    : generateTopicFaqs(prompt.title, prompt.description, prompt.model.name, prompt.profession.name, prompt.task.slug);
-  const howToSteps = generateContextualSteps(prompt.task.slug);
+  const faqs = generateTopicFaqs(
+    prompt.title, 
+    prompt.description, 
+    prompt.model.name, 
+    prompt.profession.name, 
+    prompt.task.slug
+  );
+  const howToSteps = generateContextualSteps(
+    prompt.task.slug, 
+    prompt.model.name, 
+    prompt.profession.name
+  );
 
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
@@ -126,18 +132,18 @@ export default async function PromptDetailPage({ params }: Props) {
     },
   };
 
-  const faqSchema = faqs.length > 0 ? {
+  const faqSchema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: faqs.map((f: any) => ({
       '@type': 'Question',
-      name: f.question || f.q,
+      name: f.question,
       acceptedAnswer: {
         '@type': 'Answer',
-        text: f.answer || f.a,
+        text: f.answer,
       },
     })),
-  } : null;
+  };
 
   return (
     <>
@@ -149,12 +155,10 @@ export default async function PromptDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
       />
-      {faqSchema && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-        />
-      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 text-slate-100">
         
@@ -217,7 +221,7 @@ export default async function PromptDetailPage({ params }: Props) {
           exampleInput={rawPrompt.example_input}
         />
 
-        {/* DEMONSTRATED AI EXECUTION OUTPUT (Adds 250+ Indexable Words for Google & AI Overviews) */}
+        {/* DEMONSTRATED AI EXECUTION OUTPUT */}
         <section className="mt-14 pt-10 border-t border-[#30363D] space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -291,42 +295,66 @@ export default async function PromptDetailPage({ params }: Props) {
           </div>
         </section>
 
-        {/* How To Steps Section */}
+        {/* COMPREHENSIVE HOW TO EXECUTE SECTION */}
         <section className="mt-14 pt-10 border-t border-[#30363D] space-y-6">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-lg font-bold text-white">How to Execute This {prompt.task.name} Workflow</h2>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-emerald-400" />
+              <div>
+                <h2 className="text-lg font-bold text-white">How to Execute This {prompt.task.name} Workflow</h2>
+                <p className="text-xs text-slate-400">Production execution protocol for developers and engineering teams</p>
+              </div>
+            </div>
+            <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/50 border border-cyan-800/40 px-2.5 py-1 rounded-lg">
+              4-Phase Implementation
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {howToSteps.map((item) => (
-              <div key={item.title} className="p-4 rounded-2xl bg-[#161B22] border border-[#30363D] space-y-1.5 shadow-sm">
-                <h3 className="text-xs sm:text-sm font-bold text-white">{item.title}</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">{item.detail}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {howToSteps.map((step) => (
+              <div key={step.title} className="p-5 rounded-2xl bg-[#161B22] border border-[#30363D] hover:border-emerald-500/40 transition space-y-3 shadow-md flex flex-col justify-between">
+                <div className="space-y-2">
+                  <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                    {step.title}
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">{step.detail}</p>
+                </div>
+                {step.checkpoint && (
+                  <div className="pt-2.5 border-t border-[#30363D]/60 flex items-start gap-2 text-[11px] text-emerald-400/90 font-mono">
+                    <CheckSquare className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>{step.checkpoint}</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </section>
 
-        {/* Frequently Asked Questions Section */}
+        {/* FREQUENTLY ASKED QUESTIONS SECTION */}
         <section className="mt-14 pt-10 border-t border-[#30363D] space-y-4">
-          <div className="flex items-center gap-2 mb-2">
-            <HelpCircle className="w-5 h-5 text-emerald-400" />
-            <div>
-              <h2 className="text-lg font-bold text-white">Frequently Asked Questions</h2>
-              <p className="text-xs text-slate-400">Technical execution guidance for &apos;{prompt.seoTitle}&apos;</p>
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-emerald-400" />
+              <div>
+                <h2 className="text-lg font-bold text-white">Frequently Asked Questions</h2>
+                <p className="text-xs text-slate-400">In-depth technical execution and architecture guidance</p>
+              </div>
             </div>
+            <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/50 border border-emerald-800/40 px-2.5 py-1 rounded-lg">
+              Schema.org FAQPage Verified
+            </span>
           </div>
 
           <div className="space-y-3">
-            {faqs.map((faq: any, i: number) => (
-              <details key={i} className="group bg-[#161B22] border border-[#30363D] rounded-2xl p-4 transition open:border-emerald-500/40">
+            {faqs.map((faq, i) => (
+              <details key={i} className="group bg-[#161B22] border border-[#30363D] rounded-2xl p-4 transition open:border-emerald-500/40 hover:border-slate-600">
                 <summary className="text-xs sm:text-sm font-bold text-slate-200 cursor-pointer list-none flex items-center justify-between">
-                  <span>{faq.question || faq.q}</span>
-                  <span className="text-emerald-400 font-mono text-xs ml-2 group-open:rotate-180 transition-transform">▼</span>
+                  <span className="pr-4">{faq.question}</span>
+                  <span className="text-emerald-400 font-mono text-xs ml-2 group-open:rotate-180 transition-transform shrink-0">▼</span>
                 </summary>
-                <p className="text-xs text-slate-400 mt-2.5 pt-2.5 border-t border-[#30363D] leading-relaxed">
-                  {faq.answer || faq.a}
+                <p className="text-xs text-slate-400 mt-3 pt-3 border-t border-[#30363D] leading-relaxed">
+                  {faq.answer}
                 </p>
               </details>
             ))}

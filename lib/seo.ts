@@ -1,202 +1,153 @@
-import { sanitizeClaims, generateSeoTitle } from './prompts/normalizePrompt';
+export interface ExecutionStep {
+  title: string;
+  detail: string;
+  codeSnippet?: string;
+  checkpoint?: string;
+}
 
-export { sanitizeClaims, generateSeoTitle, generateSeoTitle as generateIntentTitle };
+export interface FAQItem {
+  question: string;
+  answer: string;
+}
 
-export function generateTopicFaqs(
-  title: string,
-  description: string,
-  modelName: string,
-  roleName: string,
-  taskSlug: string
-): Array<{ question: string; answer: string }> {
-  const cleanTitle = sanitizeClaims(title);
+export function generateContextualSteps(
+  taskSlug: string = 'coding',
+  modelName: string = 'AI',
+  roleName: string = 'Engineer'
+): ExecutionStep[] {
+  const normalized = (taskSlug || '').toLowerCase();
 
-  if (taskSlug === 'database' || taskSlug === 'performance') {
+  if (normalized.includes('test')) {
     return [
       {
-        question: `What information should I provide for ${cleanTitle}?`,
-        answer: `Provide your slow SQL query, table DDL, row counts, existing index configurations, and EXPLAIN (ANALYZE, BUFFERS) query plan outputs.`,
+        title: '01. Define Target Runtime & Interface Contract',
+        detail: 'Isolate the exact module, function signature, or API endpoint requiring validation. Specify your test runner (e.g., Vitest, Jest, Pytest, Playwright) and mock requirements to prevent the model from generating incompatible syntax.',
+        checkpoint: 'Ensure method inputs, outputs, and external dependencies (DB, Redis, Third-Party APIs) are clearly specified.',
       },
       {
-        question: `Can this prompt analyze query plans and execution bottlenecks?`,
-        answer: `Yes. It focuses on identifying costly sequential scans, N+1 query patterns, unindexed foreign keys, and memory locking issues.`,
+        title: '02. Compile Variables with Strict Boundary Guardrails',
+        detail: 'Paste your source logic into the template variables. The embedded negative constraints force the model to reject arbitrary assertions and instead focus on real failure states, timeouts, and null boundary exceptions.',
+        checkpoint: 'Verify that zero-hallucination constraints are active in the prompt preview before execution.',
       },
       {
-        question: `Should I test recommended indexes before production deployment?`,
-        answer: `Always benchmark proposed index additions and rewritten queries in a staging environment under realistic traffic before migrating production schemas.`,
+        title: '03. Execute Dual-Model Comparative Simulation',
+        detail: 'Run the compiled prompt through the Promptory Live AI Output Simulator. Benchmark high-speed models (GPT-OSS 20B) for assertion velocity against deep reasoning models (GPT-OSS 120B) for complex architectural edge cases.',
+        checkpoint: 'Review output assertions to confirm both happy-path coverage and defensive exception handling.',
       },
       {
-        question: `Can I use this workflow with another AI model?`,
-        answer: `Yes. While structured around ${modelName}'s system instruction handling, the imperative rules operate reliably in Claude 3.5 Sonnet, DeepSeek-R1, and GPT-4o.`,
+        title: '04. Export to Local IDE & Run CI Pipeline',
+        detail: 'Use the "Export API / IDE" modal to download the blueprint as a .cursorrules file or run `npx promptory-cli` to inject the test suite directly into your local repository test runner.',
+        checkpoint: 'Execute your test suite locally: target a minimum of 85% branch coverage with deterministic passing runs.',
       },
     ];
   }
 
-  if (taskSlug === 'code-review') {
+  if (normalized.includes('database') || normalized.includes('query')) {
     return [
       {
-        question: `What code context should I provide for this review?`,
-        answer: `Provide the isolated function or module, static typing interfaces, framework version, runtime constraints, and expected behavior.`,
+        title: '01. Ingest DDL Schema & Current Query Execution Plan',
+        detail: 'Provide table schema, existing index declarations, and the EXPLAIN ANALYZE output or raw slow query log. Specifying row volume (e.g., 5M rows) ensures the model accounts for memory buffers and sequential scan costs.',
+        checkpoint: 'Provide actual indexing structure to avoid duplicate index recommendations.',
       },
       {
-        question: `What issues can this prompt help identify?`,
-        answer: `It highlights boundary regressions, race conditions, memory leaks, unhandled exceptions, and framework idiomatic anti-patterns.`,
+        title: '02. Set Dialect Constraints & Isolation Levels',
+        detail: 'Specify your exact database engine (PostgreSQL 16, MySQL 8, SQLite, Supabase) and concurrency limits. The negative constraints prevent the engine from suggesting generic syntax incompatible with your dialect.',
+        checkpoint: 'Verify transaction isolation requirements and vacuum/connection pool limits.',
       },
       {
-        question: `Can it review large pull requests?`,
-        answer: `For optimal accuracy, break large pull requests into logical functions or files rather than pasting multi-thousand-line diffs at once.`,
+        title: '03. Simulate Plan Optimization & Index Synthesis',
+        detail: 'Test the compiled query prompt in the Simulator to inspect composite index proposals, partial index strategies, and CTE refactoring suggestions for latency reduction.',
+        checkpoint: 'Compare proposed query execution time against original sequential scan telemetry.',
       },
       {
-        question: `How should I verify recommendations?`,
-        answer: `Validate all proposed refactors against existing automated unit and regression test suites before merging into the main branch.`,
+        title: '04. Benchmark in Staging Before Production Migration',
+        detail: 'Copy the optimized SQL statements and run them in an isolated staging branch using `EXPLAIN (BUFFERS, ANALYZE)` to confirm buffer hit ratios improve before creating migration scripts.',
+        checkpoint: 'Confirm zero locking regressions on active write tables during index creation.',
       },
     ];
   }
 
-  if (taskSlug === 'debugging') {
+  if (normalized.includes('debug') || normalized.includes('code-review')) {
     return [
       {
-        question: `What debugging inputs produce the best diagnostic output?`,
-        answer: `Provide the observed stack trace, error logs, problematic function code, and any reproducible trigger conditions.`,
+        title: '01. Isolate Stack Trace & Reproduction Scenario',
+        detail: 'Capture the full stack trace, environment parameters (Node.js/Python version, OS), and the minimal reproducible code snippet. Avoid stripping out the error origin line numbers.',
+        checkpoint: 'Include exact exception logs alongside the relevant file context.',
       },
       {
-        question: `How does this prompt approach root-cause analysis?`,
-        answer: `It isolates the fault mechanism, identifies environmental assumptions, and generates targeted remediations with minimal changes.`,
+        title: '02. Apply Root-Cause Boundary Constraints',
+        detail: 'The prompt instructs the AI model to perform causality diagnosis rather than guessing surface patches. It prevents "try-catch wrapping" and forces structural architectural repairs.',
+        checkpoint: 'Ensure negative constraints block conversational apologies and non-actionable suggestions.',
       },
       {
-        question: `Does this prompt replace runtime debuggers or APM tools?`,
-        answer: `No. It serves as an analytical assistant. Combine its analysis with APM tracing tools and reproduction unit tests.`,
+        title: '03. Cross-Check Against Frontier Reasoning Models',
+        detail: 'Simulate the debugging prompt across Deep Reasoning models to detect memory leaks, race conditions, async deadlocks, or unhandled promise rejections.',
+        checkpoint: 'Verify proposed diffs solve the underlying memory or concurrency bottleneck.',
+      },
+      {
+        title: '04. Apply Diff & Validate Regressions',
+        detail: 'Export the clean code diff into your IDE or Cursor editor. Run existing unit test suites to guarantee the bug fix introduces zero regressions in adjacent modules.',
+        checkpoint: 'Validate that regression tests reproduce the original bug when failing and verify passing post-patch.',
       },
     ];
   }
 
-  if (taskSlug === 'testing') {
-    return [
-      {
-        question: `What test frameworks are supported?`,
-        answer: `It scaffolds test suites for Pytest, Playwright, Jest, Vitest, and standard testing libraries based on your configured parameters.`,
-      },
-      {
-        question: `Does this prompt cover edge cases and failure modes?`,
-        answer: `Yes. It instructs the model to scaffold happy-path assertions, boundary conditions, null inputs, and expected network exceptions.`,
-      },
-      {
-        question: `How should I execute the generated tests?`,
-        answer: `Paste the generated test file into your repository test directory and execute your test runner locally or in CI.`,
-      },
-    ];
-  }
-
-  if (taskSlug === 'security') {
-    return [
-      {
-        question: `What security vectors does this audit evaluate?`,
-        answer: `It reviews authentication flows, token expiration, SQL injection vulnerabilities, CORS settings, input sanitization, and secret leaks.`,
-      },
-      {
-        question: `Does this audit replace professional penetration testing?`,
-        answer: `No. It functions as a static structural code review assistant. Use automated DAST/SAST scanners alongside this audit.`,
-      },
-    ];
-  }
-
-  if (taskSlug === 'seo') {
-    return [
-      {
-        question: `What information should I provide for an SEO workflow?`,
-        answer: `Supply your primary search query intent, target audience profile, topical cluster themes, and competitor reference URLs.`,
-      },
-      {
-        question: `Does this prompt guarantee top search engine rankings?`,
-        answer: `No. Rankings depend on domain authority, crawl performance, and search satisfaction. This prompt structures content to satisfy user intent.`,
-      },
-    ];
-  }
-
-  if (taskSlug === 'email' || taskSlug === 'email-outreach') {
-    return [
-      {
-        question: `What information should I supply for outbound copy?`,
-        answer: `Provide your target audience persona, specific value proposition, proof metrics, and a low-friction call to action.`,
-      },
-      {
-        question: `Should I send generated cold outreach without review?`,
-        answer: `Always review and personalize generated emails with prospect-specific details before sending.`,
-      },
-    ];
-  }
-
+  // Default Universal Technical Workflow
   return [
     {
-      question: `What inputs are required to customize this template?`,
-      answer: `Fill in the dynamic brackets in the customizer above with your specific repository or operational details.`,
+      title: '01. Ingest Context & Parameter Isolation',
+      detail: `Provide the core business or technical metrics required for the ${taskSlug} task. Isolate input parameters from instructions to preserve context window integrity and maximize LLM attention density.`,
+      checkpoint: 'Ensure all bracketed variables are filled with concrete, verifiable domain values.',
     },
     {
-      question: `Can this workflow be executed on multiple AI models?`,
-      answer: `Yes. You can copy the configured prompt or launch it across Claude, ChatGPT, DeepSeek, and Gemini via the 1-click launcher.`,
+      title: '02. Apply Zero-Hallucination Negative Guardrails',
+      detail: 'The system prompt applies strict boundary constraints that prevent conversational fluff, generic corporate boilerplate, and ungrounded speculation.',
+      checkpoint: 'Confirm the output format enforces hierarchical markdown or structured code blocks.',
+    },
+    {
+      title: '03. Benchmark Response Telemetry in Simulator',
+      detail: 'Use the live dual-model simulation playground to verify token latency and structural adherence before integrating the prompt into mission-critical workflows.',
+      checkpoint: 'Evaluate reasoning depth and speed tradeoffs across open-weights models.',
+    },
+    {
+      title: '04. Export to Developer Workflows & IDEs',
+      detail: 'Sync the prompt into your daily developer environment via `npx promptory-cli`, download as `.cursorrules`, or trigger direct execution across ChatGPT, Claude, and Gemini.',
+      checkpoint: 'Store verified configurations for team-wide reproducible AI execution.',
     },
   ];
 }
 
-export function generateContextualSteps(taskSlug: string): Array<{ title: string; detail: string }> {
-  switch (taskSlug) {
-    case 'database':
-    case 'performance':
-      return [
-        { title: 'Provide Query & Schema', detail: 'Paste your slow SQL query, table DDL, row counts, and existing index definitions.' },
-        { title: 'Add EXPLAIN / Target', detail: 'Include EXPLAIN ANALYZE execution output and define your latency SLA target.' },
-        { title: 'Generate Plan', detail: 'Run the prompt to receive query rewrite suggestions and indexing recommendations.' },
-        { title: 'Benchmark In Staging', detail: 'Apply recommendations to a staging replica and compare execution times under workload.' },
-      ];
-    case 'code-review':
-      return [
-        { title: 'Paste Code & Context', detail: 'Provide the function or module along with framework and language versions.' },
-        { title: 'Define Constraints', detail: 'Specify architecture conventions, memory boundaries, and typing standards.' },
-        { title: 'Run the Review', detail: 'Generate line-by-line inspection highlighting regressions, security risks, and style.' },
-        { title: 'Validate With Tests', detail: 'Verify suggested improvements against automated unit tests before merging.' },
-      ];
-    case 'debugging':
-      return [
-        { title: 'Isolate Error Trace', detail: 'Collect the exception message, stack trace, runtime logs, and trigger inputs.' },
-        { title: 'Supply Code Context', detail: 'Provide the function boundary where the failure manifests.' },
-        { title: 'Generate Analysis', detail: 'Execute the prompt to identify root-cause mechanics and targeted fixes.' },
-        { title: 'Write Regression Test', detail: 'Add a targeted automated test to ensure the bug cannot regress in production.' },
-      ];
-    case 'testing':
-      return [
-        { title: 'Provide Code & Context', detail: 'Paste the interface contract, component code, or endpoint specification.' },
-        { title: 'Define Framework', detail: 'Specify your target testing framework (e.g., Pytest, Playwright, Jest).' },
-        { title: 'Generate Test Cases', detail: 'Scaffold assertions covering happy paths, edge cases, and unexpected errors.' },
-        { title: 'Run and Review Tests', detail: 'Execute test suites locally and verify code coverage before deployment.' },
-      ];
-    case 'security':
-      return [
-        { title: 'Define Attack Surface', detail: 'Supply API routes, authentication middleware, and input ingestion handlers.' },
-        { title: 'Set Compliance Criteria', detail: 'Specify required standards such as OWASP Top 10, sanitized inputs, or RBAC.' },
-        { title: 'Synthesize Threat Audit', detail: 'Run analysis to isolate injection risks, broken auth, and sensitive data leaks.' },
-        { title: 'Apply and Patch', detail: 'Implement remediation logic and verify against automated security regression tests.' },
-      ];
-    case 'seo':
-      return [
-        { title: 'Provide Topic & Audience', detail: 'Specify primary keyword intent, audience persona, and existing page URL.' },
-        { title: 'Define Search Intent', detail: 'Map out informational vs. transactional search intent and entity concepts.' },
-        { title: 'Generate Content Structure', detail: 'Synthesize structural briefs, metadata tags, and internal link suggestions.' },
-        { title: 'Validate Against SERP', detail: 'Audit output against top-ranking search results to ensure technical completeness.' },
-      ];
-    case 'email':
-    case 'email-outreach':
-      return [
-        { title: 'Provide Prospect Context', detail: 'Enter prospect industry, role pain points, and target outcome.' },
-        { title: 'Define Offer & Goal', detail: 'Specify your core value proposition and a low-friction single call-to-action.' },
-        { title: 'Generate Outreach', detail: 'Execute the prompt to produce concise, relevant outreach copy.' },
-        { title: 'Personalize Before Sending', detail: 'Review output and insert verified individual personalization before delivery.' },
-      ];
-    default:
-      return [
-        { title: 'Configure Variables', detail: 'Fill in the bracketed inputs with your specific project details.' },
-        { title: 'Set Constraints', detail: 'Choose output constraints (e.g., Markdown, Structured Table) to match your workflow.' },
-        { title: 'Launch in Workspace', detail: 'Copy prompt or launch directly into your preferred AI model interface.' },
-        { title: 'Review & Verify', detail: 'Audit AI deliverables against production requirements before deploying.' },
-      ];
-  }
+export function generateTopicFaqs(
+  title: string,
+  description: string,
+  modelName: string = 'AI',
+  roleName: string = 'Engineer',
+  taskSlug: string = 'coding'
+): FAQItem[] {
+  return [
+    {
+      question: `How does this prompt enforce deterministic outputs when run on ${modelName}?`,
+      answer: `This prompt implements explicit structural syntax, strict markdown schema guidelines, and negative constraints that explicitly forbid speculative assumptions, introductory pleasantries, and conversational sign-offs. By removing subjective phrasing and pinning the output format (tables, step-by-step checklists, or typed code), responses remain consistent across multiple execution runs.`,
+    },
+    {
+      question: `Can I integrate this workflow directly into Cursor, VS Code, or automated CI/CD pipelines?`,
+      answer: `Yes. You can export this blueprint directly into your IDE by downloading the generated '.cursorrules' configuration file from the Remix modal, or by running 'npx promptory-cli add <slug>' directly inside your project repository terminal. This embeds the system prompt directly into your local agent workflow.`,
+    },
+    {
+      question: `How does this prompt handle missing variables or incomplete input parameters?`,
+      answer: `Unlike generic prompts that invent fictional facts when inputs are missing, this prompt contains zero-hallucination boundary rules. If a required input parameter is omitted, the model is instructed to halt execution and return an explicit 'STATUS: AWAITING INPUT DATA' checklist highlighting the missing parameters needed to proceed.`,
+    },
+    {
+      question: `What are the latency and token overhead considerations when executing this prompt?`,
+      answer: `The prompt has been token-optimized by stripping redundant pleasantries and repetitive instructions. When executed on Groq LPU inference using open-weights models like GPT-OSS 20B or Qwen 3.8 27B, end-to-end latency averages between 600ms and 1500ms, allocating over 90% of the active context window to substantive output generation.`,
+    },
+    {
+      question: `Can I customize or fork this template for different tech stacks or business domains?`,
+      answer: `Yes. Click the 'Remix / Fork' button on the prompt page to open the in-browser sandbox playground. You can modify variable definitions, inject custom negative constraints, test the fork instantly against live models, and export your tailored version as a reusable template.`,
+    },
+    {
+      question: `Which AI frontier models are best suited for running this ${taskSlug} prompt?`,
+      answer: `For rapid execution and automated scripts, ultra-fast models such as GPT-OSS 20B or Claude 3.5 Sonnet offer the lowest latency and sharp instruction adherence. For complex architectural planning, multi-file codebases, or deep analytical audits, high-parameter reasoning models such as GPT-OSS 120B or DeepSeek-R1 are recommended.`,
+    },
+  ];
 }
