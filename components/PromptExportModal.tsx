@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Copy, Check, Download, Code, Terminal, FileCode, CheckCircle2 } from 'lucide-react';
+import { X, Copy, Check, Download, Code, Terminal, FileCode, CheckCircle2, Sparkles } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -9,9 +9,10 @@ interface Props {
   promptTitle: string;
   compiledPrompt: string;
   modelName: string;
+  slug?: string;
 }
 
-type TabType = 'cursor' | 'openai' | 'claude' | 'python';
+type TabType = 'cli' | 'cursor' | 'openai' | 'claude' | 'python';
 
 export default function PromptExportModal({
   isOpen,
@@ -19,11 +20,25 @@ export default function PromptExportModal({
   promptTitle,
   compiledPrompt,
   modelName,
+  slug,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<TabType>('cursor');
+  const [activeTab, setActiveTab] = useState<TabType>('cli');
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
+
+  // Auto-generate clean slug if not explicitly passed
+  const derivedSlug = (
+    slug || 
+    promptTitle.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+  );
+
+  // 0. CLI (npx) Terminal Command
+  const cliSnippet = `# Pull directly into your local project root as .cursorrules
+npx promptory add ${derivedSlug} --cursor
+
+# Or pull as a standalone Markdown prompt file
+npx promptory add ${derivedSlug} --raw`;
 
   // 1. .cursorrules content
   const cursorRulesContent = `# Cursor System Rules: ${promptTitle}
@@ -94,6 +109,8 @@ print(response.choices[0].message.content)
 
   const getActiveContent = () => {
     switch (activeTab) {
+      case 'cli':
+        return cliSnippet;
       case 'cursor':
         return cursorRulesContent;
       case 'openai':
@@ -107,7 +124,10 @@ print(response.choices[0].message.content)
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(getActiveContent());
+      const textToCopy = activeTab === 'cli' 
+        ? `npx promptory add ${derivedSlug} --cursor` 
+        : getActiveContent();
+      await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {}
@@ -137,7 +157,7 @@ print(response.choices[0].message.content)
             </div>
             <div>
               <h3 className="text-sm font-bold text-white">Export for Developers & IDEs</h3>
-              <p className="text-[11px] text-slate-400">Export as .cursorrules, API payload, or Python script</p>
+              <p className="text-[11px] text-slate-400">Export via CLI, .cursorrules, API payload, or Python</p>
             </div>
           </div>
           <button
@@ -149,12 +169,13 @@ print(response.choices[0].message.content)
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1.5 bg-[#0D1117] p-1 rounded-xl border border-[#30363D]">
+        <div className="flex items-center gap-1.5 bg-[#0D1117] p-1 rounded-xl border border-[#30363D] overflow-x-auto">
           {[
-            { id: 'cursor', label: '.cursorrules (IDE)', icon: Terminal },
-            { id: 'openai', label: 'OpenAI API JSON', icon: FileCode },
-            { id: 'claude', label: 'Claude API JSON', icon: FileCode },
-            { id: 'python', label: 'Python Script', icon: Code },
+            { id: 'cli', label: 'CLI (npx)', icon: Terminal },
+            { id: 'cursor', label: '.cursorrules', icon: FileCode },
+            { id: 'openai', label: 'OpenAI JSON', icon: FileCode },
+            { id: 'claude', label: 'Claude JSON', icon: FileCode },
+            { id: 'python', label: 'Python', icon: Code },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -162,14 +183,14 @@ print(response.choices[0].message.content)
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as TabType)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold transition ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
                   isActive
                     ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-[#161B22]'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
-                <span className="truncate">{tab.label}</span>
+                <span>{tab.label}</span>
               </button>
             );
           })}
@@ -192,6 +213,11 @@ print(response.choices[0].message.content)
               <Download className="w-3.5 h-3.5 text-emerald-400" />
               <span>Download .cursorrules</span>
             </button>
+          ) : activeTab === 'cli' ? (
+            <div className="text-[11px] text-cyan-400 flex items-center gap-1 font-mono">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Zero-install npm executable</span>
+            </div>
           ) : (
             <div className="text-[11px] text-slate-400 flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
@@ -212,7 +238,7 @@ print(response.choices[0].message.content)
               ) : (
                 <>
                   <Copy className="w-3.5 h-3.5" />
-                  <span>Copy Configuration</span>
+                  <span>{activeTab === 'cli' ? 'Copy CLI Command' : 'Copy Configuration'}</span>
                 </>
               )}
             </button>
