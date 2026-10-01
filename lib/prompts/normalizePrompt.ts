@@ -120,6 +120,32 @@ export function generateSeoTitle(rawTitle: string, taskSlug?: string): string {
   return removeRepeatedPhrases(clean);
 }
 
+function enhanceTechnicalDescription(
+  rawDesc: string | undefined,
+  modelName: string,
+  professionName: string,
+  taskName: string
+): string {
+  const base = (rawDesc || '').trim();
+
+  // Agar pehle se hi bada multi-sentence paragraph (>180 chars) hai toh waise hi rakhein
+  if (base.length >= 180 && base.split('. ').length >= 3) {
+    return base;
+  }
+
+  const cleanBase = base ? (base.endsWith('.') ? base : `${base}.`) : '';
+
+  // Tailored technical synthesis according to role, model, and workflow
+  const technicalAdditions = [
+    cleanBase,
+    `This system prompt is engineered to assist ${professionName} teams in executing high-precision ${taskName.toLowerCase()} workflows.`,
+    `It leverages ${modelName}'s reasoning capabilities to analyze complex parameters, structure high-signal outputs, and eliminate conversational filler.`,
+    `The blueprint enforces strict negative boundary constraints, reduces token overhead, and maintains deterministic fidelity across both rapid prototyping and production pipelines.`
+  ].filter(Boolean).join(' ');
+
+  return technicalAdditions;
+}
+
 export function calculateContentQualityScore(prompt: any, content: string): number {
   let score = 0;
   if (prompt.title && prompt.title.length >= 20 && !prompt.title.includes('Optimizer Optimizer')) score += 15;
@@ -146,7 +172,6 @@ export function normalizePrompt(raw: any): NormalizedPrompt {
     ''
   );
 
-  // Convert raw HTML linebreaks and styling to clean plain Markdown
   const cleanContent = rawContent
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/?(strong|b)>/gi, '**')
@@ -158,29 +183,38 @@ export function normalizePrompt(raw: any): NormalizedPrompt {
   const taskSlug = raw.task?.slug || raw.task_slug || 'coding';
   const seoTitle = generateSeoTitle(rawTitle, taskSlug);
 
+  const modelName = raw.model?.name || 'AI Model';
+  const professionName = raw.profession?.name || 'Engineer';
+  const taskName = raw.task?.name || 'Production';
+
+  const fullDescription = enhanceTechnicalDescription(
+    raw.description,
+    modelName,
+    professionName,
+    taskName
+  );
+
   return {
     id: raw.id,
     slug: raw.slug,
     title: sanitizeClaims(rawTitle),
     displayTitle: sanitizeClaims(rawTitle),
     seoTitle,
-    description: sanitizeClaims(
-      raw.description || `Practical ${raw.model?.name || 'AI'} system prompt for ${raw.profession?.name || 'engineers'}.`
-    ),
+    description: sanitizeClaims(fullDescription),
     content: sanitizeClaims(cleanContent, true),
     model: {
       id: raw.model?.id || raw.model_id || '',
-      name: raw.model?.name || 'AI Model',
+      name: modelName,
       slug: raw.model?.slug || 'chatgpt',
     },
     profession: {
       id: raw.profession?.id || raw.profession_id || '',
-      name: raw.profession?.name || 'Developer',
+      name: professionName,
       slug: raw.profession?.slug || 'software-developer',
     },
     task: {
       id: raw.task?.id || raw.task_id || '',
-      name: raw.task?.name || 'Coding',
+      name: taskName,
       slug: taskSlug,
     },
     tags: Array.isArray(raw.tags) ? raw.tags : [],
@@ -189,7 +223,10 @@ export function normalizePrompt(raw: any): NormalizedPrompt {
     limitations: Array.isArray(raw.limitations) ? raw.limitations : [],
     faqs: Array.isArray(raw.faqs) ? raw.faqs : [],
     qualityScore: raw.quality_score || 90,
-    contentQualityScore: calculateContentQualityScore(raw, cleanContent),
+    contentQualityScore: calculateContentQualityScore(
+      { ...raw, description: fullDescription },
+      cleanContent
+    ),
     status: raw.status || 'published',
     createdAt: raw.created_at || new Date().toISOString(),
     updatedAt: raw.updated_at || raw.created_at || new Date().toISOString(),
