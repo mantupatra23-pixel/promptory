@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
+import Groq from 'groq-sdk';
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    
     const prompt = (
       body.prompt || 
       body.promptText || 
@@ -10,6 +16,8 @@ export async function POST(req: Request) {
       body.compiled_prompt || 
       ''
     ).trim();
+
+    const model = body.model || 'llama-3.3-70b-versatile';
 
     if (!prompt) {
       return NextResponse.json(
@@ -28,53 +36,42 @@ export async function POST(req: Request) {
 
     const startTime = performance.now();
 
-    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-oss-20b',
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 4096,
-      }),
+    const response = await groq.chat.completions.create({
+      model: model,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an elite production AI execution engine. Provide deterministic, high-density, directly actionable technical output without introductory filler or sign-offs.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.2,
+      max_tokens: 4096,
     });
 
     const endTime = performance.now();
     const latencyMs = Math.round(endTime - startTime);
 
-    if (!groqResponse.ok) {
-      const errPayload = await groqResponse.text();
-      return NextResponse.json(
-        { error: `Groq Gateway Error (${groqResponse.status}): ${errPayload}` },
-        { status: groqResponse.status }
-      );
-    }
-
-    const data = await groqResponse.json();
-    const msg = data.choices?.[0]?.message;
+    const msg = response.choices[0]?.message;
     const output = (msg?.content && msg.content.trim()) 
       ? msg.content 
-      : (msg?.reasoning && msg.reasoning.trim()) 
-        ? msg.reasoning 
-        : 'Execution finished with no output returned.';
+      : 'Execution finished with no output returned.';
 
     return NextResponse.json({
       success: true,
       output: output,
-      provider: 'GPT-OSS 20B (Groq Runtime)',
       latency_ms: latencyMs,
+      modelUsed: model,
+      usage: response.usage,
     });
 
   } catch (error: any) {
+    console.error('Simulation error:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal Runtime Failure' },
+      { error: error?.message || 'Internal Runtime Failure' },
       { status: 500 }
     );
   }
