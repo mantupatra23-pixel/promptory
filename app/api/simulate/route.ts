@@ -1,103 +1,84 @@
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge';
-
 export async function POST(req: Request) {
   try {
-    const { prompt, model = 'groq' } = await req.json();
+    const body = await req.json();
+    const prompt = (body.compiledPrompt || body.promptText || '').trim();
 
-    if (!prompt || typeof prompt !== 'string') {
-      return NextResponse.json({ error: 'Prompt text is required' }, { status: 400 });
+    if (!prompt) {
+      return NextResponse.json(
+        { success: false, error: 'Prompt content is required for simulation.' },
+        { status: 400 }
+      );
     }
 
-    const startTime = Date.now();
-    const groqKey = process.env.GROQ_API_KEY;
-    const geminiKey = process.env.GEMINI_API_KEY;
-
-    // 1. Primary: Groq High-Speed Llama 3 Inference
-    if (groqKey) {
-      try {
-        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${groqKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [
-              {
-                role: 'system',
-                content: 'You are an AI prompt execution simulator on Promptory.xyz. Execute the user prompt directly according to its requested output constraints with zero conversational filler.',
-              },
-              { role: 'user', content: prompt },
-            ],
-            temperature: 0.2,
-            max_tokens: 1024,
-          }),
-        });
-
-        if (groqRes.ok) {
-          const data = await groqRes.json();
-          const content = data.choices[0]?.message?.content;
-          return NextResponse.json({
-            success: true,
-            output: content,
-            latency_ms: Date.now() - startTime,
-            provider: 'Groq Llama 3.3 70B Engine',
-          });
-        }
-      } catch (e) {}
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'GROQ_API_KEY is not configured on the server environment.' 
+        },
+        { status: 500 }
+      );
     }
 
-    // 2. Secondary: Google Gemini 1.5 Flash Inference
-    if (geminiKey) {
-      try {
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+    const startTime = performance.now();
+
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        messages: [
           {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
-            }),
+            role: 'system',
+            content: 'You are the ultra-fast execution preview engine for Promptory.xyz. Execute the user prompt strictly according to its instructions. If a JSON schema or specific format is requested, output valid JSON only with zero conversational preamble, zero apologies, and no markdown wrapping.'
+          },
+          {
+            role: 'user',
+            content: prompt
           }
-        );
+        ],
+        temperature: 0.1,
+        max_tokens: 1024,
+      }),
+    });
 
-        if (geminiRes.ok) {
-          const data = await geminiRes.json();
-          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          return NextResponse.json({
-            success: true,
-            output: text,
-            latency_ms: Date.now() - startTime,
-            provider: 'Google Gemini 1.5 Flash',
-          });
-        }
-      } catch (e) {}
+    const endTime = performance.now();
+    const latencyMs = Math.round(endTime - startTime);
+
+    if (!groqResponse.ok) {
+      const errPayload = await groqResponse.text();
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Groq Gateway Error (${groqResponse.status}): ${errPayload}` 
+        },
+        { status: groqResponse.status }
+      );
     }
 
-    // 3. Fallback: High-Accuracy Production Template Preview
-    const sampleOutput = `[SIMULATED PRODUCTION OUTPUT PREVIEW]
-
-1. Execution Status: Verified & Formatted
-2. Target Constraints: Adhered to output template parameters
-3. Processed Directives:
-   - System instruction analyzed
-   - Dynamic parameters mapped successfully
-
-Prompt ready to run on ChatGPT, Claude 3.5 Sonnet, or DeepSeek-R1.`;
+    const data = await groqResponse.json();
+    const output = data.choices?.[0]?.message?.content || 'No output produced by the runtime.';
 
     return NextResponse.json({
       success: true,
-      output: sampleOutput,
-      latency_ms: Date.now() - startTime,
-      provider: 'Promptory Deterministic Engine',
+      output,
+      latency: `${latencyMs}ms`,
+      latencyMs,
+      model: 'Llama 3.1 8B Instant (Groq Runtime)'
     });
+
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || 'Simulation pipeline failed' },
+      { 
+        success: false, 
+        error: error.message || 'Internal Runtime Simulation Failure' 
+      },
       { status: 500 }
     );
   }
