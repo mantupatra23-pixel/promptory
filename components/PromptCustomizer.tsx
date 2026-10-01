@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Copy, Check, RotateCcw, Sliders, FileCode, ChevronDown, GitFork, Download } from 'lucide-react';
+import { Copy, Check, RotateCcw, Sliders, FileCode, ChevronDown, GitFork, Download, Zap, Sparkles } from 'lucide-react';
 import { parsePromptVariables, replacePromptVariables } from '@/lib/variableParser';
 import AIBridge from './AIBridge';
 import PromptExportModal from './PromptExportModal';
@@ -149,8 +149,8 @@ export default function PromptCustomizer({
   return (
     <div className="space-y-6">
       
-      {/* VARIABLE INPUTS SECTION */}
-      {detectedVariables.length > 0 && (
+      {/* VARIABLE INPUTS SECTION OR DIRECT EXECUTION BANNER */}
+      {detectedVariables.length > 0 ? (
         <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5 md:p-6 space-y-4 shadow-md">
           <div className="flex items-center justify-between pb-3 border-b border-[#30363D]">
             <div className="flex items-center gap-2">
@@ -193,6 +193,32 @@ export default function PromptCustomizer({
               );
             })}
           </div>
+        </div>
+      ) : (
+        <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0">
+              <Zap className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-white flex items-center gap-2">
+                <span>Direct Execution Mode</span>
+                <span className="text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded-full font-mono">
+                  Zero-Config Ready
+                </span>
+              </h4>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Yeh prompt pre-structured instructions ke saath ready hai. Isko directly simulate ya copy kar sakte hain.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowRemixModal(true)}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#21262D] hover:bg-[#30363D] text-cyan-400 hover:text-cyan-300 text-xs font-semibold border border-[#30363D] transition shrink-0"
+          >
+            <GitFork className="w-3.5 h-3.5" />
+            <span>Remix &amp; Add Variables</span>
+          </button>
         </div>
       )}
 
