@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
 
+const VALID_MODELS = [
+  'openai/gpt-oss-20b',
+  'openai/gpt-oss-120b',
+  'qwen/qwen3.8-27b'
+];
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // Multi-field fallback for prompt extraction
     const prompt = (
       body.prompt || 
       body.promptText || 
@@ -13,8 +18,10 @@ export async function POST(req: Request) {
       ''
     ).trim();
 
-    // Dynamic model selection with fallback
-    const model = body.model || 'llama-3.3-70b-versatile';
+    const requestedModel = body.model;
+    const model = VALID_MODELS.includes(requestedModel) 
+      ? requestedModel 
+      : 'openai/gpt-oss-20b';
 
     if (!prompt) {
       return NextResponse.json(

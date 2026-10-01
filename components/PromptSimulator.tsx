@@ -10,15 +10,15 @@ interface Props {
 }
 
 const AVAILABLE_MODELS = [
-  { id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B', tag: 'Deep Reasoning' },
-  { id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B', tag: 'Ultra-Fast' },
-  { id: 'mixtral-8x7b-32768', label: 'Mixtral 8x7B', tag: 'Balanced 32k' },
+  { id: 'openai/gpt-oss-20b', label: 'GPT-OSS 20B', tag: 'Ultra-Fast' },
+  { id: 'openai/gpt-oss-120b', label: 'GPT-OSS 120B', tag: 'Deep Reasoning' },
+  { id: 'qwen/qwen3.8-27b', label: 'Qwen 3.8 27B', tag: 'Code & Logic' },
 ];
 
 export default function PromptSimulator({ promptText }: Props) {
   const [output, setOutput] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('llama-3.3-70b-versatile');
+  const [selectedModel, setSelectedModel] = useState('openai/gpt-oss-20b');
   const [modelUsed, setModelUsed] = useState<string | null>(null);
   const [latency, setLatency] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
