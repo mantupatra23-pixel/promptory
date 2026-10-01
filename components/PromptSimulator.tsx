@@ -3,16 +3,23 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Sparkles, Check, Copy, Loader2, Zap } from 'lucide-react';
+import { Play, Sparkles, Check, Copy, Loader2, Zap, Cpu } from 'lucide-react';
 
 interface Props {
   promptText: string;
 }
 
+const AVAILABLE_MODELS = [
+  { id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B', tag: 'Deep Reasoning' },
+  { id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B', tag: 'Ultra-Fast' },
+  { id: 'mixtral-8x7b-32768', label: 'Mixtral 8x7B', tag: 'Balanced 32k' },
+];
+
 export default function PromptSimulator({ promptText }: Props) {
   const [output, setOutput] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [provider, setProvider] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState('llama-3.3-70b-versatile');
+  const [modelUsed, setModelUsed] = useState<string | null>(null);
   const [latency, setLatency] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -25,16 +32,19 @@ export default function PromptSimulator({ promptText }: Props) {
       const res = await fetch('/api/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: promptText }),
+        body: JSON.stringify({ 
+          prompt: promptText,
+          model: selectedModel 
+        }),
       });
 
       const data = await res.json();
       if (data && data.output) {
         setOutput(data.output);
-        setProvider(data.provider || 'Promptory Engine');
+        setModelUsed(data.modelUsed || selectedModel);
         setLatency(data.latency_ms || 95);
       } else {
-        setOutput('Execution finished with no output returned.');
+        setOutput(data.error || 'Execution finished with no output returned.');
       }
     } catch (err) {
       setOutput('Unable to reach simulator engine. Please try again.');
@@ -54,45 +64,63 @@ export default function PromptSimulator({ promptText }: Props) {
 
   return (
     <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5 md:p-6 space-y-4 shadow-md">
-      <div className="flex items-center justify-between pb-3 border-b border-[#30363D]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#30363D] gap-3">
         <div className="flex items-center gap-2">
           <Zap className="w-4 h-4 text-cyan-400" />
           <h3 className="text-sm font-bold text-white">Live AI Output Simulator</h3>
         </div>
 
-        <button
-          onClick={handleSimulate}
-          disabled={loading}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold transition shadow-md shadow-cyan-500/20 disabled:opacity-50"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span>Simulating...</span>
-            </>
-          ) : (
-            <>
-              <Play className="w-3.5 h-3.5 fill-black" />
-              <span>Run Live Preview</span>
-            </>
-          )}
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative flex items-center">
+            <Cpu className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" />
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              disabled={loading}
+              className="bg-[#0D1117] border border-[#30363D] hover:border-slate-500 text-slate-200 text-xs rounded-xl pl-8 pr-3 py-1.5 focus:outline-none focus:border-cyan-500 transition cursor-pointer appearance-none disabled:opacity-50"
+            >
+              {AVAILABLE_MODELS.map((m) => (
+                <option key={m.id} value={m.id} className="bg-[#161B22] text-slate-200">
+                  {m.label} ({m.tag})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={handleSimulate}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold transition shadow-md shadow-cyan-500/20 disabled:opacity-50"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Simulating...</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5 fill-black" />
+                <span>Run Live Preview</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       <p className="text-xs text-slate-400">
-        Test this compiled prompt instantly to preview the expected AI output response.
+        Test this compiled prompt instantly across frontier open-weights models to verify response fidelity.
       </p>
 
       {output && (
         <div className="space-y-3 pt-2 animate-in fade-in duration-200">
           <div className="flex items-center justify-between text-[11px] text-slate-400">
-            <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+            <span className="flex items-center gap-1.5 text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
               <Sparkles className="w-3 h-3" />
-              {provider} ({latency}ms)
+              {modelUsed} &bull; {latency}ms
             </span>
             <button
               onClick={handleCopy}
-              className="text-slate-300 hover:text-white flex items-center gap-1 transition"
+              className="text-slate-300 hover:text-white flex items-center gap-1 transition px-2 py-1 rounded-lg hover:bg-slate-800"
             >
               {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
               <span>{copied ? 'Copied' : 'Copy Output'}</span>
