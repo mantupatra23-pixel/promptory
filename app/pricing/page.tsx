@@ -2,13 +2,15 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Check, Zap, Sparkles, Terminal, Shield, ArrowRight, Layers } from 'lucide-react';
+import { Check, Zap, Sparkles, Terminal, ArrowRight, ShieldCheck } from 'lucide-react';
+
+const PRO_CHECKOUT_URL =
+  process.env.NEXT_PUBLIC_LEMONSQUEEZY_PRO_CHECKOUT_URL ||
+  'https://promptory-ai.lemonsqueezy.com/checkout/buy/d732cb82-7372-4365-95f2-852a9212fab3?discount=0';
 
 export default function PricingPage() {
-  const checkoutUrl = process.env.NEXT_PUBLIC_LEMONSQUEEZY_PRO_CHECKOUT_URL || '#';
-
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 text-slate-100 space-y-12">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 text-slate-100 space-y-12">
       {/* Header */}
       <div className="text-center space-y-3">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-mono">
@@ -18,22 +20,22 @@ export default function PricingPage() {
         <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
           Supercharge Your AI Workflow
         </h1>
-        <p className="text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
+        <p className="text-slate-400 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
           Production prompts, multi-model dual benchmarking, and IDE sync built for engineers and founders.
         </p>
       </div>
 
       {/* Pricing Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 pt-2">
         {/* FREE PLAN */}
-        <div className="p-7 rounded-2xl bg-[#161B22] border border-[#30363D] flex flex-col justify-between space-y-6">
+        <div className="p-6 sm:p-7 rounded-2xl bg-[#161B22] border border-[#30363D] flex flex-col justify-between space-y-6 shadow-md">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-slate-300 uppercase tracking-wider">Community</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Community</span>
               <span className="text-xs font-mono text-slate-500">Free forever</span>
             </div>
             <div>
-              <span className="text-4xl font-extrabold text-white">$0</span>
+              <span className="text-3xl sm:text-4xl font-extrabold text-white">₹0</span>
               <span className="text-xs text-slate-400 ml-1">/ month</span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">
@@ -69,21 +71,21 @@ export default function PricingPage() {
         </div>
 
         {/* PRO PLAN */}
-        <div className="p-7 rounded-2xl bg-[#161B22] border-2 border-emerald-500/60 relative flex flex-col justify-between space-y-6 shadow-xl shadow-emerald-950/20">
+        <div className="p-6 sm:p-7 rounded-2xl bg-[#161B22] border-2 border-emerald-500/60 relative flex flex-col justify-between space-y-6 shadow-xl shadow-emerald-950/20">
           <div className="absolute -top-3 right-6 px-3 py-0.5 rounded-full bg-emerald-500 text-black text-[10px] font-extrabold uppercase tracking-wide">
             Recommended
           </div>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-emerald-400 uppercase tracking-wider">Pro Developer</span>
-              <span className="text-xs font-mono text-cyan-400 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Pro Developer</span>
+              <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/60 border border-cyan-800/40 px-2 py-0.5 rounded-full">
                 All Features
               </span>
             </div>
             <div>
-              <span className="text-4xl font-extrabold text-white">$9</span>
-              <span className="text-xs text-slate-400 ml-1">/ month</span>
+              <span className="text-3xl sm:text-4xl font-extrabold text-white">₹799</span>
+              <span className="text-xs text-slate-400 ml-1">/ month (~$9 USD)</span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
               Full reasoning telemetry, dual-view benchmarks, and CLI syncing for high-output engineering teams.
@@ -108,18 +110,18 @@ export default function PricingPage() {
               </div>
               <div className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Authenticated CLI token (`promptory pull`)</span>
+                <span>Developer CLI License Key included</span>
               </div>
             </div>
           </div>
 
           <a
-            href={checkoutUrl}
+            href={PRO_CHECKOUT_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full py-2.5 text-center text-xs font-bold rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
           >
-            <span>Upgrade to Pro ($9/mo)</span>
+            <span>Upgrade to Pro (₹799/mo)</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </a>
         </div>
@@ -127,7 +129,7 @@ export default function PricingPage() {
 
       {/* Feature Highlight Matrix */}
       <div className="border border-[#30363D] bg-[#0D1117] rounded-2xl p-6 sm:p-8 space-y-4">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+        <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
           <Terminal className="w-4 h-4 text-cyan-400" />
           <span>Why Developers Choose Promptory Pro</span>
         </h3>
