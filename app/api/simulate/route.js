@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req) {
   try {
-    const { compiledPrompt, targetModel } = await req.json();
+    const body = await req.json();
+    const prompt = (body.compiledPrompt || body.promptText || '').trim();
 
-    if (!compiledPrompt || compiledPrompt.trim() === '') {
+    if (!prompt) {
       return NextResponse.json(
-        { error: 'Compiled prompt is required' },
+        { success: false, error: 'Prompt content is required for simulation.' },
         { status: 400 }
       );
     }
@@ -14,13 +15,17 @@ export async function POST(req) {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Groq API Key is not configured on server' },
+        { 
+          success: false, 
+          error: 'GROQ_API_KEY is not configured on the server environment.' 
+        },
         { status: 500 }
       );
     }
 
-    // Call Groq with ultra-fast Llama-3.1-8b-instant (800+ tokens/sec)
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const startTime = performance.now();
+
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -31,39 +36,49 @@ export async function POST(req) {
         messages: [
           {
             role: 'system',
-            content: 'You are an ultra-fast runtime preview engine for Promptory. Strictly execute the prompt instructions provided. If the prompt specifies a JSON format, output valid JSON only without preamble or markdown commentary.'
+            content: 'You are the ultra-fast execution preview engine for Promptory.xyz. Execute the user prompt strictly according to its instructions. If a JSON schema or specific format is requested, output valid JSON only with zero conversational preamble, zero apologies, and no markdown wrapping.'
           },
           {
             role: 'user',
-            content: compiledPrompt
+            content: prompt
           }
         ],
-        temperature: 0.2,
+        temperature: 0.1,
         max_tokens: 1024,
       }),
     });
 
-    if (!response.ok) {
-      const errData = await response.text();
+    const endTime = performance.now();
+    const latencyMs = Math.round(endTime - startTime);
+
+    if (!groqResponse.ok) {
+      const errPayload = await groqResponse.text();
       return NextResponse.json(
-        { error: `Groq error: ${response.statusText}` },
-        { status: response.status }
+        { 
+          success: false, 
+          error: `Groq Gateway Error (${groqResponse.status}): ${errPayload}` 
+        },
+        { status: groqResponse.status }
       );
     }
 
-    const data = await response.json();
-    const resultText = data.choices?.[0]?.message?.content || 'No output generated.';
+    const data = await groqResponse.json();
+    const output = data.choices?.[0]?.message?.content || 'No output produced by the runtime.';
 
     return NextResponse.json({
       success: true,
-      output: resultText,
-      modelUsed: 'Llama 3.1 8B Instant (Groq Runtime)',
-      latencyMs: data.usage?.total_time ? Math.round(data.usage.total_time * 1000) : null
+      output,
+      latency: `${latencyMs}ms`,
+      latencyMs,
+      model: 'Llama 3.1 8B Instant (Groq Runtime)'
     });
 
   } catch (error) {
     return NextResponse.json(
-      { error: error.message || 'Internal Simulation Error' },
+      { 
+        success: false, 
+        error: error.message || 'Internal Runtime Simulation Failure' 
+      },
       { status: 500 }
     );
   }
