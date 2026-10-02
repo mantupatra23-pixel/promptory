@@ -35,6 +35,11 @@ export default function ProfilePage() {
 
       setUser(user);
 
+      // Auto-grant Pro if Admin Email
+      if (user.email === 'mantupatra23@gmail.com') {
+        localStorage.setItem('promptory_pro_active', 'true');
+      }
+
       try {
         const { data, error } = await supabase
           .from('subscriptions')
@@ -77,12 +82,11 @@ export default function ProfilePage() {
     );
   }
 
-  const isPro = subData?.status === 'active';
+  const isPro = subData?.status === 'active' || user?.email === 'mantupatra23@gmail.com';
   const dynamicCheckoutUrl = getCheckoutUrl(user?.email);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12 space-y-6">
-      {/* Profile Header Banner */}
       <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-32 bg-emerald-500/5 blur-3xl pointer-events-none" />
 
@@ -96,8 +100,8 @@ export default function ProfilePage() {
                 {user?.email}
               </h1>
               {isPro ? (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  PRO MEMBER
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3 text-emerald-400" /> PRO MEMBER
                 </span>
               ) : (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-400 border border-slate-700">
@@ -122,7 +126,6 @@ export default function ProfilePage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left Column: Plan Details */}
         <div className="md:col-span-2 space-y-6">
           <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#30363D]">
@@ -131,7 +134,7 @@ export default function ProfilePage() {
                 <h2 className="text-sm font-bold text-white">Subscription & Plan</h2>
               </div>
               <span className="text-[11px] font-mono text-slate-400">
-                Billing via Lemon Squeezy
+                {user?.email === 'mantupatra23@gmail.com' ? 'SuperAdmin Access' : 'Billing via Lemon Squeezy'}
               </span>
             </div>
 
@@ -142,29 +145,15 @@ export default function ProfilePage() {
                     <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider font-bold">
                       Active Plan
                     </span>
-                    <h3 className="text-base font-bold text-white">Promptory Pro (Monthly)</h3>
-                    <p className="text-xs text-slate-400 mt-0.5">₹799/month • Auto-renews</p>
+                    <h3 className="text-base font-bold text-white">Promptory Pro (Lifetime Developer)</h3>
+                    <p className="text-xs text-slate-400 mt-0.5">₹0 • Unlimited Cloud Executions</p>
                   </div>
                   <div className="text-right">
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-bold">
-                      <ShieldCheck className="w-3.5 h-3.5" /> Active
+                      <ShieldCheck className="w-3.5 h-3.5" /> Active Pro
                     </span>
                   </div>
                 </div>
-
-                {subData?.customer_portal_url && (
-                  <div className="pt-1">
-                    <a
-                      href={subData.customer_portal_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 font-medium transition"
-                    >
-                      <span>Manage billing, payment methods & invoices</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="p-5 rounded-xl bg-[#0D1117] border border-[#30363D] space-y-3">
@@ -193,7 +182,6 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Entitlements Matrix */}
           <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-6 space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-[#30363D]">
               <Layers className="w-4 h-4 text-cyan-400" />
@@ -227,7 +215,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Right Column: CLI Quickstart */}
         <div className="space-y-6">
           <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5 space-y-3">
             <div className="flex items-center gap-2 text-slate-200">
@@ -240,19 +227,6 @@ export default function ProfilePage() {
             <div className="p-3 rounded-xl bg-[#0D1117] border border-[#30363D] font-mono text-[11px] text-emerald-400 overflow-x-auto select-all">
               npx promptory-cli pull --all
             </div>
-          </div>
-
-          <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5 space-y-3 text-xs text-slate-400">
-            <h4 className="font-bold text-white text-xs">Need Help?</h4>
-            <p className="text-[11px] leading-relaxed">
-              Your subscription is linked to <span className="text-slate-200 font-mono">{user?.email}</span>.
-            </p>
-            <Link
-              href="/pricing"
-              className="inline-block text-[11px] text-emerald-400 hover:underline font-semibold"
-            >
-              View Full Feature Matrix &rarr;
-            </Link>
           </div>
         </div>
       </div>

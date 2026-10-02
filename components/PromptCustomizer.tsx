@@ -14,6 +14,7 @@ import {
   Lock,
   Sparkles
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { parsePromptVariables, replacePromptVariables } from '@/lib/variableParser';
 import AIBridge from './AIBridge';
 import PromptExportModal from './PromptExportModal';
@@ -132,10 +133,18 @@ export default function PromptCustomizer({
   const [paywallDesc, setPaywallDesc] = useState('');
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const active = localStorage.getItem('promptory_pro_active') === 'true';
-      setIsProUser(active);
+    async function checkProStatus() {
+      const { data: { user } } = await supabase.auth.getUser();
+      const localPro = typeof window !== 'undefined' && localStorage.getItem('promptory_pro_active') === 'true';
+      
+      if (user?.email === 'mantupatra23@gmail.com' || localPro) {
+        setIsProUser(true);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('promptory_pro_active', 'true');
+        }
+      }
     }
+    checkProStatus();
   }, []);
 
   useEffect(() => {
@@ -163,7 +172,6 @@ export default function PromptCustomizer({
     });
   }, [baseTemplate, values, selectedTone, selectedFormat, selectedLength]);
 
-  // Handle Dynamic Split Point for Gating
   const { publicPart, lockedPart, hasSplit } = useMemo(() => {
     let splitIdx = generatedPrompt.indexOf('### NEGATIVE CONSTRAINTS');
     if (splitIdx === -1) {
@@ -223,8 +231,6 @@ export default function PromptCustomizer({
 
   return (
     <div className="space-y-6">
-      
-      {/* VARIABLE INPUTS SECTION OR DIRECT EXECUTION BANNER */}
       {detectedVariables.length > 0 ? (
         <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5 md:p-6 space-y-4 shadow-md">
           <div className="flex items-center justify-between pb-3 border-b border-[#30363D]">
@@ -297,14 +303,12 @@ export default function PromptCustomizer({
         </div>
       )}
 
-      {/* OUTPUT CONSTRAINTS */}
       <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-md">
         <CustomSelect label="Output Tone" options={TONES} value={selectedTone} onChange={setSelectedTone} />
         <CustomSelect label="Output Format" options={FORMATS} value={selectedFormat} onChange={setSelectedFormat} />
         <CustomSelect label="Output Length" options={LENGTHS} value={selectedLength} onChange={setSelectedLength} />
       </div>
 
-      {/* LIVE GENERATED PROMPT PREVIEW */}
       <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5 md:p-6 space-y-4 shadow-md">
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#30363D]">
           <div className="flex items-center gap-2">
@@ -326,7 +330,6 @@ export default function PromptCustomizer({
               <span>Remix / Fork</span>
             </button>
 
-            {/* GATED EXPORT API / IDE BUTTON */}
             <button
               onClick={handleExportClick}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#21262D] hover:bg-[#30363D] text-slate-200 text-xs font-semibold transition border border-[#30363D]"
@@ -359,26 +362,22 @@ export default function PromptCustomizer({
           </div>
         </div>
 
-        {/* PROMPT CONTAINER WITH SEO-SAFE BLUR OVERLAY */}
         {isProUser ? (
           <div className="p-4 rounded-xl bg-[#0D1117] border border-[#30363D] text-xs md:text-sm text-slate-200 font-mono leading-relaxed whitespace-pre-wrap select-all max-h-96 overflow-y-auto">
             {generatedPrompt}
           </div>
         ) : (
           <div className="rounded-xl bg-[#0D1117] border border-[#30363D] overflow-hidden text-xs md:text-sm font-mono leading-relaxed">
-            {/* Free Public Section: Fully Visible & Crawlable */}
             <div className="p-4 text-slate-200 whitespace-pre-wrap select-all">
               {publicPart}
             </div>
 
-            {/* Locked Section: Visible to SEO Crawlers, Blurred for Free Users */}
             {hasSplit && (
               <div className="relative border-t border-[#30363D]/60 p-4 bg-[#080B0F]/90 overflow-hidden">
                 <div className="filter blur-[4px] select-none pointer-events-none opacity-25 text-slate-400 whitespace-pre-wrap">
                   {lockedPart}
                 </div>
 
-                {/* Cyberpunk Pro Upgrade Card Overlay */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-gradient-to-b from-[#0D1117]/60 via-[#0D1117]/95 to-[#0D1117] backdrop-blur-[2px]">
                   <div className="flex items-center gap-1.5 text-amber-400 font-mono font-bold text-xs uppercase tracking-wider mb-1">
                     <Lock className="w-3.5 h-3.5" />
@@ -402,13 +401,9 @@ export default function PromptCustomizer({
         )}
       </div>
 
-      {/* LIVE AI OUTPUT SIMULATOR */}
       <PromptSimulator promptText={generatedPrompt} />
-
-      {/* 1-CLICK AI BRIDGE */}
       <AIBridge promptText={generatedPrompt} modelName={modelName} />
 
-      {/* PRO PAYWALL MODAL */}
       {showPaywall && (
         <ProPaywall
           title={paywallTitle}
@@ -418,7 +413,6 @@ export default function PromptCustomizer({
         />
       )}
 
-      {/* DEVELOPER EXPORT MODAL (PRO ONLY) */}
       <PromptExportModal
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
@@ -427,7 +421,6 @@ export default function PromptCustomizer({
         modelName={modelName}
       />
 
-      {/* INTERACTIVE REMIX / FORK PLAYGROUND MODAL */}
       <PromptRemixModal
         isOpen={showRemixModal}
         onClose={() => setShowRemixModal(false)}
@@ -435,7 +428,6 @@ export default function PromptCustomizer({
         promptTitle={effectiveTitle}
         modelName={modelName}
       />
-
     </div>
   );
 }
