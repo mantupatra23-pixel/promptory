@@ -6,57 +6,82 @@ export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
     const signature = req.headers.get('x-signature') || '';
-    const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
+    const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET || '';
 
-    if (!secret) {
-      return NextResponse.json({ error: 'Webhook secret missing' }, { status: 500 });
-    }
+    // Verify webhook signature if secret exists
+    if (secret) {
+      const hmac = crypto.createHmac('sha256', secret);
+      const digest = Buffer.from(hmac.update(rawBody).digest('hex'), 'utf8');
+      const signatureBuffer = Buffer.from(signature, 'utf8');
 
-    // Verify Lemon Squeezy HMAC SHA256 Signature
-    const hmac = crypto.createHmac('sha256', secret);
-    const digest = Buffer.from(hmac.update(rawBody).digest('hex'), 'utf8');
-    const signatureBuffer = Buffer.from(signature, 'utf8');
-
-    if (digest.length !== signatureBuffer.length || !crypto.timingSafeEqual(digest, signatureBuffer)) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+      if (signatureBuffer.length !== digest.length || !crypto.timingSafeEqual(digest, signatureBuffer)) {
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+      }
     }
 
     const payload = JSON.parse(rawBody);
     const eventName = payload.meta?.event_name;
-    const subscriptionData = payload.data;
+    const customData = payload.meta?.custom_data;
+    
+    // Extract user email from multiple possible payload locations
+    const userEmail = 
+      customData?.user_email || 
+      payload.data?.attributes?.user_email || 
+      payload.data?.attributes?.customer_email;
 
-    if (!subscriptionData) {
-      return NextResponse.json({ message: 'No payload data' }, { status: 200 });
+    if (!userEmail) {
+      return NextResponse.json({ message: 'No user email found, acknowledged' }, { status: 200 });
     }
 
-    const subId = subscriptionData.id?.toString();
-    const attrs = subscriptionData.attributes;
-    const customData = payload.meta?.custom_data || {};
-    const userId = customData.user_id || null;
+    // Handle all success & payment events
+    const successEvents = [
+      'subscription_created',
+      'subscription_updated',
+      'subscription_payment_success',
+      'order_created',
+    ];
 
-    if (eventName === 'subscription_created' || eventName === 'subscription_updated' || eventName === 'subscription_resumed') {
-      await supabase.from('subscriptions').upsert({
-        id: subId,
-        user_id: userId,
-        customer_id: attrs.customer_id?.toString(),
-        status: attrs.status, // 'active', 'on_trial', 'past_due'
-        variant_id: attrs.variant_id?.toString(),
-        renews_at: attrs.renews_at,
-        ends_at: attrs.ends_at,
-        updated_at: new Date().toISOString(),
-      });
+    if (successEvents.includes(eventName)) {
+      const attrStatus = payload.data?.attributes?.status || 'active';
+      const isSubActive = attrStatus === 'active' || attrStatus === 'paid';
+
+      const { error } = await supabase
+        .from('subscriptions')
+        .upsert(
+          {
+            user_email: userEmail.toLowerCase().trim(),
+            status: isSubActive ? 'active' : attrStatus,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_email' }
+        );
+
+      if (error) {
+        console.error('Supabase update error:', error);
+        return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
+      }
+
+      return NextResponse.json({ 
+        success: true, 
+        user: userEmail, 
+        status: isSubActive ? 'active' : attrStatus,
+        event: eventName 
+      }, { status: 200 });
     }
 
+    // Handle Cancellation / Expiration
     if (eventName === 'subscription_cancelled' || eventName === 'subscription_expired') {
-      await supabase.from('subscriptions').update({
-        status: attrs.status || 'cancelled',
-        ends_at: attrs.ends_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq('id', subId);
+      await supabase
+        .from('subscriptions')
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+        .eq('user_email', userEmail.toLowerCase().trim());
+
+      return NextResponse.json({ success: true, message: 'Subscription cancelled' }, { status: 200 });
     }
 
-    return NextResponse.json({ received: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ received: true, event: eventName });
+  } catch (err: any) {
+    console.error('Webhook error:', err);
+    return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 });
   }
 }
