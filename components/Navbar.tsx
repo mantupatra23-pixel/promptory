@@ -1,14 +1,42 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { PlusCircle, Bookmark, Workflow, Compass, Menu, X, Zap } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { 
+  PlusCircle, 
+  Bookmark, 
+  Workflow, 
+  Compass, 
+  Menu, 
+  X, 
+  Zap, 
+  User, 
+  LogIn 
+} from 'lucide-react';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    // Check active auth session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user ?? null);
+    });
+
+    // Listen for real-time auth changes (Sign in, Sign out)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#30363D]/80 bg-[#161B22]/90 backdrop-blur-xl">
@@ -78,7 +106,7 @@ export default function Navbar() {
           </Link>
         </nav>
 
-        {/* Right Actions: Pinned Submit CTA & Mobile Menu */}
+        {/* Right Actions: Auth, Submit & Mobile Menu */}
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href="/pricing"
@@ -87,6 +115,31 @@ export default function Navbar() {
             <Zap className="w-3 h-3 fill-amber-400" />
             <span>Pro</span>
           </Link>
+
+          {/* User Profile / Sign In Desktop Button */}
+          {currentUser ? (
+            <Link
+              href="/profile"
+              className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition ${
+                pathname === '/profile'
+                  ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                  : 'bg-[#0D1117] border-[#30363D] text-slate-300 hover:text-white hover:border-slate-500'
+              }`}
+            >
+              <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold">
+                {currentUser.email?.charAt(0).toUpperCase()}
+              </div>
+              <span className="truncate max-w-[100px]">{currentUser.email?.split('@')[0]}</span>
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0D1117] border border-[#30363D] hover:border-slate-500 text-slate-300 hover:text-white text-xs font-semibold transition"
+            >
+              <LogIn className="w-3.5 h-3.5 text-slate-400" />
+              <span>Sign In</span>
+            </Link>
+          )}
 
           <Link
             href="/submit"
@@ -111,6 +164,30 @@ export default function Navbar() {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-[#30363D] bg-[#161B22] px-4 py-3 space-y-1.5 animate-in slide-in-from-top-2 duration-150 shadow-2xl">
+          {/* Mobile Auth Button */}
+          {currentUser ? (
+            <Link
+              href="/profile"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold bg-[#0D1117] border border-[#30363D] text-white"
+            >
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-emerald-400" />
+                <span className="truncate">{currentUser.email}</span>
+              </div>
+              <span className="text-[10px] text-emerald-400 font-mono">Profile &rarr;</span>
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-[#0D1117] border border-[#30363D] text-slate-200 hover:text-white"
+            >
+              <LogIn className="w-4 h-4 text-emerald-400" />
+              <span>Sign In / Create Account</span>
+            </Link>
+          )}
+
           <Link
             href="/pricing"
             onClick={() => setMobileMenuOpen(false)}
