@@ -245,7 +245,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
                   <div className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-1.5 flex items-center justify-between">
                     <span>Phases ({steps.length})</span>
                     {wf.is_pro && (
-                      <span className="text-[10px] text-amber-400/90">Phase 1 Free • 2-4 Pro</span>
+                      <span className="text-[10px] text-amber-400/90">Phase 1 Free • 2-${steps.length} Pro</span>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
