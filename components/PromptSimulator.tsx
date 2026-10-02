@@ -33,7 +33,7 @@ interface ModelItem {
 
 const AVAILABLE_MODELS: ModelItem[] = [
   { id: 'openai/gpt-oss-20b', label: 'GPT-OSS 20B', tag: 'Fast', isPro: false },
-  { id: 'openai/gpt-oss-120b', label: 'GPT-OSS 120B', tag: '⚡ Pro • Reasoning', isPro: true },
+  { id: 'openai/gpt-oss-120b', label: 'GPT-OSS 120B', tag: 'Reasoning', isPro: false },
   { id: 'qwen/qwen3.8-27b', label: 'Qwen 3.8 27B', tag: 'Logic', isPro: false },
 ];
 
@@ -114,15 +114,9 @@ function CustomModelDropdown({
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0">
-                  {model.isPro ? (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-0.5">
-                      <Lock className="w-2.5 h-2.5" /> PRO
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-mono text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700/60">
-                      {model.tag}
-                    </span>
-                  )}
+                  <span className="text-[10px] font-mono text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700/60">
+                    {model.tag}
+                  </span>
                   {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400 ml-0.5" />}
                 </div>
               </button>
@@ -158,12 +152,12 @@ export default function PromptSimulator({ promptText }: Props) {
     loadUserState();
   }, []);
 
-  const [selectedModelA, setSelectedModelA] = useState('openai/gpt-oss-20b');
+  const [selectedModelA, setSelectedModelA] = useState('openai/gpt-oss-120b');
   const [outputA, setOutputA] = useState<string | null>(null);
   const [latencyA, setLatencyA] = useState<number | null>(null);
   const [copiedA, setCopiedA] = useState(false);
 
-  const [selectedModelB, setSelectedModelB] = useState('openai/gpt-oss-120b');
+  const [selectedModelB, setSelectedModelB] = useState('openai/gpt-oss-20b');
   const [outputB, setOutputB] = useState<string | null>(null);
   const [latencyB, setLatencyB] = useState<number | null>(null);
   const [copiedB, setCopiedB] = useState(false);
@@ -185,30 +179,6 @@ export default function PromptSimulator({ promptText }: Props) {
     setCompareMode(!compareMode);
   };
 
-  const handleModelAChange = (modelId: string) => {
-    const model = AVAILABLE_MODELS.find((m) => m.id === modelId);
-    if (model?.isPro && !isProUser) {
-      triggerPaywall(
-        'GPT-OSS 120B Reasoning (Pro)',
-        '120B parameter reasoning models require high-compute allocation available exclusively on Pro plans.'
-      );
-      return;
-    }
-    setSelectedModelA(modelId);
-  };
-
-  const handleModelBChange = (modelId: string) => {
-    const model = AVAILABLE_MODELS.find((m) => m.id === modelId);
-    if (model?.isPro && !isProUser) {
-      triggerPaywall(
-        'GPT-OSS 120B Reasoning (Pro)',
-        '120B parameter reasoning models require high-compute allocation available exclusively on Pro plans.'
-      );
-      return;
-    }
-    setSelectedModelB(modelId);
-  };
-
   const fetchSimulation = async (model: string) => {
     const res = await fetch('/api/simulate', {
       method: 'POST',
@@ -225,7 +195,6 @@ export default function PromptSimulator({ promptText }: Props) {
   const handleSimulate = async () => {
     if (!promptText.trim() || loading) return;
 
-    // 1. Force Login Check
     if (!userEmail) {
       triggerPaywall(
         'Sign In to Claim 1 Free Simulation',
@@ -386,7 +355,7 @@ export default function PromptSimulator({ promptText }: Props) {
 
           <CustomModelDropdown
             selectedId={selectedModelA}
-            onSelect={handleModelAChange}
+            onSelect={(id) => setSelectedModelA(id)}
             disabled={loading}
             prefix={compareMode ? 'A' : undefined}
             accent="cyan"
@@ -395,7 +364,7 @@ export default function PromptSimulator({ promptText }: Props) {
           {compareMode && (
             <CustomModelDropdown
               selectedId={selectedModelB}
-              onSelect={handleModelBChange}
+              onSelect={(id) => setSelectedModelB(id)}
               disabled={loading}
               prefix="B"
               accent="emerald"
