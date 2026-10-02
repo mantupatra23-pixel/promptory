@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import { 
   Play, 
   Sparkles, 
@@ -133,18 +135,27 @@ function CustomModelDropdown({
 }
 
 export default function PromptSimulator({ promptText }: Props) {
+  const router = useRouter();
   const [compareMode, setCompareMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallTitle, setPaywallTitle] = useState('Unlock Promptory Pro');
   const [paywallDesc, setPaywallDesc] = useState('');
   const [isProUser, setIsProUser] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const active = localStorage.getItem('promptory_pro_active') === 'true';
-      setIsProUser(active);
+    async function loadUserState() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+      if (typeof window !== 'undefined') {
+        const active = localStorage.getItem('promptory_pro_active') === 'true';
+        setIsProUser(active);
+      }
     }
+    loadUserState();
   }, []);
 
   const [selectedModelA, setSelectedModelA] = useState('openai/gpt-oss-20b');
@@ -202,23 +213,46 @@ export default function PromptSimulator({ promptText }: Props) {
     const res = await fetch('/api/simulate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: promptText, model }),
+      body: JSON.stringify({ 
+        prompt: promptText, 
+        model,
+        email: userEmail 
+      }),
     });
-    return res.json();
+    return res;
   };
 
   const handleSimulate = async () => {
     if (!promptText.trim() || loading) return;
+
+    // 1. Force Login Check
+    if (!userEmail) {
+      triggerPaywall(
+        'Sign In to Claim 1 Free Simulation',
+        'Sign in with your email to preview this blueprint live. Upgrade to Pro for unlimited executions.'
+      );
+      return;
+    }
+
     setLoading(true);
     setOutputA(null);
     setOutputB(null);
 
     try {
       if (compareMode) {
-        const [dataA, dataB] = await Promise.all([
+        const [resA, resB] = await Promise.all([
           fetchSimulation(selectedModelA),
           fetchSimulation(selectedModelB),
         ]);
+
+        const dataA = await resA.json();
+        const dataB = await resB.json();
+
+        if (resA.status === 403 || dataA.error === 'LIMIT_EXCEEDED') {
+          triggerPaywall('Free Limit Reached (1/1 Used)', dataA.message);
+          setLoading(false);
+          return;
+        }
 
         setOutputA(dataA.output || dataA.error || 'No output returned.');
         setLatencyA(dataA.latency_ms || 0);
@@ -226,7 +260,18 @@ export default function PromptSimulator({ promptText }: Props) {
         setOutputB(dataB.output || dataB.error || 'No output returned.');
         setLatencyB(dataB.latency_ms || 0);
       } else {
-        const dataA = await fetchSimulation(selectedModelA);
+        const resA = await fetchSimulation(selectedModelA);
+        const dataA = await resA.json();
+
+        if (resA.status === 403 || dataA.error === 'LIMIT_EXCEEDED') {
+          triggerPaywall(
+            'Free Limit Reached (1/1 Used)',
+            `You have used your 1 free simulation on ${userEmail}. Upgrade to Promptory Pro for unlimited executions, dual-model comparison, and IDE sync.`
+          );
+          setLoading(false);
+          return;
+        }
+
         setOutputA(dataA.output || dataA.error || 'No output returned.');
         setLatencyA(dataA.latency_ms || 0);
       }
@@ -313,10 +358,14 @@ export default function PromptSimulator({ promptText }: Props) {
         <div className="flex items-center gap-2">
           <Zap className="w-4 h-4 text-cyan-400" />
           <h3 className="text-sm font-bold text-white">Live AI Output Simulator</h3>
+          {!isProUser && (
+            <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full">
+              1 Free Trial Run
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Mode Switcher Toggle */}
           <button
             type="button"
             onClick={handleToggleCompare}
@@ -335,7 +384,6 @@ export default function PromptSimulator({ promptText }: Props) {
             )}
           </button>
 
-          {/* Custom Model Selector A */}
           <CustomModelDropdown
             selectedId={selectedModelA}
             onSelect={handleModelAChange}
@@ -344,7 +392,6 @@ export default function PromptSimulator({ promptText }: Props) {
             accent="cyan"
           />
 
-          {/* Custom Model Selector B (when Compare Mode is active) */}
           {compareMode && (
             <CustomModelDropdown
               selectedId={selectedModelB}
@@ -355,7 +402,6 @@ export default function PromptSimulator({ promptText }: Props) {
             />
           )}
 
-          {/* Execution Button */}
           <button
             onClick={handleSimulate}
             disabled={loading}
@@ -376,7 +422,6 @@ export default function PromptSimulator({ promptText }: Props) {
         </div>
       </div>
 
-      {/* Paywall Banner / Modal */}
       {showPaywall && (
         <ProPaywall
           title={paywallTitle}
@@ -392,7 +437,6 @@ export default function PromptSimulator({ promptText }: Props) {
           : 'Test this compiled prompt instantly across frontier open-weights models to verify response fidelity.'}
       </p>
 
-      {/* Results Section */}
       {(outputA || outputB) && (
         <div
           className={`pt-2 animate-in fade-in duration-200 ${
