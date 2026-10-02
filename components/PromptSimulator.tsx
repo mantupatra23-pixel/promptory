@@ -1,20 +1,136 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Sparkles, Check, Copy, Loader2, Zap, Cpu, Columns, Square, Lock } from 'lucide-react';
+import { 
+  Play, 
+  Sparkles, 
+  Check, 
+  Copy, 
+  Loader2, 
+  Zap, 
+  Cpu, 
+  Columns, 
+  Square, 
+  Lock,
+  ChevronDown 
+} from 'lucide-react';
 import ProPaywall from './ProPaywall';
 
 interface Props {
   promptText: string;
 }
 
-const AVAILABLE_MODELS = [
+interface ModelItem {
+  id: string;
+  label: string;
+  tag: string;
+  isPro: boolean;
+}
+
+const AVAILABLE_MODELS: ModelItem[] = [
   { id: 'openai/gpt-oss-20b', label: 'GPT-OSS 20B', tag: 'Fast', isPro: false },
   { id: 'openai/gpt-oss-120b', label: 'GPT-OSS 120B', tag: '⚡ Pro • Reasoning', isPro: true },
   { id: 'qwen/qwen3.8-27b', label: 'Qwen 3.8 27B', tag: 'Logic', isPro: false },
 ];
+
+function CustomModelDropdown({
+  selectedId,
+  onSelect,
+  disabled,
+  prefix,
+  accent = 'cyan',
+}: {
+  selectedId: string;
+  onSelect: (id: string) => void;
+  disabled?: boolean;
+  prefix?: string;
+  accent?: 'cyan' | 'emerald';
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
+
+  const currentModel = AVAILABLE_MODELS.find((m) => m.id === selectedId) || AVAILABLE_MODELS[0];
+
+  return (
+    <div className="relative inline-block" ref={dropdownRef}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium bg-[#0D1117] border transition-all ${
+          accent === 'emerald'
+            ? 'border-emerald-500/40 hover:border-emerald-500 text-slate-200'
+            : 'border-[#30363D] hover:border-slate-500 text-slate-200'
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+      >
+        <Cpu className={`w-3.5 h-3.5 shrink-0 ${accent === 'emerald' ? 'text-emerald-400' : 'text-cyan-400'}`} />
+        <span className="truncate max-w-[130px] sm:max-w-none">
+          {prefix ? `${prefix}: ` : ''}
+          {currentModel.label}
+        </span>
+        <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-2 w-64 rounded-2xl bg-[#161B22] border border-[#30363D] shadow-2xl z-50 py-1.5 overflow-hidden backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
+          <div className="px-3 py-1.5 text-[10px] font-mono text-slate-500 uppercase tracking-wider border-b border-[#30363D]/80">
+            Select Engine
+          </div>
+          {AVAILABLE_MODELS.map((model) => {
+            const isSelected = model.id === selectedId;
+            return (
+              <button
+                key={model.id}
+                type="button"
+                onClick={() => {
+                  onSelect(model.id);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between gap-2 transition text-xs ${
+                  isSelected ? 'bg-cyan-500/10 text-cyan-400 font-semibold' : 'text-slate-300 hover:bg-[#21262D]'
+                }`}
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSelected ? 'bg-cyan-400' : 'bg-slate-600'}`} />
+                  <span className="truncate">{model.label}</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {model.isPro ? (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-0.5">
+                      <Lock className="w-2.5 h-2.5" /> PRO
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-mono text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700/60">
+                      {model.tag}
+                    </span>
+                  )}
+                  {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400 ml-0.5" />}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function PromptSimulator({ promptText }: Props) {
   const [compareMode, setCompareMode] = useState(false);
@@ -24,7 +140,6 @@ export default function PromptSimulator({ promptText }: Props) {
   const [paywallDesc, setPaywallDesc] = useState('');
   const [isProUser, setIsProUser] = useState(false);
 
-  // Check if user has active Pro access in localStorage / session
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const active = localStorage.getItem('promptory_pro_active') === 'true';
@@ -32,13 +147,11 @@ export default function PromptSimulator({ promptText }: Props) {
     }
   }, []);
 
-  // Model A State (or Single Model)
   const [selectedModelA, setSelectedModelA] = useState('openai/gpt-oss-20b');
   const [outputA, setOutputA] = useState<string | null>(null);
   const [latencyA, setLatencyA] = useState<number | null>(null);
   const [copiedA, setCopiedA] = useState(false);
 
-  // Model B State (Comparison Mode)
   const [selectedModelB, setSelectedModelB] = useState('openai/gpt-oss-120b');
   const [outputB, setOutputB] = useState<string | null>(null);
   const [latencyB, setLatencyB] = useState<number | null>(null);
@@ -222,40 +335,24 @@ export default function PromptSimulator({ promptText }: Props) {
             )}
           </button>
 
-          {/* Model Selector A */}
-          <div className="relative flex items-center">
-            <Cpu className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" />
-            <select
-              value={selectedModelA}
-              onChange={(e) => handleModelAChange(e.target.value)}
-              disabled={loading}
-              className="bg-[#0D1117] border border-[#30363D] hover:border-slate-500 text-slate-200 text-xs rounded-xl pl-8 pr-3 py-1.5 focus:outline-none focus:border-cyan-500 transition cursor-pointer appearance-none disabled:opacity-50"
-            >
-              {AVAILABLE_MODELS.map((m) => (
-                <option key={m.id} value={m.id} className="bg-[#161B22] text-slate-200">
-                  {compareMode ? `A: ${m.label}` : `${m.label} (${m.tag})`}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Custom Model Selector A */}
+          <CustomModelDropdown
+            selectedId={selectedModelA}
+            onSelect={handleModelAChange}
+            disabled={loading}
+            prefix={compareMode ? 'A' : undefined}
+            accent="cyan"
+          />
 
-          {/* Model Selector B (when Compare Mode is active) */}
+          {/* Custom Model Selector B (when Compare Mode is active) */}
           {compareMode && (
-            <div className="relative flex items-center animate-in fade-in duration-150">
-              <Cpu className="w-3.5 h-3.5 text-emerald-400 absolute left-2.5 pointer-events-none" />
-              <select
-                value={selectedModelB}
-                onChange={(e) => handleModelBChange(e.target.value)}
-                disabled={loading}
-                className="bg-[#0D1117] border border-emerald-500/30 hover:border-emerald-500 text-slate-200 text-xs rounded-xl pl-8 pr-3 py-1.5 focus:outline-none focus:border-emerald-500 transition cursor-pointer appearance-none disabled:opacity-50"
-              >
-                {AVAILABLE_MODELS.map((m) => (
-                  <option key={m.id} value={m.id} className="bg-[#161B22] text-slate-200">
-                    B: {m.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomModelDropdown
+              selectedId={selectedModelB}
+              onSelect={handleModelBChange}
+              disabled={loading}
+              prefix="B"
+              accent="emerald"
+            />
           )}
 
           {/* Execution Button */}
@@ -279,7 +376,7 @@ export default function PromptSimulator({ promptText }: Props) {
         </div>
       </div>
 
-      {/* Paywall Banner / Modal when non-pro user tries locked feature */}
+      {/* Paywall Banner / Modal */}
       {showPaywall && (
         <ProPaywall
           title={paywallTitle}
