@@ -3,16 +3,16 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Production AI System Prompts & Multi-Step Workflows | Promptory Guide',
-  description: 'Enterprise guide to deterministic prompt engineering, 4-phase sequential chaining, zero-hallucination guardrails, and .cursorrules IDE synchronization.',
+  title: 'Production AI System Prompts & Multi-Step Workflows: The Enterprise Engineering Guide',
+  description: 'Eliminate LLM hallucinations. Learn how 4-phase sequential chaining boosts first-pass compilation from 42.4% to 96.8% with zero mock placeholders.',
   alternates: {
     canonical: 'https://www.promptory.xyz/guides/production-ai-system-prompts',
   },
   openGraph: {
-    title: 'Production AI System Prompts & Multi-Step Workflows: Enterprise Guide',
-    description: 'Eliminate prompt trial-and-error with deterministic boundary constraints and 4-phase sequential prompt chains.',
+    type: 'article',
+    title: 'Production AI System Prompts & Multi-Step Workflows: The Enterprise Engineering Guide',
+    description: 'Eliminate LLM hallucinations. Learn how 4-phase sequential chaining boosts first-pass compilation from 42.4% to 96.8% with zero mock placeholders.',
     url: 'https://www.promptory.xyz/guides/production-ai-system-prompts',
-    siteName: 'Promptory',
     images: [
       {
         url: 'https://www.promptory.xyz/api/og?title=Production+AI+System+Prompts+Guide&category=Architecture&role=Staff+Engineer&score=99',
@@ -21,12 +21,11 @@ export const metadata: Metadata = {
         alt: 'Production AI System Prompts & Multi-Step Workflows Guide',
       },
     ],
-    type: 'article',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Production AI System Prompts & Multi-Step Workflows',
-    description: 'Enterprise guide to deterministic prompt engineering and sequential chaining.',
+    description: 'Why single-shot prompts fail in production and how 4-phase sequential prompt chains enforce zero-hallucination code generation.',
     images: ['https://www.promptory.xyz/api/og?title=Production+AI+System+Prompts+Guide&category=Architecture&role=Staff+Engineer&score=99'],
   },
 };
