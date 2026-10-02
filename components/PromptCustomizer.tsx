@@ -11,7 +11,8 @@ import {
   GitFork, 
   Download, 
   Zap, 
-  Lock 
+  Lock,
+  Sparkles
 } from 'lucide-react';
 import { parsePromptVariables, replacePromptVariables } from '@/lib/variableParser';
 import AIBridge from './AIBridge';
@@ -162,9 +163,39 @@ export default function PromptCustomizer({
     });
   }, [baseTemplate, values, selectedTone, selectedFormat, selectedLength]);
 
+  // Handle Dynamic Split Point for Gating
+  const { publicPart, lockedPart, hasSplit } = useMemo(() => {
+    let splitIdx = generatedPrompt.indexOf('### NEGATIVE CONSTRAINTS');
+    if (splitIdx === -1) {
+      splitIdx = generatedPrompt.indexOf('### OUTPUT FORMAT');
+    }
+    if (splitIdx === -1 && generatedPrompt.length > 320) {
+      splitIdx = Math.floor(generatedPrompt.length * 0.55);
+    }
+
+    if (splitIdx > 0) {
+      return {
+        publicPart: generatedPrompt.slice(0, splitIdx).trimEnd(),
+        lockedPart: generatedPrompt.slice(splitIdx).trimStart(),
+        hasSplit: true,
+      };
+    }
+
+    return {
+      publicPart: generatedPrompt,
+      lockedPart: '',
+      hasSplit: false,
+    };
+  }, [generatedPrompt]);
+
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(generatedPrompt);
+      if (isProUser) {
+        await navigator.clipboard.writeText(generatedPrompt);
+      } else {
+        const textToCopy = `${publicPart}\n\n# [🔒 Full Production Guardrails & Schemas available on Promptory Pro: https://promptory.xyz/pricing]`;
+        await navigator.clipboard.writeText(textToCopy);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {}
@@ -180,6 +211,14 @@ export default function PromptCustomizer({
       return;
     }
     setShowExportModal(true);
+  };
+
+  const handleUnlockConstraints = () => {
+    setPaywallTitle('Unlock Negative Constraints & Output Schemas');
+    setPaywallDesc(
+      'Full production-grade negative constraints, zero-hallucination guards, and exact JSON formatting schemas are unlocked with Promptory Pro.'
+    );
+    setShowPaywall(true);
   };
 
   return (
@@ -271,6 +310,11 @@ export default function PromptCustomizer({
           <div className="flex items-center gap-2">
             <FileCode className="w-4 h-4 text-emerald-400" />
             <h3 className="text-sm font-bold text-white">Live Generated Prompt</h3>
+            {!isProUser && (
+              <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Lock className="w-2.5 h-2.5" /> Gated Guardrails
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -308,16 +352,54 @@ export default function PromptCustomizer({
               ) : (
                 <>
                   <Copy className="w-3.5 h-3.5" />
-                  <span>Copy Final Prompt</span>
+                  <span>{isProUser ? 'Copy Final Prompt' : 'Copy Basic Prompt'}</span>
                 </>
               )}
             </button>
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-[#0D1117] border border-[#30363D] text-xs md:text-sm text-slate-200 font-mono leading-relaxed whitespace-pre-wrap select-all max-h-96 overflow-y-auto">
-          {generatedPrompt}
-        </div>
+        {/* PROMPT CONTAINER WITH SEO-SAFE BLUR OVERLAY */}
+        {isProUser ? (
+          <div className="p-4 rounded-xl bg-[#0D1117] border border-[#30363D] text-xs md:text-sm text-slate-200 font-mono leading-relaxed whitespace-pre-wrap select-all max-h-96 overflow-y-auto">
+            {generatedPrompt}
+          </div>
+        ) : (
+          <div className="rounded-xl bg-[#0D1117] border border-[#30363D] overflow-hidden text-xs md:text-sm font-mono leading-relaxed">
+            {/* Free Public Section: Fully Visible & Crawlable */}
+            <div className="p-4 text-slate-200 whitespace-pre-wrap select-all">
+              {publicPart}
+            </div>
+
+            {/* Locked Section: Visible to SEO Crawlers, Blurred for Free Users */}
+            {hasSplit && (
+              <div className="relative border-t border-[#30363D]/60 p-4 bg-[#080B0F]/90 overflow-hidden">
+                <div className="filter blur-[4px] select-none pointer-events-none opacity-25 text-slate-400 whitespace-pre-wrap">
+                  {lockedPart}
+                </div>
+
+                {/* Cyberpunk Pro Upgrade Card Overlay */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-gradient-to-b from-[#0D1117]/60 via-[#0D1117]/95 to-[#0D1117] backdrop-blur-[2px]">
+                  <div className="flex items-center gap-1.5 text-amber-400 font-mono font-bold text-xs uppercase tracking-wider mb-1">
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Negative Constraints &amp; Schema Locked</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 text-center max-w-sm mb-3 font-sans leading-normal">
+                    Production guardrails, zero-hallucination rules, and exact JSON output formats are exclusive to Pro subscribers.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleUnlockConstraints}
+                    className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black text-xs font-extrabold transition shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 fill-black" />
+                    <span>Unlock Full Blueprint (₹799/mo)</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* LIVE AI OUTPUT SIMULATOR */}
