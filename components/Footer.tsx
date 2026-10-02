@@ -127,6 +127,11 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/benchmarks" className="hover:text-emerald-400 transition">
+                  Architecture Guide
+                </Link>
+              </li>
+              <li>
+                <Link href="/guides/production-ai-system-prompts" className="hover:text-emerald-400 transition-colors text-emerald-400 font-semibold">
                   Speed Benchmarks
                 </Link>
               </li>

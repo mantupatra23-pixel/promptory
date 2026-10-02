@@ -1,0 +1,29 @@
+{
+  "name": "promptory-cli",
+  "version": "0.1.0",
+  "description": "Production-grade AI prompt engineering CLI to inject .cursorrules and system prompts into local projects",
+  "bin": {
+    "promptory": "index.js",
+    "promptory-cli": "index.js"
+  },
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "keywords": [
+    "ai",
+    "prompts",
+    "cursor",
+    "cursorrules",
+    "llm",
+    "fastapi",
+    "developer-tools"
+  ],
+  "author": "Mantu",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mantupatra23-pixel/promptory.git"
+  }
+}
