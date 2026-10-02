@@ -1,21 +1,29 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Check, Zap, Sparkles, Terminal, ArrowRight, ShieldCheck } from 'lucide-react';
-
-const PRO_CHECKOUT_URL =
-  process.env.NEXT_PUBLIC_LEMONSQUEEZY_PRO_CHECKOUT_URL ||
-  'https://promptory-ai.lemonsqueezy.com/checkout/buy/d732cb82-7372-4365-95f2-852a9212fab3?discount=0';
+import { supabase } from '@/lib/supabase';
+import { getCheckoutUrl, DEFAULT_CHECKOUT_URL } from '@/lib/checkout';
+import { Check, Zap, Sparkles, Terminal, ArrowRight, Flame, Clock } from 'lucide-react';
 
 export default function PricingPage() {
+  const [checkoutUrl, setCheckoutUrl] = useState(DEFAULT_CHECKOUT_URL);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) {
+        setCheckoutUrl(getCheckoutUrl(session.user.email));
+      }
+    });
+  }, []);
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 text-slate-100 space-y-12">
       {/* Header */}
       <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-mono">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Simple Developer Pricing</span>
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-mono">
+          <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+          <span>377+ Production Blueprints &bull; Fresh Prompts Added Daily</span>
         </div>
         <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
           Supercharge Your AI Workflow
@@ -45,7 +53,10 @@ export default function PricingPage() {
             <div className="border-t border-[#30363D] pt-4 space-y-3 text-xs text-slate-300">
               <div className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Access all 377+ public prompt blueprints</span>
+                <span>
+                  Access all <strong className="text-white">377+ prompt blueprints</strong>{' '}
+                  <span className="text-[11px] text-emerald-400 font-mono">(Updated daily)</span>
+                </span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -72,8 +83,9 @@ export default function PricingPage() {
 
         {/* PRO PLAN */}
         <div className="p-6 sm:p-7 rounded-2xl bg-[#161B22] border-2 border-emerald-500/60 relative flex flex-col justify-between space-y-6 shadow-xl shadow-emerald-950/20">
-          <div className="absolute -top-3 right-6 px-3 py-0.5 rounded-full bg-emerald-500 text-black text-[10px] font-extrabold uppercase tracking-wide">
-            Recommended
+          <div className="absolute -top-3 right-6 px-3 py-0.5 rounded-full bg-emerald-500 text-black text-[10px] font-extrabold uppercase tracking-wide flex items-center gap-1">
+            <Zap className="w-3 h-3 fill-black" />
+            <span>Recommended</span>
           </div>
 
           <div className="space-y-4">
@@ -94,6 +106,12 @@ export default function PricingPage() {
             <div className="border-t border-[#30363D] pt-4 space-y-3 text-xs text-slate-200">
               <div className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="font-semibold text-white">
+                  Early access to daily production prompt drops
+                </span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span className="font-semibold text-white">Parallel Dual-Model Comparison Simulator</span>
               </div>
               <div className="flex items-center gap-2.5">
@@ -106,17 +124,17 @@ export default function PricingPage() {
               </div>
               <div className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Private Remix/Fork vault saved to your account</span>
+                <span>Developer CLI License Key included</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Developer CLI License Key included</span>
+                <span className="text-emerald-300 font-medium">Request custom prompts (24-hour turnaround)</span>
               </div>
             </div>
           </div>
 
           <a
-            href={PRO_CHECKOUT_URL}
+            href={checkoutUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full py-2.5 text-center text-xs font-bold rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
@@ -147,9 +165,9 @@ export default function PricingPage() {
             </p>
           </div>
           <div className="p-4 rounded-xl bg-[#161B22] border border-[#30363D] space-y-1.5">
-            <span className="font-bold text-amber-400">Custom Boundary Guardrails</span>
+            <span className="font-bold text-amber-400">Daily Production Drops</span>
             <p className="text-slate-400 leading-relaxed">
-              Inject strict negative constraints into any public blueprint with 1-click sandbox verification.
+              Battle-tested prompts refreshed daily across latest frontier model releases.
             </p>
           </div>
         </div>
