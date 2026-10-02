@@ -218,7 +218,7 @@ export default function PromptSimulator({ promptText }: Props) {
         const dataB = await resB.json();
 
         if (resA.status === 403 || dataA.error === 'LIMIT_EXCEEDED') {
-          triggerPaywall('Free Limit Reached (1/1 Used)', dataA.message);
+          triggerPaywall('Free Limit Reached (3/3 Used)', dataA.message);
           setLoading(false);
           return;
         }
@@ -234,8 +234,8 @@ export default function PromptSimulator({ promptText }: Props) {
 
         if (resA.status === 403 || dataA.error === 'LIMIT_EXCEEDED') {
           triggerPaywall(
-            'Free Limit Reached (1/1 Used)',
-            `You have used your 1 free simulation on ${userEmail}. Upgrade to Promptory Pro for unlimited executions, dual-model comparison, and IDE sync.`
+            'Free Limit Reached (3/3 Used)',
+            `You have used your 3 free simulations on ${userEmail}. Upgrade to Promptory Pro for unlimited executions, dual-model comparison, and IDE sync.`
           );
           setLoading(false);
           return;
@@ -329,7 +329,7 @@ export default function PromptSimulator({ promptText }: Props) {
           <h3 className="text-sm font-bold text-white">Live AI Output Simulator</h3>
           {!isProUser && (
             <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full">
-              1 Free Trial Run
+              3 Free Trial Runs
             </span>
           )}
         </div>

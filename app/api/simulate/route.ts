@@ -73,11 +73,11 @@ export async function POST(req: Request) {
         .eq('user_email', email)
         .maybeSingle();
 
-      if (usage && usage.count >= 1) {
+      if (usage && usage.count >= 3) {
         return NextResponse.json(
           {
             error: 'LIMIT_EXCEEDED',
-            message: 'Your account has used its 1 free lifetime simulation. Upgrade to Pro for unlimited benchmarks.'
+            message: 'Your account has used all 3 free simulations. Upgrade to Pro for unlimited benchmarks.'
           },
           { status: 403 }
         );
