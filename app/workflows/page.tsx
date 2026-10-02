@@ -19,6 +19,50 @@ export default async function WorkflowsPage() {
 
   return (
     <div className="min-h-screen bg-[#07090e] text-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Why do single-shot prompts fail in production software environments?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Single-shot prompts fail due to context window dilution and attention saturation. Compressing architectural contracts, business rules, typed validation, and implementation into one prompt causes context drift and non-deterministic placeholder generation."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How does Promptory enforce deterministic outputs in LLMs?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Promptory blueprints enforce determinism using negative boundary constraints, strict RFC-compliant JSON output schemas, and multi-step phase isolation, preventing extraneous conversational tokens and untested mock code."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can multi-step prompt workflows integrate into automated CI/CD pipelines?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. Promptory blueprints can be invoked programmatically via standard APIs or synchronized into local codebases via npx promptory-cli pull --all, enabling automated PR review and schema testing in GitHub Actions."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What is the performance impact of context isolation vs monolithic prompts?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Context isolation reduces total tokens ingested by up to 50% across multi-turn sessions by pruning dead conversational branches and passing only verified state artifacts between phases."
+                }
+              }
+            ]
+          })
+        }}
+      />
+
       <div className="max-w-6xl mx-auto space-y-16">
         
         {/* Header Hero */}
