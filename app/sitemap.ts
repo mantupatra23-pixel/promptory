@@ -75,13 +75,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       };
     });
 
-    return [...staticRoutes, ...taskRoutes, ...modelRoutes, ...roleRoutes, ...promptRoutes  {
+      const guideRoute = {
     url: 'https://www.promptory.xyz/guides/production-ai-system-prompts',
     lastModified: new Date(),
-    changeFrequency: 'weekly',
+    changeFrequency: 'weekly' as const,
     priority: 0.9,
-  },
-];
+  };
+
+  return [
+    guideRoute,...staticRoutes, ...taskRoutes, ...modelRoutes, ...roleRoutes, ...promptRoutes];
   } catch (error) {
     console.error('Error generating sitemap:', error);
     return staticRoutes;
