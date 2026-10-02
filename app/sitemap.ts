@@ -1,16 +1,19 @@
 import { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabase';
 
-export const revalidate = 86400;
+// Revalidate every 1 hour so newly published prompts appear fast
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.promptory.xyz';
   const now = new Date();
 
-  // Core Static & Hub Routes
+  // Core Static & High-Value Hub Routes
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
-    { url: `${baseUrl}/directory`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${baseUrl}/directory`, lastModified: now, changeFrequency: 'daily', priority: 0.95 },
+    { url: `${baseUrl}/pricing`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${baseUrl}/submit`, lastModified: now, changeFrequency: 'weekly', priority: 0.85 },
     { url: `${baseUrl}/tasks`, lastModified: now, changeFrequency: 'daily', priority: 0.85 },
     { url: `${baseUrl}/workflows`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/compare/promptory-vs-promptbase`, lastModified: now, changeFrequency: 'weekly', priority: 0.85 },
@@ -61,7 +64,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const promptRoutes: MetadataRoute.Sitemap = (promptsRes.data || []).map((p: any) => {
       const modelSlug = modelMap.get(p.model_id) || 'chatgpt';
-      const roleSlug = roleMap.get(p.profession_id) || 'software-developer';
+      const roleSlug = roleMap.get(p.profession_id) || 'developer';
       const timestamp = p.updated_at || p.created_at || now;
 
       return {
