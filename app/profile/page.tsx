@@ -4,11 +4,10 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { getCheckoutUrl } from '@/lib/checkout';
 import { 
-  User as UserIcon, 
-  Sparkles, 
   CreditCard, 
-  Key, 
+  Sparkles, 
   ExternalLink, 
   LogOut, 
   ShieldCheck, 
@@ -17,10 +16,6 @@ import {
   Clock,
   Layers
 } from 'lucide-react';
-
-const CHECKOUT_URL =
-  process.env.NEXT_PUBLIC_LEMONSQUEEZY_PRO_CHECKOUT_URL ||
-  'https://promptory-ai.lemonsqueezy.com/checkout/buy/d732cb82-7372-4365-95f2-852a9212fab3?discount=0';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -40,7 +35,6 @@ export default function ProfilePage() {
 
       setUser(user);
 
-      // Fetch subscription record matching user's email
       try {
         const { data, error } = await supabase
           .from('subscriptions')
@@ -84,10 +78,11 @@ export default function ProfilePage() {
   }
 
   const isPro = subData?.status === 'active';
+  const dynamicCheckoutUrl = getCheckoutUrl(user?.email);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12 space-y-6">
-      {/* Top Banner Profile Summary */}
+      {/* Profile Header Banner */}
       <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-32 bg-emerald-500/5 blur-3xl pointer-events-none" />
 
@@ -127,7 +122,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left Column: Plan & Subscription Status (2 cols wide) */}
+        {/* Left Column: Plan Details */}
         <div className="md:col-span-2 space-y-6">
           <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#30363D]">
@@ -177,7 +172,7 @@ export default function ProfilePage() {
                   <div>
                     <h3 className="text-sm font-bold text-white">Free Community Plan</h3>
                     <p className="text-xs text-slate-400 mt-1 max-w-sm">
-                      You are using basic single-model simulations. Upgrade to Pro to unlock dual-model reasoning comparison and CLI sync.
+                      Upgrade to unlock dual-model reasoning comparisons, GPT-OSS 120B simulations, and direct IDE sync.
                     </p>
                   </div>
                   <span className="text-xs font-mono text-slate-500">₹0/mo</span>
@@ -185,7 +180,7 @@ export default function ProfilePage() {
 
                 <div className="pt-2">
                   <a
-                    href={CHECKOUT_URL}
+                    href={dynamicCheckoutUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs transition shadow-lg shadow-emerald-500/20"
@@ -198,11 +193,11 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Developer Entitlements & Pro Features */}
+          {/* Entitlements Matrix */}
           <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-6 space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-[#30363D]">
               <Layers className="w-4 h-4 text-cyan-400" />
-              <h2 className="text-sm font-bold text-white">Your Developer Entitlements</h2>
+              <h2 className="text-sm font-bold text-white">Developer Entitlements</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -240,7 +235,7 @@ export default function ProfilePage() {
               <h3 className="text-xs font-bold uppercase tracking-wider font-mono">CLI Integration</h3>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Pull blueprints directly into your projects without leaving the terminal:
+              Pull blueprints directly into your workspace:
             </p>
             <div className="p-3 rounded-xl bg-[#0D1117] border border-[#30363D] font-mono text-[11px] text-emerald-400 overflow-x-auto select-all">
               npx promptory-cli pull --all
@@ -248,9 +243,9 @@ export default function ProfilePage() {
           </div>
 
           <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5 space-y-3 text-xs text-slate-400">
-            <h4 className="font-bold text-white text-xs">Need Help or Inquiries?</h4>
+            <h4 className="font-bold text-white text-xs">Need Help?</h4>
             <p className="text-[11px] leading-relaxed">
-              If your Pro subscription status is not reflecting, verify that you used the same email during checkout.
+              Your subscription is linked to <span className="text-slate-200 font-mono">{user?.email}</span>.
             </p>
             <Link
               href="/pricing"

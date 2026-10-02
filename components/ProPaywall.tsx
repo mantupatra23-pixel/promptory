@@ -1,11 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Lock, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
-
-const CHECKOUT_URL =
-  process.env.NEXT_PUBLIC_LEMONSQUEEZY_PRO_CHECKOUT_URL ||
-  'https://promptory-ai.lemonsqueezy.com/checkout/buy/d732cb82-7372-4365-95f2-852a9212fab3?discount=0';
+import { supabase } from '@/lib/supabase';
+import { getCheckoutUrl } from '@/lib/checkout';
 
 interface Props {
   title?: string;
@@ -20,6 +18,16 @@ export default function ProPaywall({
   price = "₹799/mo",
   onClose
 }: Props) {
+  const [checkoutUrl, setCheckoutUrl] = useState(getCheckoutUrl());
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) {
+        setCheckoutUrl(getCheckoutUrl(session.user.email));
+      }
+    });
+  }, []);
+
   return (
     <div className="relative overflow-hidden rounded-2xl border border-emerald-500/40 bg-[#0D1117]/95 backdrop-blur-xl p-6 sm:p-8 text-center my-6 shadow-2xl shadow-emerald-950/30">
       {/* GLOW EFFECT */}
@@ -42,7 +50,7 @@ export default function ProPaywall({
 
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
           <a
-            href={CHECKOUT_URL}
+            href={checkoutUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
