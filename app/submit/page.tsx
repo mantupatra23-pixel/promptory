@@ -329,7 +329,7 @@ ${draft}`;
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Home</span>
         </Link>
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap mb-2">
           <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
             {isFork ? <GitFork className="w-3 h-3 text-cyan-400" /> : <Sparkles className="w-3 h-3 text-emerald-400" />}
             <span>{isFork ? 'Remix / Fork Mode' : 'Community Submission'}</span>
@@ -350,14 +350,14 @@ ${draft}`;
         {/* Main Form */}
         <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-5">
           {errorMsg && (
-            <div className="p-4 rounded-xl bg-red-950/40 border border-red-800 text-xs text-red-300 flex items-center gap-2">
+            <div className="p-4 rounded-xl bg-red-950/40 border border-red-800 text-xs text-red-300 flex items-center gap-2 flex-wrap sm:flex-nowrap">
               <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {success && (
-            <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-800 text-xs text-emerald-300 flex items-center gap-2 shadow-lg shadow-emerald-500/10">
+            <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-800 text-xs text-emerald-300 flex items-center gap-2 flex-wrap sm:flex-nowrap shadow-lg shadow-emerald-500/10">
               <Check className="w-4 h-4 shrink-0 text-emerald-400" />
               <span>Blueprint published successfully! Redirecting to live page...</span>
             </div>
@@ -406,7 +406,7 @@ ${draft}`;
 
           {/* Prompt Body with Tabs & AI Enhancer */}
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <div className="flex items-center gap-1 bg-[#161B22] p-1 rounded-xl border border-[#30363D]">
                 <button
                   type="button"
@@ -431,7 +431,7 @@ ${draft}`;
               </div>
 
               {/* Action Toolbar */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                 <button
                   type="button"
                   onClick={handleInsertStarterBlueprint}
@@ -508,7 +508,7 @@ ${draft}`;
             className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black text-sm font-bold transition shadow-lg shadow-emerald-500/20 active:scale-[0.99] cursor-pointer"
           >
             {loading ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                 <Loader2 className="w-4 h-4 animate-spin text-black" />
                 <span>Auditing &amp; Publishing Blueprint...</span>
               </div>
