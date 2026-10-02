@@ -586,6 +586,10 @@ ${draft}`;
                 <span>Anti-hallucination guardrails</span>
               </div>
             </div>
+
+        {/* Submission Architecture Guidelines & FAQs */}
+        <SubmitGuideAndFaq />
+
           </div>
 
           {/* Detected Variables Box */}
@@ -618,7 +622,6 @@ ${draft}`;
 export default function SubmitPromptPage() {
   return (
     <Suspense fallback={<div className="p-12 text-center text-xs text-slate-400 font-mono">Loading submission portal...
-        <SubmitGuideAndFaq />
       </div>}>
       <SubmitFormContent />
     </Suspense>
