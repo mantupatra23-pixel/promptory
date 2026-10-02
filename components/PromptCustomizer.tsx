@@ -1,12 +1,24 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Copy, Check, RotateCcw, Sliders, FileCode, ChevronDown, GitFork, Download, Zap, Sparkles } from 'lucide-react';
+import { 
+  Copy, 
+  Check, 
+  RotateCcw, 
+  Sliders, 
+  FileCode, 
+  ChevronDown, 
+  GitFork, 
+  Download, 
+  Zap, 
+  Lock 
+} from 'lucide-react';
 import { parsePromptVariables, replacePromptVariables } from '@/lib/variableParser';
 import AIBridge from './AIBridge';
 import PromptExportModal from './PromptExportModal';
 import PromptSimulator from './PromptSimulator';
 import PromptRemixModal from './PromptRemixModal';
+import ProPaywall from './ProPaywall';
 
 export interface Props {
   initialPrompt?: string;
@@ -97,7 +109,6 @@ export default function PromptCustomizer({
   prompt,
   promptTitle,
   title,
-  promptId,
   modelName = 'ChatGPT',
   exampleInput,
 }: Props) {
@@ -112,6 +123,19 @@ export default function PromptCustomizer({
   const [copied, setCopied] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showRemixModal, setShowRemixModal] = useState(false);
+
+  // Pro State & Paywall Handling
+  const [isProUser, setIsProUser] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [paywallTitle, setPaywallTitle] = useState('Unlock Promptory Pro');
+  const [paywallDesc, setPaywallDesc] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const active = localStorage.getItem('promptory_pro_active') === 'true';
+      setIsProUser(active);
+    }
+  }, []);
 
   useEffect(() => {
     if (exampleInput && typeof exampleInput === 'object') {
@@ -144,6 +168,18 @@ export default function PromptCustomizer({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {}
+  };
+
+  const handleExportClick = () => {
+    if (!isProUser) {
+      setPaywallTitle('Export API / IDE Snippets (Pro)');
+      setPaywallDesc(
+        'Exporting ready-to-run Python SDK, TypeScript, cURL, and LangChain snippets directly into your production codebase requires an active Promptory Pro subscription.'
+      );
+      setShowPaywall(true);
+      return;
+    }
+    setShowExportModal(true);
   };
 
   return (
@@ -246,12 +282,18 @@ export default function PromptCustomizer({
               <span>Remix / Fork</span>
             </button>
 
+            {/* GATED EXPORT API / IDE BUTTON */}
             <button
-              onClick={() => setShowExportModal(true)}
+              onClick={handleExportClick}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#21262D] hover:bg-[#30363D] text-slate-200 text-xs font-semibold transition border border-[#30363D]"
             >
               <Download className="w-3.5 h-3.5 text-emerald-400" />
               <span>Export API / IDE</span>
+              {!isProUser && (
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-0.5">
+                  <Lock className="w-2.5 h-2.5" /> PRO
+                </span>
+              )}
             </button>
 
             <button
@@ -284,7 +326,17 @@ export default function PromptCustomizer({
       {/* 1-CLICK AI BRIDGE */}
       <AIBridge promptText={generatedPrompt} modelName={modelName} />
 
-      {/* DEVELOPER EXPORT MODAL */}
+      {/* PRO PAYWALL MODAL */}
+      {showPaywall && (
+        <ProPaywall
+          title={paywallTitle}
+          description={paywallDesc}
+          price="₹799/mo"
+          onClose={() => setShowPaywall(false)}
+        />
+      )}
+
+      {/* DEVELOPER EXPORT MODAL (PRO ONLY) */}
       <PromptExportModal
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
