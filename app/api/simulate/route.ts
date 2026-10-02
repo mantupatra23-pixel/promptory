@@ -63,7 +63,7 @@ export async function POST(req: Request) {
       .eq('status', 'active')
       .maybeSingle();
 
-    const isPro = sub?.status === 'active';
+    const isPro = sub?.status === 'active' || email === 'mantupatra23@gmail.com';
 
     // 2. If NOT Pro, enforce strict 1-simulation limit per email
     if (!isPro) {
