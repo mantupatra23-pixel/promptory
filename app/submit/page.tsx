@@ -1,6 +1,6 @@
-import SubmitGuideAndFaq from "./SubmitGuideAndFaq";
 'use client';
 
+import SubmitGuideAndFaq from './SubmitGuideAndFaq';
 import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
