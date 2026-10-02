@@ -1,23 +1,36 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Play, Sparkles, Check, Copy, Loader2, Zap, Cpu, Columns, Square } from 'lucide-react';
+import { Play, Sparkles, Check, Copy, Loader2, Zap, Cpu, Columns, Square, Lock } from 'lucide-react';
+import ProPaywall from './ProPaywall';
 
 interface Props {
   promptText: string;
 }
 
 const AVAILABLE_MODELS = [
-  { id: 'openai/gpt-oss-20b', label: 'GPT-OSS 20B', tag: 'Ultra-Fast' },
-  { id: 'openai/gpt-oss-120b', label: 'GPT-OSS 120B', tag: 'Deep Reasoning' },
-  { id: 'qwen/qwen3.8-27b', label: 'Qwen 3.8 27B', tag: 'Code & Logic' },
+  { id: 'openai/gpt-oss-20b', label: 'GPT-OSS 20B', tag: 'Fast', isPro: false },
+  { id: 'openai/gpt-oss-120b', label: 'GPT-OSS 120B', tag: '⚡ Pro • Reasoning', isPro: true },
+  { id: 'qwen/qwen3.8-27b', label: 'Qwen 3.8 27B', tag: 'Logic', isPro: false },
 ];
 
 export default function PromptSimulator({ promptText }: Props) {
   const [compareMode, setCompareMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [paywallTitle, setPaywallTitle] = useState('Unlock Promptory Pro');
+  const [paywallDesc, setPaywallDesc] = useState('');
+  const [isProUser, setIsProUser] = useState(false);
+
+  // Check if user has active Pro access in localStorage / session
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const active = localStorage.getItem('promptory_pro_active') === 'true';
+      setIsProUser(active);
+    }
+  }, []);
 
   // Model A State (or Single Model)
   const [selectedModelA, setSelectedModelA] = useState('openai/gpt-oss-20b');
@@ -30,6 +43,47 @@ export default function PromptSimulator({ promptText }: Props) {
   const [outputB, setOutputB] = useState<string | null>(null);
   const [latencyB, setLatencyB] = useState<number | null>(null);
   const [copiedB, setCopiedB] = useState(false);
+
+  const triggerPaywall = (title: string, desc: string) => {
+    setPaywallTitle(title);
+    setPaywallDesc(desc);
+    setShowPaywall(true);
+  };
+
+  const handleToggleCompare = () => {
+    if (!isProUser && !compareMode) {
+      triggerPaywall(
+        'Dual-Model Comparison (Pro)',
+        'Parallel side-by-side LLM benchmarking requires an active Promptory Pro developer subscription.'
+      );
+      return;
+    }
+    setCompareMode(!compareMode);
+  };
+
+  const handleModelAChange = (modelId: string) => {
+    const model = AVAILABLE_MODELS.find((m) => m.id === modelId);
+    if (model?.isPro && !isProUser) {
+      triggerPaywall(
+        'GPT-OSS 120B Reasoning (Pro)',
+        '120B parameter reasoning models require high-compute allocation available exclusively on Pro plans.'
+      );
+      return;
+    }
+    setSelectedModelA(modelId);
+  };
+
+  const handleModelBChange = (modelId: string) => {
+    const model = AVAILABLE_MODELS.find((m) => m.id === modelId);
+    if (model?.isPro && !isProUser) {
+      triggerPaywall(
+        'GPT-OSS 120B Reasoning (Pro)',
+        '120B parameter reasoning models require high-compute allocation available exclusively on Pro plans.'
+      );
+      return;
+    }
+    setSelectedModelB(modelId);
+  };
 
   const fetchSimulation = async (model: string) => {
     const res = await fetch('/api/simulate', {
@@ -152,7 +206,7 @@ export default function PromptSimulator({ promptText }: Props) {
           {/* Mode Switcher Toggle */}
           <button
             type="button"
-            onClick={() => setCompareMode(!compareMode)}
+            onClick={handleToggleCompare}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition ${
               compareMode
                 ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400'
@@ -161,6 +215,11 @@ export default function PromptSimulator({ promptText }: Props) {
           >
             {compareMode ? <Columns className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
             <span>{compareMode ? 'Compare: ON' : 'Compare Mode'}</span>
+            {!isProUser && (
+              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-0.5">
+                <Lock className="w-2.5 h-2.5" /> PRO
+              </span>
+            )}
           </button>
 
           {/* Model Selector A */}
@@ -168,7 +227,7 @@ export default function PromptSimulator({ promptText }: Props) {
             <Cpu className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" />
             <select
               value={selectedModelA}
-              onChange={(e) => setSelectedModelA(e.target.value)}
+              onChange={(e) => handleModelAChange(e.target.value)}
               disabled={loading}
               className="bg-[#0D1117] border border-[#30363D] hover:border-slate-500 text-slate-200 text-xs rounded-xl pl-8 pr-3 py-1.5 focus:outline-none focus:border-cyan-500 transition cursor-pointer appearance-none disabled:opacity-50"
             >
@@ -186,7 +245,7 @@ export default function PromptSimulator({ promptText }: Props) {
               <Cpu className="w-3.5 h-3.5 text-emerald-400 absolute left-2.5 pointer-events-none" />
               <select
                 value={selectedModelB}
-                onChange={(e) => setSelectedModelB(e.target.value)}
+                onChange={(e) => handleModelBChange(e.target.value)}
                 disabled={loading}
                 className="bg-[#0D1117] border border-emerald-500/30 hover:border-emerald-500 text-slate-200 text-xs rounded-xl pl-8 pr-3 py-1.5 focus:outline-none focus:border-emerald-500 transition cursor-pointer appearance-none disabled:opacity-50"
               >
@@ -219,6 +278,16 @@ export default function PromptSimulator({ promptText }: Props) {
           </button>
         </div>
       </div>
+
+      {/* Paywall Banner / Modal when non-pro user tries locked feature */}
+      {showPaywall && (
+        <ProPaywall
+          title={paywallTitle}
+          description={paywallDesc}
+          price="₹799/mo"
+          onClose={() => setShowPaywall(false)}
+        />
+      )}
 
       <p className="text-xs text-slate-400">
         {compareMode
