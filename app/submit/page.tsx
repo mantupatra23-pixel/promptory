@@ -1,3 +1,4 @@
+import SubmitGuideAndFaq from "./SubmitGuideAndFaq";
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
@@ -616,7 +617,9 @@ ${draft}`;
 
 export default function SubmitPromptPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-xs text-slate-400 font-mono">Loading submission portal...</div>}>
+    <Suspense fallback={<div className="p-12 text-center text-xs text-slate-400 font-mono">Loading submission portal...
+        <SubmitGuideAndFaq />
+      </div>}>
       <SubmitFormContent />
     </Suspense>
   );
