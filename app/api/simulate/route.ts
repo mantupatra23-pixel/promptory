@@ -9,7 +9,7 @@ const VALID_MODELS = [
 async function callGeminiFallback(prompt: string, apiKey: string) {
   const startTime = performance.now();
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -117,25 +117,25 @@ export async function POST(req: Request) {
           });
         }
 
-        console.warn(`Groq API returned ${groqResponse.status}. Triggering Gemini fallback...`);
+        console.warn(`Groq API status ${groqResponse.status}. Switching to Gemini fallback...`);
       } catch (groqErr) {
-        console.warn('Groq fetch error. Triggering Gemini fallback...', groqErr);
+        console.warn('Groq fetch error. Switching to Gemini fallback...', groqErr);
       }
     }
 
-    // 2. Fallback to Gemini if Groq hit 429/failed or not configured
+    // 2. Auto-fallback to Gemini 2.5 Flash
     if (geminiApiKey) {
       const geminiResult = await callGeminiFallback(prompt, geminiApiKey);
       return NextResponse.json({
         success: true,
         output: geminiResult.output,
         latency_ms: geminiResult.latencyMs,
-        modelUsed: 'gemini-1.5-flash (Smart Fallback)',
+        modelUsed: 'gemini-2.5-flash (Smart Fallback)',
       });
     }
 
     return NextResponse.json(
-      { error: 'AI provider rate-limited and no Gemini fallback key is configured.' },
+      { error: 'AI execution engines are currently busy. Please check configured API keys.' },
       { status: 429 }
     );
 
