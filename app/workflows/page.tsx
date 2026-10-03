@@ -55,7 +55,7 @@ export default async function WorkflowsPage() {
                 "name": "What is the performance impact of context isolation vs monolithic prompts?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Context isolation reduces total tokens ingested by up to 50% across multi-turn sessions by pruning dead conversational branches and passing only verified state artifacts between phases."
+                  "text": "Context isolation reduces total tokens ingested by up to 5Fail-Closed across multi-turn sessions by pruning dead conversational branches and passing only verified state artifacts between phases."
                 }
               }
             ]
@@ -81,16 +81,16 @@ export default async function WorkflowsPage() {
           {/* Quick Stats Banner */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto pt-4">
             <div className="bg-[#0c1017] border border-gray-800/80 rounded-xl p-3.5 text-center">
-              <div className="text-lg sm:text-xl font-bold font-mono text-emerald-400">99.4%</div>
-              <div className="text-[11px] text-gray-400 mt-0.5">Execution Fidelity</div>
+              <div className="text-lg sm:text-xl font-bold font-mono text-emerald-400">RFC-Strict</div>
+              <div className="text-[11px] text-gray-400 mt-0.5">Schema Contracts</div>
             </div>
             <div className="bg-[#0c1017] border border-gray-800/80 rounded-xl p-3.5 text-center">
               <div className="text-lg sm:text-xl font-bold font-mono text-white">4-Phase</div>
               <div className="text-[11px] text-gray-400 mt-0.5">Pipeline Chaining</div>
             </div>
             <div className="bg-[#0c1017] border border-gray-800/80 rounded-xl p-3.5 text-center">
-              <div className="text-lg sm:text-xl font-bold font-mono text-emerald-400">0%</div>
-              <div className="text-[11px] text-gray-400 mt-0.5">Hallucinated Schemas</div>
+              <div className="text-lg sm:text-xl font-bold font-mono text-emerald-400">Fail-Closed</div>
+              <div className="text-[11px] text-gray-400 mt-0.5">Halt Guardrails</div>
             </div>
             <div className="bg-[#0c1017] border border-gray-800/80 rounded-xl p-3.5 text-center">
               <div className="text-lg sm:text-xl font-bold font-mono text-white">1-Click</div>
@@ -130,7 +130,7 @@ export default async function WorkflowsPage() {
               </div>
               <h4 className="text-sm font-bold text-white">Context Window Isolation</h4>
               <p className="text-xs text-gray-400 leading-relaxed">
-                Phase 1 outputs only architectural blueprints. Phase 2 receives this clean structure without conversational garbage, allowing 100% token focus on code quality.
+                Phase 1 outputs only architectural blueprints. Phase 2 receives this clean structure without conversational garbage, allowing 10Fail-Closed token focus on code quality.
               </p>
             </div>
 
