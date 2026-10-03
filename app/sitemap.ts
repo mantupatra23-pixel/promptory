@@ -82,7 +82,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   };
 
+    const compareRoute = {
+    url: 'https://www.promptory.xyz/promptory-vs-promptbase',
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.9,
+  };
+
   return [
+    compareRoute,
     guideRoute,...staticRoutes, ...taskRoutes, ...modelRoutes, ...roleRoutes, ...promptRoutes];
   } catch (error) {
     console.error('Error generating sitemap:', error);
