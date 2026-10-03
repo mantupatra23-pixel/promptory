@@ -47,7 +47,7 @@ export default async function WorkflowsPage() {
                 "name": "Can multi-step prompt workflows integrate into automated CI/CD pipelines?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Yes. Promptory blueprints can be invoked programmatically via standard APIs or synchronized into local codebases via npx promptory-cli pull --all, enabling automated PR review and schema testing in GitHub Actions."
+                  "text": "Yes. Promptory blueprints can be invoked programmatically via standard APIs or synchronized into local codebases via npx promptory-cli, enabling automated PR review and schema testing in GitHub Actions."
                 }
               },
               {
@@ -55,7 +55,7 @@ export default async function WorkflowsPage() {
                 "name": "What is the performance impact of context isolation vs monolithic prompts?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Context isolation reduces total tokens ingested by up to 5Fail-Closed across multi-turn sessions by pruning dead conversational branches and passing only verified state artifacts between phases."
+                  "text": "Context isolation reduces total tokens ingested by up to 50% across multi-turn sessions by pruning dead conversational branches and passing only verified state artifacts between phases."
                 }
               }
             ]
@@ -130,7 +130,7 @@ export default async function WorkflowsPage() {
               </div>
               <h4 className="text-sm font-bold text-white">Context Window Isolation</h4>
               <p className="text-xs text-gray-400 leading-relaxed">
-                Phase 1 outputs only architectural blueprints. Phase 2 receives this clean structure without conversational garbage, allowing 10Fail-Closed token focus on code quality.
+                Phase 1 outputs only architectural blueprints. Phase 2 receives this clean structure without conversational garbage, allowing 100% token focus on code quality.
               </p>
             </div>
 
