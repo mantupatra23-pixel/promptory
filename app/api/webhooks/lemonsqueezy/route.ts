@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+// Webhook ke liye Admin client create karein (RLS bypass ke sath)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = 
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
+  auth: { persistSession: false, autoRefreshToken: false }
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,7 +33,7 @@ export async function POST(req: NextRequest) {
     const eventName = payload.meta?.event_name;
     const customData = payload.meta?.custom_data;
     
-    // Extract user email from multiple possible payload locations
+    // Extract user email from multiple possible locations
     const userEmail = 
       customData?.user_email || 
       payload.data?.attributes?.user_email || 
@@ -33,7 +43,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'No user email found, acknowledged' }, { status: 200 });
     }
 
-    // Handle all success & payment events
+    const cleanEmail = userEmail.toLowerCase().trim();
+
+    // Handle payment & subscription creation events
     const successEvents = [
       'subscription_created',
       'subscription_updated',
@@ -45,25 +57,29 @@ export async function POST(req: NextRequest) {
       const attrStatus = payload.data?.attributes?.status || 'active';
       const isSubActive = attrStatus === 'active' || attrStatus === 'paid';
 
-      const { error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('subscriptions')
         .upsert(
           {
-            user_email: userEmail.toLowerCase().trim(),
+            user_email: cleanEmail,
             status: isSubActive ? 'active' : attrStatus,
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'user_email' }
-        );
+        )
+        .select();
 
       if (error) {
-        console.error('Supabase update error:', error);
-        return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
+        console.error('Supabase update error:', error.message, error.details);
+        return NextResponse.json({ 
+          error: 'Database update failed', 
+          details: error.message 
+        }, { status: 500 });
       }
 
       return NextResponse.json({ 
         success: true, 
-        user: userEmail, 
+        user: cleanEmail, 
         status: isSubActive ? 'active' : attrStatus,
         event: eventName 
       }, { status: 200 });
@@ -71,10 +87,10 @@ export async function POST(req: NextRequest) {
 
     // Handle Cancellation / Expiration
     if (eventName === 'subscription_cancelled' || eventName === 'subscription_expired') {
-      await supabase
+      await supabaseAdmin
         .from('subscriptions')
         .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-        .eq('user_email', userEmail.toLowerCase().trim());
+        .eq('user_email', cleanEmail);
 
       return NextResponse.json({ success: true, message: 'Subscription cancelled' }, { status: 200 });
     }
