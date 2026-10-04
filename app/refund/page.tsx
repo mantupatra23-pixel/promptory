@@ -26,7 +26,7 @@ export default function RefundPage() {
 
           <h2 className="text-lg font-semibold text-white">2. How to Request a Refund</h2>
           <p>
-            To initiate a refund, please send an email to <a href="mailto:pmantu030@gmail.com" className="text-emerald-400 underline">pmantu030@gmail.com</a> with the subject line <code>Refund Request - [Your Account Email]</code>. Please include your purchase receipt or Lemon Squeezy order number.
+            To initiate a refund, please send an email to <a href="mailto:pmantu808@gmail.com" className="text-emerald-400 underline">pmantu808@gmail.com</a> with the subject line <code>Refund Request - [Your Account Email]</code>. Please include your purchase receipt or Lemon Squeezy order number.
           </p>
           <p>
             Refund requests are reviewed and processed within <strong>24 to 48 business hours</strong>. Once approved, the funds will be reversed to your original payment method within 5–7 business days depending on your bank.
