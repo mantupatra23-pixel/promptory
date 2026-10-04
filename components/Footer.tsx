@@ -161,6 +161,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/refund" className="hover:text-emerald-400 transition">
+                  Refund Policy
+                </Link>
+              </li>
+              <li>
                 <a
                   href="https://github.com/mantupatra23-pixel/promptory"
                   target="_blank"
