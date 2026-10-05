@@ -294,13 +294,7 @@ export default function PromptCustomizer({
     setShowRemixModal(true);
   };
 
-  const handleUnlockConstraints = () => {
-    setPaywallTitle('Free Quota Exhausted (3/3 Used)');
-    setPaywallDesc(
-      'You have used your 3 free prompts. Upgrade to Promptory Pro for ₹799/mo to unlock unlimited blueprints, negative constraints, and CLI exports.'
-    );
-    setShowPaywall(true);
-  };
+  const handleUnlockConstraints = () => { window.location.href = "/pricing"; };
 
   return (
     <div className="space-y-6">
