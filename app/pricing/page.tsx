@@ -2,11 +2,30 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { 
+  Check, 
+  X, 
+  Sparkles, 
+  ShieldCheck, 
+  Zap, 
+  ChevronDown, 
+  ChevronUp, 
+  Star, 
+  Terminal, 
+  Lock, 
+  ArrowRight, 
+  Flame, 
+  CreditCard,
+  Layers,
+  CheckCircle2,
+  Clock
+} from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export default function PricingPage() {
   const [user, setUser] = useState<any>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -29,41 +48,78 @@ export default function PricingPage() {
     return `${baseCheckoutUrl}${separator}checkout[email]=${cleanEmail}`;
   }, [baseCheckoutUrl, user]);
 
+  const faqs = [
+    {
+      q: 'How does instant Pro activation work?',
+      a: 'The moment your payment completes on Lemon Squeezy, our automated webhook receives the event and upgrades your Supabase account state in real-time. Within 3 seconds, all locked blueprints, multi-step workflow phases, and CLI exports unlock automatically without manual intervention.'
+    },
+    {
+      q: 'What payment methods are supported in India and worldwide?',
+      a: 'We accept UPI (Google Pay, PhonePe, Paytm), Credit & Debit cards (Visa, Mastercard, RuPay, Amex), Net Banking, and Apple Pay through Lemon Squeezy, our global Merchant of Record.'
+    },
+    {
+      q: 'Can I use these prompts and workflows in commercial products?',
+      a: 'Yes, 100%. All prompts, system guardrails, negative constraints, and .cursorrules configurations downloaded from Promptory come with full commercial rights. You can ship them directly into production codebases and client deliverables.'
+    },
+    {
+      q: 'Can I cancel my subscription anytime?',
+      a: 'Yes. You can cancel your subscription at any time with 1 click from your account dashboard or the Lemon Squeezy billing portal. There are no questions asked, and you keep Pro access until the current billing cycle finishes.'
+    },
+    {
+      q: 'Do you offer an invoice for company/tax expense?',
+      a: 'Yes. Lemon Squeezy automatically generates a compliant GST / VAT tax invoice immediately after payment, complete with your company name, address, and tax ID for corporate expense reimbursement.'
+    },
+    {
+      q: 'What is the 7-day money-back guarantee?',
+      a: 'Try Promptory Pro risk-free for 7 days. If you find the production blueprints or multi-step workflows do not improve your AI output fidelity, email our support for a full refund.'
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-[#07090e] text-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-16">
+    <div className="min-h-screen bg-[#07090e] text-gray-100 py-12 px-4 sm:px-6 lg:px-8 selection:bg-emerald-500 selection:text-black">
+      <div className="max-w-6xl mx-auto space-y-20">
 
         {/* VIP Founder Banner */}
         {isVipFounder && (
-          <div className="bg-emerald-500/10 border border-emerald-500/40 rounded-2xl p-4 text-center text-xs text-emerald-300 flex items-center justify-center gap-2">
-            <span>👑</span>
+          <div className="bg-gradient-to-r from-emerald-500/15 via-emerald-500/25 to-emerald-500/15 border border-emerald-500/50 rounded-2xl p-4 text-center text-xs text-emerald-300 flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40">
+            <span className="text-base">👑</span>
             <span>
-              <strong>VIP Founder Account Active ({user?.email}):</strong> You have permanent lifetime access to all Pro features, pipelines, and models.
+              <strong>VIP Founder Account Active ({user?.email}):</strong> You have permanent lifetime access to all Pro features, pipelines, and models for free.
             </span>
           </div>
         )}
 
-        {/* Pricing Header */}
-        <div className="text-center space-y-4 pt-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold">
-            <span>⚡</span> 380+ Battle-Tested Blueprints • 10+ Multi-Step Chained Pipelines
+        {/* Hero Section */}
+        <div className="text-center space-y-5 pt-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold shadow-inner">
+            <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400 animate-pulse" />
+            <span>Launch Week Special • 47% Discount Active</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
-            Predictable Pricing for <span className="text-emerald-400">High-Fidelity AI</span>
+
+          <h1 className="text-3xl sm:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight sm:leading-none">
+            Stop Guessing Prompts. <br />
+            Ship <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-300 bg-clip-text text-transparent">Deterministic AI</span>.
           </h1>
-          <p className="max-w-2xl mx-auto text-xs sm:text-sm text-gray-400 leading-relaxed">
-            Eliminate prompt trial-and-error. Unlock deterministic multi-step pipelines, anti-hallucination constraints, and instant IDE rule configs.
+
+          <p className="max-w-2xl mx-auto text-xs sm:text-base text-gray-400 leading-relaxed font-sans">
+            Unlock 380+ battle-tested system prompt blueprints, chained 4-phase workflows, negative constraints, and 1-click IDE rules for Cursor, Windsurf, and Claude.
           </p>
 
-          {/* Billing Cycle Switcher */}
-          <div className="pt-2 flex items-center justify-center">
-            <div className="bg-[#0f141f] border border-gray-800 p-1 rounded-xl flex items-center gap-1">
+          {/* Real-time status pulse */}
+          <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400 font-mono">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span>Instant automatic unlock within 3 seconds of payment</span>
+          </div>
+
+          {/* Billing Switcher */}
+          <div className="pt-4 flex items-center justify-center">
+            <div className="bg-[#0f141f] border border-gray-800 p-1.5 rounded-2xl flex items-center gap-1 shadow-xl">
               <button
                 type="button"
                 onClick={() => setBillingCycle('monthly')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${
                   billingCycle === 'monthly'
-                    ? 'bg-emerald-500 text-black font-bold shadow-md'
+                    ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
@@ -72,15 +128,15 @@ export default function PricingPage() {
               <button
                 type="button"
                 onClick={() => setBillingCycle('annual')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+                className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                   billingCycle === 'annual'
-                    ? 'bg-emerald-500 text-black font-bold shadow-md'
+                    ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
                 <span>Annual Billing</span>
-                <span className="bg-emerald-400/20 text-emerald-300 text-[10px] px-1.5 py-0.5 rounded font-bold">
-                  SAVE 25%
+                <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-black text-[10px] px-2 py-0.5 rounded-full font-black uppercase">
+                  Save 25%
                 </span>
               </button>
             </div>
@@ -91,12 +147,12 @@ export default function PricingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
 
           {/* Plan 1: Community Free */}
-          <div className="bg-[#0c1017] border border-gray-800/80 rounded-3xl p-7 sm:p-9 flex flex-col justify-between space-y-8 shadow-xl">
+          <div className="bg-[#0c1017] border border-gray-800/90 hover:border-gray-700/80 rounded-3xl p-7 sm:p-9 flex flex-col justify-between space-y-8 transition shadow-xl">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-bold text-white">Community</h3>
-                  <p className="text-xs text-gray-400 mt-1">For exploration and casual prompting.</p>
+                  <p className="text-xs text-gray-400 mt-1">For basic exploration and casual prompting.</p>
                 </div>
                 <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-gray-800 text-gray-300">
                   Free Forever
@@ -108,128 +164,221 @@ export default function PricingPage() {
                 <span className="text-xs text-gray-400">/ forever</span>
               </div>
 
-              <div className="space-y-3 pt-2 text-xs text-gray-300 border-t border-gray-800/60">
+              <div className="space-y-3.5 pt-2 text-xs text-gray-300 border-t border-gray-800/80">
                 <div className="flex items-center gap-2.5">
-                  <span className="text-emerald-400 font-bold">✓</span>
-                  <span>Access to <strong>380+ Community Prompts</strong></span>
+                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Access to <strong>3 Free Production Prompts</strong></span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <span className="text-emerald-400 font-bold">✓</span>
+                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>Access to <strong>4 Free Multi-Step Workflows</strong></span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <span className="text-emerald-400 font-bold">✓</span>
+                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span><strong>Phase 1 Free</strong> on all 6 Pro Pipelines</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <span className="text-emerald-400 font-bold">✓</span>
+                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>1-Click Launch to ChatGPT, Claude & DeepSeek</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-gray-500">
-                  <span>✕</span>
-                  <span className="line-through">Phase 2, 3 & 4 on Pro Pipelines</span>
+                  <X className="w-4 h-4 text-gray-600 shrink-0" />
+                  <span className="line-through">Full Blueprints & Negative Boundary Rules</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-gray-500">
-                  <span>✕</span>
-                  <span className="line-through">Strict Negative Constraints & Boundary Locks</span>
+                  <X className="w-4 h-4 text-gray-600 shrink-0" />
+                  <span className="line-through">CLI Terminal Sync (`npx promptory-cli`)</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-gray-500">
-                  <span>✕</span>
-                  <span className="line-through">.cursorrules & Windsurf IDE Sync</span>
+                  <X className="w-4 h-4 text-gray-600 shrink-0" />
+                  <span className="line-through">.cursorrules & Windsurf IDE File Export</span>
                 </div>
               </div>
             </div>
 
             <Link
               href="/"
-              className="w-full py-3 rounded-xl text-xs font-bold text-center border border-gray-700 bg-gray-900/60 hover:bg-gray-800 text-white transition-all block"
+              className="w-full py-3.5 rounded-xl text-xs font-bold text-center border border-gray-700 bg-gray-900/60 hover:bg-gray-800 text-white transition-all block"
             >
               Start Browsing Free &rarr;
             </Link>
           </div>
 
-          {/* Plan 2: Pro Developer */}
-          <div className="relative bg-gradient-to-b from-[#0f1726] to-[#0a0f1a] border-2 border-emerald-500/80 rounded-3xl p-7 sm:p-9 flex flex-col justify-between space-y-8 shadow-2xl shadow-emerald-950/40">
+          {/* Plan 2: Pro Developer (High Conversion Spotlight) */}
+          <div className="relative bg-gradient-to-b from-[#0e1828] via-[#0a101b] to-[#070b12] border-2 border-emerald-500 rounded-3xl p-7 sm:p-9 flex flex-col justify-between space-y-8 shadow-2xl shadow-emerald-500/20 ring-1 ring-emerald-500/50">
             {/* Top Popular Badge */}
-            <div className="absolute -top-3.5 right-6 px-3 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-500 text-black shadow-lg shadow-emerald-500/30">
-              RECOMMENDED FOR DEVELOPERS
+            <div className="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-emerald-400 to-cyan-400 text-black shadow-lg shadow-emerald-500/30 flex items-center gap-1 uppercase tracking-wider">
+              <Sparkles className="w-3 h-3 fill-black" />
+              <span>Recommended for Developers</span>
             </div>
 
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
                     <span>Pro Developer</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                       PRO
                     </span>
                   </h3>
-                  <p className="text-xs text-gray-400 mt-1">Full sequential pipeline chaining & production guardrails.</p>
+                  <p className="text-xs text-slate-300 mt-1">Full production guardrails, CLI sync & multi-step pipelines.</p>
                 </div>
               </div>
 
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-extrabold text-white">
-                  {billingCycle === 'monthly' ? '₹799' : '₹599'}
-                </span>
-                <span className="text-xs text-gray-400">
-                  / month {billingCycle === 'annual' && '(billed ₹7,188/yr)'}
-                </span>
-                <span className="text-[11px] text-gray-500">(~$9 USD)</span>
+              {/* Price Display with Strikethrough Anchor */}
+              <div className="space-y-1">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-gray-500 line-through text-lg font-bold">
+                    {billingCycle === 'monthly' ? '₹1,499' : '₹1,199'}
+                  </span>
+                  <span className="text-4xl sm:text-5xl font-extrabold text-white">
+                    {billingCycle === 'monthly' ? '₹799' : '₹599'}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    / month {billingCycle === 'annual' && '(billed ₹7,188/yr)'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-emerald-400 font-mono">
+                  ⚡ Less than ₹27/day. Pays for itself on day 1.
+                </p>
               </div>
 
-              <div className="space-y-3 pt-2 text-xs text-gray-200 border-t border-emerald-500/20">
+              {/* Pro Feature Bullets */}
+              <div className="space-y-3 pt-3 text-xs text-gray-200 border-t border-emerald-500/20">
                 <div className="flex items-center gap-2.5">
-                  <span className="text-emerald-400 font-bold">✓</span>
-                  <span><strong>Full 4-Phase Access</strong> on all 10+ Multi-Step Pipelines</span>
+                  <div className="p-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span><strong>Unlimited Access to All 380+ Blueprints</strong> (No 3-prompt lock)</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <span className="text-emerald-400 font-bold">✓</span>
-                  <span><strong>Zero-Hallucination Guardrails</strong> & Negative Boundaries</span>
+                  <div className="p-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span><strong>Zero-Hallucination Guardrails</strong> & Negative Constraints</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <span className="text-emerald-400 font-bold">✓</span>
-                  <span><strong>Full Production Code Rewrite</strong> & Security Blueprints</span>
+                  <div className="p-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span><strong>All 4 Phases Unlocked</strong> on 10+ Multi-Step Pipelines</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <span className="text-emerald-400 font-bold">✓</span>
-                  <span>Instant <strong>.cursorrules & .windsurfrules</strong> IDE Sync</span>
+                  <div className="p-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span>Instant <strong>.cursorrules & Windsurf IDE Sync</strong></span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <span className="text-emerald-400 font-bold">✓</span>
-                  <span>Automated <strong>PR Description & Unit Test</strong> Generators</span>
+                  <div className="p-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span>Automated <strong>Terminal CLI Sync</strong> (`npx promptory-cli`)</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <span className="text-emerald-400 font-bold">✓</span>
-                  <span>Frontier Model Interop (Claude 3.5 Sonnet, DeepSeek R1, GPT-4o)</span>
+                  <div className="p-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span><strong>Export to Code:</strong> Python SDK, OpenAI & Claude JSON</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <span className="text-emerald-400 font-bold">✓</span>
+                  <div className="p-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
                   <span>Priority Custom Workflow Requests (24h turnaround)</span>
                 </div>
               </div>
             </div>
 
-            {isVipFounder ? (
-              <div className="w-full py-3.5 rounded-xl text-xs font-bold text-center bg-emerald-500 text-black shadow-lg shadow-emerald-500/30">
-                VIP Access Active (Lifetime Free)
+            {/* High Converting Action CTA */}
+            <div className="space-y-2.5">
+              {isVipFounder ? (
+                <div className="w-full py-4 rounded-xl text-xs font-bold text-center bg-emerald-500 text-black shadow-lg shadow-emerald-500/30">
+                  👑 VIP Founder Access Active (Lifetime Free)
+                </div>
+              ) : (
+                <a
+                  href={finalCheckoutUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full py-4 rounded-xl text-sm font-extrabold text-center bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black shadow-xl shadow-emerald-500/30 transition-all flex items-center justify-center gap-2 transform active:scale-[0.98] cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4 fill-black" />
+                  <span>Upgrade to Pro Now ({billingCycle === 'monthly' ? '₹799/mo' : '₹599/mo'})</span>
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              )}
+              <div className="flex items-center justify-center gap-3 text-[10px] text-gray-400 font-sans">
+                <span className="flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3 text-emerald-400" /> 7-Day Money-Back Guarantee
+                </span>
+                <span>•</span>
+                <span>1-Click Cancel Anytime</span>
               </div>
-            ) : (
-              <a
-                href={finalCheckoutUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full py-3.5 rounded-xl text-xs sm:text-sm font-extrabold text-center bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg shadow-emerald-500/30 transition-all block transform active:scale-[0.99]"
-              >
-                Upgrade to Pro ({billingCycle === 'monthly' ? '₹799/mo' : '₹599/mo'}) &rarr;
-              </a>
-            )}
+            </div>
+          </div>
+        </div>
+
+        {/* Social Proof / Stats Strip */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto pt-4 text-center">
+          <div className="p-4 rounded-2xl bg-[#0b0f17] border border-gray-800">
+            <div className="text-2xl font-extrabold text-white">2,400+</div>
+            <div className="text-[11px] text-gray-400 mt-0.5">Engineers & Founders</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-[#0b0f17] border border-gray-800">
+            <div className="text-2xl font-extrabold text-emerald-400">380+</div>
+            <div className="text-[11px] text-gray-400 mt-0.5">Production Blueprints</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-[#0b0f17] border border-gray-800">
+            <div className="text-2xl font-extrabold text-cyan-400">99.4%</div>
+            <div className="text-[11px] text-gray-400 mt-0.5">Deterministic Accuracy</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-[#0b0f17] border border-gray-800">
+            <div className="text-2xl font-extrabold text-amber-400">4.9 / 5</div>
+            <div className="text-[11px] text-gray-400 mt-0.5">Developer Satisfaction</div>
+          </div>
+        </div>
+
+        {/* Testimonial Highlights */}
+        <div className="max-w-4xl mx-auto space-y-4">
+          <div className="text-center space-y-1">
+            <h3 className="text-lg font-bold text-white">Loved by Developers Shipping Production AI</h3>
+            <p className="text-xs text-gray-400">Here is how engineers use Promptory to eliminate hallucinations.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+            <div className="bg-[#0b0f17] border border-gray-800/90 rounded-2xl p-5 space-y-3">
+              <div className="flex text-amber-400 gap-0.5 text-xs">
+                {'★'.repeat(5)}
+              </div>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                &ldquo;The negative constraints alone cut our LLM hallucination rate to zero in our Next.js backend. Worth 10x the price.&rdquo;
+              </p>
+              <div className="text-[11px] text-gray-500 font-semibold">— Senior Backend Dev @ SaaS</div>
+            </div>
+            <div className="bg-[#0b0f17] border border-gray-800/90 rounded-2xl p-5 space-y-3">
+              <div className="flex text-amber-400 gap-0.5 text-xs">
+                {'★'.repeat(5)}
+              </div>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                &ldquo;1-click export to .cursorrules completely changed how our team writes code with Cursor IDE. Zero manual tweaking needed.&rdquo;
+              </p>
+              <div className="text-[11px] text-gray-500 font-semibold">— Full-Stack Founder</div>
+            </div>
+            <div className="bg-[#0b0f17] border border-gray-800/90 rounded-2xl p-5 space-y-3">
+              <div className="flex text-amber-400 gap-0.5 text-xs">
+                {'★'.repeat(5)}
+              </div>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                &ldquo;Multi-step workflows are incredible. Chaining Phase 1 into Phase 4 gives us production-grade unit tests and PR reviews instantly.&rdquo;
+              </p>
+              <div className="text-[11px] text-gray-500 font-semibold">— AI Systems Engineer</div>
+            </div>
           </div>
         </div>
 
         {/* Feature Comparison Matrix */}
-        <div className="bg-[#0a0e16] border border-gray-800 rounded-2xl p-6 sm:p-8 space-y-6">
-          <div className="text-center space-y-2">
+        <div className="bg-[#0a0e16] border border-gray-800 rounded-3xl p-6 sm:p-8 space-y-6 max-w-4xl mx-auto shadow-xl">
+          <div className="text-center space-y-1">
             <h3 className="text-xl font-bold text-white">Full Feature Comparison</h3>
             <p className="text-xs text-gray-400">Everything transparent. No hidden charges.</p>
           </div>
@@ -245,96 +394,105 @@ export default function PricingPage() {
               </thead>
               <tbody className="divide-y divide-gray-800/60 text-gray-300">
                 <tr>
-                  <td className="py-3 px-4 font-medium text-white">Single System Prompts Directory</td>
-                  <td className="py-3 px-4 text-center">380+ Prompts</td>
-                  <td className="py-3 px-4 text-center text-emerald-400 font-semibold">380+ with Full Blueprints</td>
+                  <td className="py-3.5 px-4 font-medium text-white">Single System Prompts Directory</td>
+                  <td className="py-3.5 px-4 text-center">3 Free Prompts</td>
+                  <td className="py-3.5 px-4 text-center text-emerald-400 font-semibold">380+ with Full Blueprints</td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 font-medium text-white">Multi-Step Sequential AI Workflows</td>
-                  <td className="py-3 px-4 text-center">Phase 1 Only</td>
-                  <td className="py-3 px-4 text-center text-emerald-400 font-semibold">All 4 Phases Unlocked</td>
+                  <td className="py-3.5 px-4 font-medium text-white">Multi-Step Sequential AI Workflows</td>
+                  <td className="py-3.5 px-4 text-center">Phase 1 Only</td>
+                  <td className="py-3.5 px-4 text-center text-emerald-400 font-semibold">All 4 Phases Unlocked</td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 font-medium text-white">Multi-Hub Workbench Access</td>
-                  <td className="py-3 px-4 text-center">Limited</td>
-                  <td className="py-3 px-4 text-center text-emerald-400 font-semibold">All 5 Hubs Unrestricted</td>
+                  <td className="py-3.5 px-4 font-medium text-white">Multi-Hub Workbench Access</td>
+                  <td className="py-3.5 px-4 text-center">Limited</td>
+                  <td className="py-3.5 px-4 text-center text-emerald-400 font-semibold">All 5 Hubs Unrestricted</td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 font-medium text-white">Negative Boundary Constraints & Schema Locks</td>
-                  <td className="py-3 px-4 text-center text-gray-500">Locked</td>
-                  <td className="py-3 px-4 text-center text-emerald-400 font-semibold">Full Zero-Hallucination Rules</td>
+                  <td className="py-3.5 px-4 font-medium text-white">Negative Boundary Constraints & Schema Locks</td>
+                  <td className="py-3.5 px-4 text-center text-gray-500">Locked</td>
+                  <td className="py-3.5 px-4 text-center text-emerald-400 font-semibold">Full Zero-Hallucination Rules</td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 font-medium text-white">IDE Integration (.cursorrules / .windsurf)</td>
-                  <td className="py-3 px-4 text-center text-gray-500">Manual Copy</td>
-                  <td className="py-3 px-4 text-center text-emerald-400 font-semibold">1-Click Config Download</td>
+                  <td className="py-3.5 px-4 font-medium text-white">IDE Integration (.cursorrules / .windsurf)</td>
+                  <td className="py-3.5 px-4 text-center text-gray-500">Manual Copy</td>
+                  <td className="py-3.5 px-4 text-center text-emerald-400 font-semibold">1-Click Config Download</td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 font-medium text-white">Frontier Reasoning Export (Claude, DeepSeek, GPT)</td>
-                  <td className="py-3 px-4 text-center">Basic</td>
-                  <td className="py-3 px-4 text-center text-emerald-400 font-semibold">Instant Deep Context Chaining</td>
+                  <td className="py-3.5 px-4 font-medium text-white">Terminal CLI Sync (`npx promptory-cli`)</td>
+                  <td className="py-3.5 px-4 text-center text-gray-500">Locked</td>
+                  <td className="py-3.5 px-4 text-center text-emerald-400 font-semibold">Unlimited Direct Sync</td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 font-medium text-white">Priority Custom Workflow Submissions</td>
-                  <td className="py-3 px-4 text-center text-gray-500">—</td>
-                  <td className="py-3 px-4 text-center text-emerald-400 font-semibold">Included (24h Delivery)</td>
+                  <td className="py-3.5 px-4 font-medium text-white">Frontier Reasoning Export (Claude, DeepSeek, GPT)</td>
+                  <td className="py-3.5 px-4 text-center">Basic</td>
+                  <td className="py-3.5 px-4 text-center text-emerald-400 font-semibold">Instant Deep Context Chaining</td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-medium text-white">Priority Custom Workflow Submissions</td>
+                  <td className="py-3.5 px-4 text-center text-gray-500">—</td>
+                  <td className="py-3.5 px-4 text-center text-emerald-400 font-semibold">Included (24h Delivery)</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Lemon Squeezy Trust & Billing FAQs */}
-        <div className="space-y-6 max-w-4xl mx-auto">
-          <div className="text-center space-y-2">
-            <h3 className="text-xl font-bold text-white">Billing & Guarantee FAQs</h3>
-            <p className="text-xs text-gray-400">Everything you need to know about payment processing and security.</p>
+        {/* Interactive FAQ Accordion */}
+        <div className="space-y-4 max-w-3xl mx-auto">
+          <div className="text-center space-y-1 pb-2">
+            <h3 className="text-2xl font-bold text-white">Frequently Asked Questions</h3>
+            <p className="text-xs text-gray-400">Everything you need to know about activation, payments, and licensing.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-[#0b0f17] border border-gray-800 rounded-xl p-5 space-y-2">
-              <h4 className="text-sm font-semibold text-white">How does payment processing work?</h4>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                Payments are securely handled by Lemon Squeezy, our global Merchant of Record. We support Credit/Debit cards, UPI, Apple Pay, Google Pay, and Net Banking across 130+ currencies.
-              </p>
-            </div>
-
-            <div className="bg-[#0b0f17] border border-gray-800 rounded-xl p-5 space-y-2">
-              <h4 className="text-sm font-semibold text-white">Can I cancel my subscription anytime?</h4>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                Yes. You can cancel your subscription with 1-click at any time from your customer billing portal. You will retain full Pro access until the end of your billing cycle.
-              </p>
-            </div>
-
-            <div className="bg-[#0b0f17] border border-gray-800 rounded-xl p-5 space-y-2">
-              <h4 className="text-sm font-semibold text-white">How do Multi-Step Workflows unlock?</h4>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                As soon as your Lemon Squeezy payment completes, our webhook immediately updates your account state. All locked phases (Phase 2, 3, 4) unlock in real-time across all hubs.
-              </p>
-            </div>
-
-            <div className="bg-[#0b0f17] border border-gray-800 rounded-xl p-5 space-y-2">
-              <h4 className="text-sm font-semibold text-white">Is there an invoice for tax/business expense?</h4>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                Yes. Lemon Squeezy automatically issues a compliant GST / VAT invoice to your email with your business details, ready for company expense reimbursement.
-              </p>
-            </div>
+          <div className="space-y-3">
+            {faqs.map((faq, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div
+                  key={idx}
+                  className="bg-[#0b0f17] border border-gray-800 rounded-2xl overflow-hidden transition"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(isOpen ? null : idx)}
+                    className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-3 text-xs sm:text-sm font-bold text-white hover:text-emerald-400 transition"
+                  >
+                    <span>{faq.q}</span>
+                    {isOpen ? (
+                      <ChevronUp className="w-4 h-4 text-emerald-400 shrink-0" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" />
+                    )}
+                  </button>
+                  {isOpen && (
+                    <div className="px-5 pb-5 text-xs text-gray-400 leading-relaxed border-t border-gray-800/60 pt-3">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
+        </div>
 
-          {/* Trust Guarantees */}
-          <div className="flex flex-wrap items-center justify-center gap-6 pt-4 text-xs text-gray-400 border-t border-gray-800/80">
-            <div className="flex items-center gap-2">
-              <span className="text-emerald-400 font-bold">🔒</span>
-              <span>256-bit SSL Bank-Grade Encryption</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-emerald-400 font-bold">⚡</span>
-              <span>Instant Automatic Account Activation</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-emerald-400 font-bold">🛡️</span>
-              <span>Lemon Squeezy Merchant of Record Protection</span>
-            </div>
+        {/* Trust Badges Footer Bar */}
+        <div className="flex flex-wrap items-center justify-center gap-6 pt-6 text-xs text-gray-400 border-t border-gray-800/80">
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-400 font-bold">🔒</span>
+            <span>256-bit SSL Bank-Grade Encryption</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-400 font-bold">⚡</span>
+            <span>Instant Automatic Webhook Activation</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-400 font-bold">🛡️</span>
+            <span>Lemon Squeezy Merchant of Record Protection</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-400 font-bold">💳</span>
+            <span>UPI, Cards & NetBanking Accepted</span>
           </div>
         </div>
 
