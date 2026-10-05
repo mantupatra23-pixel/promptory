@@ -111,6 +111,7 @@ export default function PromptCustomizer({
   prompt,
   promptTitle,
   title,
+  promptId,
   modelName = 'ChatGPT',
   exampleInput,
 }: Props) {
@@ -126,57 +127,82 @@ export default function PromptCustomizer({
   const [showExportModal, setShowExportModal] = useState(false);
   const [showRemixModal, setShowRemixModal] = useState(false);
 
-  // Pro State & Paywall Handling
-  const [isProUser, setIsProUser] = useState(false);
+  // Pro & Free Quota States
+  const [isPaidPro, setIsPaidPro] = useState(false);
+  const [isPromptUnlocked, setIsPromptUnlocked] = useState(false);
+  const [freePromptsCount, setFreePromptsCount] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallTitle, setPaywallTitle] = useState('Unlock Promptory Pro');
   const [paywallDesc, setPaywallDesc] = useState('');
 
   useEffect(() => {
-    async function checkProStatus() {
+    async function evaluateAccess() {
       try {
+        // Puraana buggy localStorage saaf karein
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('promptory_pro_active');
+        }
+
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user?.email) {
-          setIsProUser(false);
-          return;
-        }
+        const userEmail = user?.email?.toLowerCase()?.trim();
 
-        const userEmail = user.email.toLowerCase().trim();
+        let isPro = false;
 
-        // 1. Owner / Admin - 100% Free Lifetime Pro Access
+        // 1. Admin/Owner Free Lifetime VIP
         if (userEmail === 'mantupatra23@gmail.com') {
-          setIsProUser(true);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('promptory_pro_active', 'true');
+          isPro = true;
+        } else if (userEmail) {
+          // 2. Database verification for real paying users
+          const { data: sub } = await supabase
+            .from('subscriptions')
+            .select('status')
+            .eq('user_email', userEmail)
+            .maybeSingle();
+
+          if (sub && (sub.status === 'active' || sub.status === 'paid')) {
+            isPro = true;
           }
+        }
+
+        setIsPaidPro(isPro);
+
+        // Agar user Pro subscriber hai, toh unlimited unlock
+        if (isPro) {
+          setIsPromptUnlocked(true);
           return;
         }
 
-        // 2. Paying Subscribers - Check Supabase subscriptions table
-        const { data: sub } = await supabase
-          .from('subscriptions')
-          .select('status')
-          .eq('user_email', userEmail)
-          .maybeSingle();
+        // 3. Free Tier: Max 3 prompts free
+        const currentPromptKey = String(promptId || effectiveTitle).trim();
+        let freeList: string[] = [];
+        try {
+          freeList = JSON.parse(localStorage.getItem('promptory_free_unlocked_prompts') || '[]');
+        } catch {
+          freeList = [];
+        }
 
-        if (sub && (sub.status === 'active' || sub.status === 'paid')) {
-          setIsProUser(true);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('promptory_pro_active', 'true');
-          }
+        if (freeList.includes(currentPromptKey)) {
+          // Yeh prompt pehle hi 3 free prompts me count ho chuka hai
+          setIsPromptUnlocked(true);
+          setFreePromptsCount(freeList.length);
+        } else if (freeList.length < 3) {
+          // Free quota me space hai (1/3, 2/3, 3/3)
+          freeList.push(currentPromptKey);
+          localStorage.setItem('promptory_free_unlocked_prompts', JSON.stringify(freeList));
+          setIsPromptUnlocked(true);
+          setFreePromptsCount(freeList.length);
         } else {
-          setIsProUser(false);
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('promptory_pro_active');
-          }
+          // 3 Free prompts khatam -> AUTOMATIC LOCK
+          setIsPromptUnlocked(false);
+          setFreePromptsCount(freeList.length);
         }
       } catch (err) {
-        console.error('Error fetching subscription status:', err);
+        console.error('Access check error:', err);
       }
     }
 
-    checkProStatus();
-  }, []);
+    evaluateAccess();
+  }, [promptId, effectiveTitle]);
 
   useEffect(() => {
     if (exampleInput && typeof exampleInput === 'object') {
@@ -229,7 +255,7 @@ export default function PromptCustomizer({
 
   const handleCopy = async () => {
     try {
-      if (isProUser) {
+      if (isPromptUnlocked) {
         await navigator.clipboard.writeText(generatedPrompt);
       } else {
         const textToCopy = `${publicPart}\n\n# [🔒 Full Production Guardrails & Schemas available on Promptory Pro: https://promptory.xyz/pricing]`;
@@ -240,11 +266,12 @@ export default function PromptCustomizer({
     } catch {}
   };
 
+  // Export API / IDE Feature: Free walo ke liye hamesha locked
   const handleExportClick = () => {
-    if (!isProUser) {
-      setPaywallTitle('Export API / IDE Snippets (Pro)');
+    if (!isPaidPro) {
+      setPaywallTitle('Export API / IDE Snippets (Pro Only)');
       setPaywallDesc(
-        'Exporting ready-to-run Python SDK, TypeScript, cURL, and LangChain snippets directly into your production codebase requires an active Promptory Pro subscription.'
+        'Exporting CLI commands (npx promptory-cli), .cursorrules, Python SDK, and API payloads is exclusively available on Promptory Pro. Upgrade to unlock.'
       );
       setShowPaywall(true);
       return;
@@ -253,9 +280,9 @@ export default function PromptCustomizer({
   };
 
   const handleUnlockConstraints = () => {
-    setPaywallTitle('Unlock Negative Constraints & Output Schemas');
+    setPaywallTitle('3 Free Prompts Limit Reached');
     setPaywallDesc(
-      'Full production-grade negative constraints, zero-hallucination guards, and exact JSON formatting schemas are unlocked with Promptory Pro.'
+      'You have used all 3 free production prompts. Upgrade to Promptory Pro for ₹799/mo to unlock unlimited prompts, negative constraints, and CLI exports.'
     );
     setShowPaywall(true);
   };
@@ -345,9 +372,19 @@ export default function PromptCustomizer({
           <div className="flex items-center gap-2">
             <FileCode className="w-4 h-4 text-emerald-400" />
             <h3 className="text-sm font-bold text-white">Live Generated Prompt</h3>
-            {!isProUser && (
+            
+            {/* Status Badges */}
+            {isPaidPro ? (
+              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Sparkles className="w-2.5 h-2.5" /> Pro Unlocked
+              </span>
+            ) : isPromptUnlocked ? (
+              <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                Free Quota ({freePromptsCount}/3 Used)
+              </span>
+            ) : (
               <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-                <Lock className="w-2.5 h-2.5" /> Gated Guardrails
+                <Lock className="w-2.5 h-2.5" /> 3 Free Used (Locked)
               </span>
             )}
           </div>
@@ -361,14 +398,15 @@ export default function PromptCustomizer({
               <span>Remix / Fork</span>
             </button>
 
+            {/* Export API / IDE Button: Free users ke liye locked rahega */}
             <button
               onClick={handleExportClick}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#21262D] hover:bg-[#30363D] text-slate-200 text-xs font-semibold transition border border-[#30363D]"
             >
               <Download className="w-3.5 h-3.5 text-emerald-400" />
               <span>Export API / IDE</span>
-              {!isProUser && (
-                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-0.5 ml-1">
+              {!isPaidPro && (
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-0.5">
                   <Lock className="w-2.5 h-2.5" /> PRO
                 </span>
               )}
@@ -386,14 +424,14 @@ export default function PromptCustomizer({
               ) : (
                 <>
                   <Copy className="w-3.5 h-3.5" />
-                  <span>{isProUser ? 'Copy Final Prompt' : 'Copy Basic Prompt'}</span>
+                  <span>{isPromptUnlocked ? 'Copy Final Prompt' : 'Copy Basic Prompt'}</span>
                 </>
               )}
             </button>
           </div>
         </div>
 
-        {isProUser ? (
+        {isPromptUnlocked ? (
           <div className="p-4 rounded-xl bg-[#0D1117] border border-[#30363D] text-xs md:text-sm text-slate-200 font-mono leading-relaxed whitespace-pre-wrap select-all max-h-96 overflow-y-auto">
             {generatedPrompt}
           </div>
@@ -412,10 +450,10 @@ export default function PromptCustomizer({
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-gradient-to-b from-[#0D1117]/60 via-[#0D1117]/95 to-[#0D1117] backdrop-blur-[2px]">
                   <div className="flex items-center gap-1.5 text-amber-400 font-mono font-bold text-xs uppercase tracking-wider mb-1">
                     <Lock className="w-3.5 h-3.5" />
-                    <span>Negative Constraints &amp; Schema Locked</span>
+                    <span>Free Quota Exhausted (3/3 Used)</span>
                   </div>
                   <p className="text-[11px] text-slate-400 text-center max-w-sm mb-3 font-sans leading-normal">
-                    Production guardrails, zero-hallucination rules, and exact JSON output formats are exclusive to Pro subscribers.
+                    You have unlocked your 3 free prompts. Upgrade to Promptory Pro for unlimited access to all 390+ blueprints.
                   </p>
                   <button
                     type="button"
@@ -450,7 +488,7 @@ export default function PromptCustomizer({
         promptTitle={effectiveTitle}
         compiledPrompt={generatedPrompt}
         modelName={modelName}
-        isProUser={isProUser}
+        isProUser={isPaidPro}
       />
 
       <PromptRemixModal
