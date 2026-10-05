@@ -7,24 +7,15 @@ import {
   X, 
   Sparkles, 
   ShieldCheck, 
-  Zap, 
   ChevronDown, 
   ChevronUp, 
-  Star, 
-  Terminal, 
-  Lock, 
-  ArrowRight, 
   Flame, 
-  CreditCard,
-  Layers,
-  CheckCircle2,
-  Clock
+  ArrowRight
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export default function PricingPage() {
   const [user, setUser] = useState<any>(null);
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   useEffect(() => {
@@ -77,7 +68,7 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-[#07090e] text-gray-100 py-12 px-4 sm:px-6 lg:px-8 selection:bg-emerald-500 selection:text-black">
-      <div className="max-w-6xl mx-auto space-y-20">
+      <div className="max-w-6xl mx-auto space-y-16">
 
         {/* VIP Founder Banner */}
         {isVipFounder && (
@@ -90,10 +81,10 @@ export default function PricingPage() {
         )}
 
         {/* Hero Section */}
-        <div className="text-center space-y-5 pt-4">
+        <div className="text-center space-y-4 pt-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold shadow-inner">
             <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400 animate-pulse" />
-            <span>Launch Week Special • 47% Discount Active</span>
+            <span>Launch Deal • 47% Flat Discount Active</span>
           </div>
 
           <h1 className="text-3xl sm:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight sm:leading-none">
@@ -105,49 +96,17 @@ export default function PricingPage() {
             Unlock 380+ battle-tested system prompt blueprints, chained 4-phase workflows, negative constraints, and 1-click IDE rules for Cursor, Windsurf, and Claude.
           </p>
 
-          {/* Real-time status pulse */}
-          <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400 font-mono">
+          <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400 font-mono pt-1">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <span>Instant automatic unlock within 3 seconds of payment</span>
           </div>
-
-          {/* Billing Switcher */}
-          <div className="pt-4 flex items-center justify-center">
-            <div className="bg-[#0f141f] border border-gray-800 p-1.5 rounded-2xl flex items-center gap-1 shadow-xl">
-              <button
-                type="button"
-                onClick={() => setBillingCycle('monthly')}
-                className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${
-                  billingCycle === 'monthly'
-                    ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Monthly Billing
-              </button>
-              <button
-                type="button"
-                onClick={() => setBillingCycle('annual')}
-                className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                  billingCycle === 'annual'
-                    ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                <span>Annual Billing</span>
-                <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-black text-[10px] px-2 py-0.5 rounded-full font-black uppercase">
-                  Save 25%
-                </span>
-              </button>
-            </div>
-          </div>
         </div>
 
-        {/* Pricing Cards Grid */}
+        {/* Pricing Cards: Mobile Stacked (Flex Column), Desktop Side-by-Side (Grid) */}
         <div className="flex flex-col md:grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
 
           {/* Plan 1: Community Free */}
-          <div className="bg-[#0c1017] border border-gray-800/90 hover:border-gray-700/80 rounded-3xl p-7 sm:p-9 flex flex-col justify-between space-y-8 transition shadow-xl">
+          <div className="bg-[#0c1017] border border-gray-800/90 rounded-3xl p-7 sm:p-9 flex flex-col justify-between space-y-8 shadow-xl">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -182,15 +141,15 @@ export default function PricingPage() {
                   <span>1-Click Launch to ChatGPT, Claude & DeepSeek</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-gray-500">
-                  <X className="w-4 h-4 text-gray-500 shrink-0" />
+                  <X className="w-4 h-4 text-gray-600 shrink-0" />
                   <span className="line-through">Full Blueprints & Negative Boundary Rules</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-gray-500">
-                  <X className="w-4 h-4 text-gray-500 shrink-0" />
+                  <X className="w-4 h-4 text-gray-600 shrink-0" />
                   <span className="line-through">CLI Terminal Sync (`npx promptory-cli`)</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-gray-500">
-                  <X className="w-4 h-4 text-gray-500 shrink-0" />
+                  <X className="w-4 h-4 text-gray-600 shrink-0" />
                   <span className="line-through">.cursorrules & Windsurf IDE File Export</span>
                 </div>
               </div>
@@ -204,7 +163,7 @@ export default function PricingPage() {
             </Link>
           </div>
 
-          {/* Plan 2: Pro Developer (High Conversion Spotlight) */}
+          {/* Plan 2: Pro Developer (Monthly ₹799 Spotlight) */}
           <div className="relative bg-gradient-to-b from-[#0e1828] via-[#0a101b] to-[#070b12] border-2 border-emerald-500 rounded-3xl p-7 sm:p-9 flex flex-col justify-between space-y-8 shadow-2xl shadow-emerald-500/20 ring-1 ring-emerald-500/50">
             {/* Top Popular Badge */}
             <div className="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-emerald-400 to-cyan-400 text-black shadow-lg shadow-emerald-500/30 flex items-center gap-1 uppercase tracking-wider">
@@ -225,17 +184,17 @@ export default function PricingPage() {
                 </div>
               </div>
 
-              {/* Price Display with Strikethrough Anchor */}
+              {/* Price Display: Clean Strikethrough with ₹799 */}
               <div className="space-y-1">
                 <div className="flex items-baseline gap-2">
                   <span className="text-gray-500 line-through text-lg font-bold">
-                    {billingCycle === 'monthly' ? '₹1,499' : '₹1,199'}
+                    ₹1,499
                   </span>
                   <span className="text-4xl sm:text-5xl font-extrabold text-white">
-                    {billingCycle === 'monthly' ? '₹799' : '₹599'}
+                    ₹799
                   </span>
                   <span className="text-xs text-gray-400">
-                    / month {billingCycle === 'annual' && '(billed ₹7,188/yr)'}
+                    / month
                   </span>
                 </div>
                 <p className="text-[11px] text-emerald-400 font-mono">
@@ -304,7 +263,7 @@ export default function PricingPage() {
                   className="w-full py-4 rounded-xl text-sm font-extrabold text-center bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black shadow-xl shadow-emerald-500/30 transition-all flex items-center justify-center gap-2 transform active:scale-[0.98] cursor-pointer"
                 >
                   <Sparkles className="w-4 h-4 fill-black" />
-                  <span>Upgrade to Pro Now ({billingCycle === 'monthly' ? '₹799/mo' : '₹599/mo'})</span>
+                  <span>Upgrade to Pro Now (₹799/mo)</span>
                   <ArrowRight className="w-4 h-4" />
                 </a>
               )}
@@ -319,7 +278,7 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Social Proof / Stats Strip */}
+        {/* Social Proof Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto pt-4 text-center">
           <div className="p-4 rounded-2xl bg-[#0b0f17] border border-gray-800">
             <div className="text-2xl font-extrabold text-white">2,400+</div>
@@ -339,7 +298,7 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* Testimonial Highlights */}
+        {/* Testimonials */}
         <div className="max-w-4xl mx-auto space-y-4">
           <div className="text-center space-y-1">
             <h3 className="text-lg font-bold text-white">Loved by Developers Shipping Production AI</h3>
