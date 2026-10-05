@@ -47,7 +47,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
   const [copied, setCopied] = useState<boolean>(false);
 
   useEffect(() => {
-    async function verifyUserAndSubscription(currentUser: any) {
+    async function checkAccess(currentUser: any) {
       if (!currentUser?.email) {
         setIsSubscribedPro(false);
         return;
@@ -55,27 +55,26 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
 
       const email = currentUser.email.toLowerCase().trim();
 
-      // 1. Owner VIP: mantupatra23@gmail.com hamesha free unlocked rahega
+      // 1. VIP Admin: mantupatra23@gmail.com hamesha unlocked
       if (email === 'mantupatra23@gmail.com') {
         setIsSubscribedPro(true);
         return;
       }
 
-      // 2. Verified Paying User check from Supabase subscriptions table
+      // 2. Paying user check from subscriptions table
       try {
-        const { data: sub } = await supabase
+        const { data: sub, error } = await supabase
           .from('subscriptions')
           .select('status')
           .eq('user_email', email)
           .maybeSingle();
 
-        if (sub && (sub.status === 'active' || sub.status === 'paid')) {
+        if (!error && sub && (sub.status === 'active' || sub.status === 'paid')) {
           setIsSubscribedPro(true);
         } else {
           setIsSubscribedPro(false);
         }
       } catch (err) {
-        console.error('Subscription verification error:', err);
         setIsSubscribedPro(false);
       }
     }
@@ -83,20 +82,19 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
       setAuthLoading(false);
-      verifyUserAndSubscription(user);
+      checkAccess(user);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user ?? null;
       setUser(u);
-      verifyUserAndSubscription(u);
+      checkAccess(u);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const isVipFounder = user?.email?.toLowerCase() === 'mantupatra23@gmail.com';
-  // Sirf Admin ya Paid DB Subscriber ke liye hi true hoga
   const hasProSubscription = isVipFounder || isSubscribedPro;
 
   const parseSteps = (wf: Workflow): Step[] => {
@@ -133,9 +131,8 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
   const currentSteps = selectedWorkflow ? parseSteps(selectedWorkflow) : [];
   const currentStep = currentSteps[activeStepIdx] || null;
 
-  // Strict Rule: Phase 1 (index 0) free, Phase 2, 3, 4 (index > 0) strictly locked
-  const isCurrentStepLocked =
-    Boolean(selectedWorkflow?.is_pro) && activeStepIdx > 0 && !hasProSubscription;
+  // Strict Rule: Phase 1 (index 0) free. Phase 2, 3, 4 (index > 0) STRICTLY LOCKED for everyone except VIP and Paid Pro
+  const isCurrentStepLocked = activeStepIdx > 0 && !hasProSubscription;
 
   const getCompiledPrompt = () => {
     if (!currentStep || isCurrentStepLocked) return '';
@@ -384,11 +381,11 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
               </button>
             </div>
 
-            {/* Stepper Navigation: Phase 2, 3, 4 strictly show 🔒 */}
+            {/* Stepper Navigation: Phase 2, 3, 4 strictly show 🔒 for non-pro */}
             <div className="bg-[#0e131d] px-4 py-2.5 border-b border-gray-800/80 flex items-center gap-2 overflow-x-auto">
               {currentSteps.map((st, i) => {
                 const isActive = i === activeStepIdx;
-                const isStepLocked = Boolean(selectedWorkflow.is_pro) && i > 0 && !hasProSubscription;
+                const isStepLocked = i > 0 && !hasProSubscription;
 
                 return (
                   <button
@@ -424,7 +421,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
                 <p className="text-xs text-gray-400 mt-1">{currentStep.goal}</p>
               </div>
 
-              {/* If step is locked, show Pro Paywall */}
+              {/* If step is locked (Phases 2, 3, 4 for free users), show Pro Paywall */}
               {isCurrentStepLocked ? (
                 <div className="bg-gradient-to-b from-[#131926] to-[#0a0e16] border border-amber-500/40 rounded-2xl p-6 text-center space-y-4 shadow-xl">
                   <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto text-xl font-bold">
