@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
@@ -16,8 +16,18 @@ export default function PricingPage() {
 
   const isVipFounder = user?.email?.toLowerCase() === 'mantupatra23@gmail.com';
 
-  // Lemon Squeezy checkout URLs (Set in Vercel or replace with your store checkout link)
-  const checkoutUrl = process.env.NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL || 'https://promptory-ai.lemonsqueezy.com/checkout/buy/750e2a22-3cc6-45fe-9b40-b4549cd38f8c';
+  // Base Lemon Squeezy live checkout URL
+  const baseCheckoutUrl =
+    process.env.NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL ||
+    'https://promptory-ai.lemonsqueezy.com/checkout/buy/750e2a22-3cc6-45fe-9b40-b4549cd38f8c';
+
+  // Logged-in user ka email checkout link me auto-attach karein
+  const finalCheckoutUrl = useMemo(() => {
+    if (!user?.email) return baseCheckoutUrl;
+    const cleanEmail = encodeURIComponent(user.email.trim());
+    const separator = baseCheckoutUrl.includes('?') ? '&' : '?';
+    return `${baseCheckoutUrl}${separator}checkout[email]=${cleanEmail}`;
+  }, [baseCheckoutUrl, user]);
 
   return (
     <div className="min-h-screen bg-[#07090e] text-gray-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -206,7 +216,7 @@ export default function PricingPage() {
               </div>
             ) : (
               <a
-                href={checkoutUrl}
+                href={finalCheckoutUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="w-full py-3.5 rounded-xl text-xs sm:text-sm font-extrabold text-center bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg shadow-emerald-500/30 transition-all block transform active:scale-[0.99]"
