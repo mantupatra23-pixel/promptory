@@ -37,6 +37,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
   const [user, setUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [showAuthGate, setShowAuthGate] = useState(false);
+  const [isSubscribedPro, setIsSubscribedPro] = useState(false);
 
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
   const [activeStepIdx, setActiveStepIdx] = useState<number>(0);
@@ -45,15 +46,50 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState<boolean>(false);
 
-  // Check Supabase Auth state
+  // Check Supabase Auth state & Subscription Status
   useEffect(() => {
+    async function checkUserAndSubscription(currentUser: any) {
+      if (!currentUser?.email) {
+        setIsSubscribedPro(false);
+        return;
+      }
+
+      const email = currentUser.email.toLowerCase().trim();
+
+      // 1. VIP Founder Lifetime Free Check
+      if (email === 'mantupatra23@gmail.com') {
+        setIsSubscribedPro(true);
+        return;
+      }
+
+      // 2. Real-time Database check from Lemon Squeezy webhook table
+      try {
+        const { data: sub } = await supabase
+          .from('subscriptions')
+          .select('status')
+          .eq('user_email', email)
+          .maybeSingle();
+
+        if (sub && (sub.status === 'active' || sub.status === 'paid')) {
+          setIsSubscribedPro(true);
+        } else {
+          setIsSubscribedPro(false);
+        }
+      } catch (err) {
+        console.error('Workflow subscription verification error:', err);
+      }
+    }
+
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
       setAuthLoading(false);
+      checkUserAndSubscription(user);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      checkUserAndSubscription(u);
     });
 
     return () => subscription.unsubscribe();
@@ -61,7 +97,8 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
 
   // VIP Founder / Admin Email check
   const isVipFounder = user?.email?.toLowerCase() === 'mantupatra23@gmail.com';
-  const hasProSubscription = isVipFounder || user?.user_metadata?.is_pro === true;
+  // Check either Admin VIP or Active DB Subscription
+  const hasProSubscription = isVipFounder || isSubscribedPro;
 
   const parseSteps = (wf: Workflow): Step[] => {
     if (Array.isArray(wf.steps)) return wf.steps;
@@ -97,7 +134,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
   const currentSteps = selectedWorkflow ? parseSteps(selectedWorkflow) : [];
   const currentStep = currentSteps[activeStepIdx] || null;
 
-  // Option A Rule: Phase 1 is free for everyone, Phase 2+ are locked for Pro pipelines
+  // Phase 1 is free for everyone, Phase 2+ are locked for Pro pipelines until subscribed
   const isCurrentStepLocked =
     selectedWorkflow?.is_pro && activeStepIdx > 0 && !hasProSubscription;
 
@@ -135,7 +172,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
         <div className="bg-emerald-500/10 border border-emerald-500/40 rounded-xl px-4 py-2.5 flex items-center justify-between text-xs text-emerald-300">
           <span className="flex items-center gap-2">
             <span>👑</span>
-            <strong>Founder VIP Mode Active:</strong> All Pro Pipelines & Phases are 100% Unlocked for ({user.email}).
+            <strong>Founder VIP Mode Active:</strong> All Pro Pipelines & Phases are 100% Unlocked for ({user?.email}).
           </span>
           <span className="bg-emerald-500 text-black px-2 py-0.5 rounded font-mono font-bold text-[10px]">
             LIFETIME FREE
@@ -245,7 +282,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
                   <div className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-1.5 flex items-center justify-between">
                     <span>Phases ({steps.length})</span>
                     {wf.is_pro && (
-                      <span className="text-[10px] text-amber-400/90">Phase 1 Free • 2-${steps.length} Pro</span>
+                      <span className="text-[10px] text-amber-400/90">Phase 1 Free • 2-{steps.length} Pro</span>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
@@ -389,7 +426,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
                 <p className="text-xs text-gray-400 mt-1">{currentStep.goal}</p>
               </div>
 
-              {/* OPTION A: If current step is locked, show Pro Paywall */}
+              {/* If current step is locked, show Pro Paywall */}
               {isCurrentStepLocked ? (
                 <div className="bg-gradient-to-b from-[#131926] to-[#0a0e16] border border-amber-500/40 rounded-2xl p-6 text-center space-y-4 shadow-xl">
                   <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto text-xl font-bold">
