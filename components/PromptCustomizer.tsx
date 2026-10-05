@@ -134,16 +134,47 @@ export default function PromptCustomizer({
 
   useEffect(() => {
     async function checkProStatus() {
-      const { data: { user } } = await supabase.auth.getUser();
-      const localPro = typeof window !== 'undefined' && localStorage.getItem('promptory_pro_active') === 'true';
-      
-      if (user?.email === 'mantupatra23@gmail.com' || localPro) {
-        setIsProUser(true);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('promptory_pro_active', 'true');
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.email) {
+          setIsProUser(false);
+          return;
         }
+
+        const userEmail = user.email.toLowerCase().trim();
+
+        // 1. Owner / Admin - 100% Free Lifetime Pro Access
+        if (userEmail === 'mantupatra23@gmail.com') {
+          setIsProUser(true);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('promptory_pro_active', 'true');
+          }
+          return;
+        }
+
+        // 2. Paying Subscribers - Check Supabase subscriptions table
+        const { data: sub } = await supabase
+          .from('subscriptions')
+          .select('status')
+          .eq('user_email', userEmail)
+          .maybeSingle();
+
+        if (sub && (sub.status === 'active' || sub.status === 'paid')) {
+          setIsProUser(true);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('promptory_pro_active', 'true');
+          }
+        } else {
+          setIsProUser(false);
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('promptory_pro_active');
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching subscription status:', err);
       }
     }
+
     checkProStatus();
   }, []);
 
@@ -337,7 +368,7 @@ export default function PromptCustomizer({
               <Download className="w-3.5 h-3.5 text-emerald-400" />
               <span>Export API / IDE</span>
               {!isProUser && (
-                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-0.5">
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-0.5 ml-1">
                   <Lock className="w-2.5 h-2.5" /> PRO
                 </span>
               )}
@@ -419,6 +450,7 @@ export default function PromptCustomizer({
         promptTitle={effectiveTitle}
         compiledPrompt={generatedPrompt}
         modelName={modelName}
+        isProUser={isProUser}
       />
 
       <PromptRemixModal

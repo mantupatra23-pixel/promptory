@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Copy, Check, Download, Code, Terminal, FileCode, CheckCircle2, Sparkles, Lock, ArrowRight } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 const CHECKOUT_URL =
-  process.env.NEXT_PUBLIC_LEMONSQUEEZY_PRO_CHECKOUT_URL ||
+  process.env.NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL ||
   'https://promptory-ai.lemonsqueezy.com/checkout/buy/750e2a22-3cc6-45fe-9b40-b4549cd38f8c';
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
   compiledPrompt: string;
   modelName: string;
   slug?: string;
+  isProUser?: boolean;
 }
 
 type TabType = 'cli' | 'cursor' | 'openai' | 'claude' | 'python';
@@ -25,34 +27,64 @@ export default function PromptExportModal({
   compiledPrompt,
   modelName,
   slug,
+  isProUser: isProProp,
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabType>('cli');
   const [copied, setCopied] = useState(false);
-  const [isProUser, setIsProUser] = useState(false);
+  const [isProUser, setIsProUser] = useState(isProProp ?? false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const active = localStorage.getItem('promptory_pro_active') === 'true';
-      setIsProUser(active);
+    if (isProProp !== undefined) {
+      setIsProUser(isProProp);
+      return;
     }
-  }, []);
+
+    async function checkPro() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) {
+        setIsProUser(false);
+        return;
+      }
+
+      const email = user.email.toLowerCase().trim();
+
+      // Owner/Admin Free VIP
+      if (email === 'mantupatra23@gmail.com') {
+        setIsProUser(true);
+        return;
+      }
+
+      // Supabase verification
+      const { data: sub } = await supabase
+        .from('subscriptions')
+        .select('status')
+        .eq('user_email', email)
+        .maybeSingle();
+
+      if (sub && (sub.status === 'active' || sub.status === 'paid')) {
+        setIsProUser(true);
+      } else {
+        const active = typeof window !== 'undefined' && localStorage.getItem('promptory_pro_active') === 'true';
+        setIsProUser(active);
+      }
+    }
+
+    checkPro();
+  }, [isProProp]);
 
   if (!isOpen) return null;
 
-  // Auto-generate clean slug if not explicitly passed
   const derivedSlug = (
     slug || 
     promptTitle.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
   );
 
-  // 0. CLI (npx) Terminal Command
   const cliSnippet = `# Pull directly into your local project root as .cursorrules
 npx promptory-cli add ${derivedSlug} --cursor
 
 # Or pull as a standalone Markdown prompt file
 npx promptory-cli add ${derivedSlug} --raw`;
 
-  // 1. .cursorrules content
   const cursorRulesContent = `# Cursor System Rules: ${promptTitle}
 # Generated automatically via Promptory.xyz
 
@@ -63,7 +95,6 @@ ${compiledPrompt}
 - Do not emit unnecessary conversational prelude.
 `;
 
-  // 2. OpenAI API JSON Payload
   const openAIPayload = JSON.stringify(
     {
       model: 'gpt-4o',
@@ -83,7 +114,6 @@ ${compiledPrompt}
     2
   );
 
-  // 3. Anthropic Claude API JSON Payload
   const claudePayload = JSON.stringify(
     {
       model: 'claude-3-5-sonnet-20241022',
@@ -100,7 +130,6 @@ ${compiledPrompt}
     2
   );
 
-  // 4. Python LangChain / API Integration Snippet
   const pythonSnippet = `from openai import OpenAI
 
 client = OpenAI()
