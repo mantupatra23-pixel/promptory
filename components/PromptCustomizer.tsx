@@ -115,7 +115,12 @@ export default function PromptCustomizer({
   modelName = 'ChatGPT',
   exampleInput,
 }: Props) {
-  const baseTemplate = initialPrompt || template || prompt || '';
+  // Convert literal '\n' characters into real line breaks
+  const rawTemplate = initialPrompt || template || prompt || '';
+  const baseTemplate = useMemo(() => {
+    return rawTemplate.replace(/\\n/g, '\n');
+  }, [rawTemplate]);
+
   const effectiveTitle = promptTitle || title || 'Custom System Prompt';
   const detectedVariables = useMemo(() => parsePromptVariables(baseTemplate), [baseTemplate]);
 
@@ -127,7 +132,7 @@ export default function PromptCustomizer({
   const [showExportModal, setShowExportModal] = useState(false);
   const [showRemixModal, setShowRemixModal] = useState(false);
 
-  // Pro & Free Quota States
+  // Subscription and Free-Tier Access States
   const [isPaidPro, setIsPaidPro] = useState(false);
   const [isPromptUnlocked, setIsPromptUnlocked] = useState(false);
   const [freePromptsCount, setFreePromptsCount] = useState(0);
@@ -138,7 +143,6 @@ export default function PromptCustomizer({
   useEffect(() => {
     async function evaluateAccess() {
       try {
-        // Puraana buggy localStorage saaf karein
         if (typeof window !== 'undefined') {
           localStorage.removeItem('promptory_pro_active');
         }
@@ -148,11 +152,11 @@ export default function PromptCustomizer({
 
         let isPro = false;
 
-        // 1. Admin/Owner Free Lifetime VIP
+        // 1. Permanent Free VIP Access for mantupatra23@gmail.com
         if (userEmail === 'mantupatra23@gmail.com') {
           isPro = true;
         } else if (userEmail) {
-          // 2. Database verification for real paying users
+          // 2. Verified Paying Subscribers in Supabase
           const { data: sub } = await supabase
             .from('subscriptions')
             .select('status')
@@ -166,13 +170,13 @@ export default function PromptCustomizer({
 
         setIsPaidPro(isPro);
 
-        // Agar user Pro subscriber hai, toh unlimited unlock
+        // Pro subscribers have unlimited access to all prompts
         if (isPro) {
           setIsPromptUnlocked(true);
           return;
         }
 
-        // 3. Free Tier: Max 3 prompts free
+        // 3. 3-Prompt Free Trial Quota
         const currentPromptKey = String(promptId || effectiveTitle).trim();
         let freeList: string[] = [];
         try {
@@ -182,17 +186,15 @@ export default function PromptCustomizer({
         }
 
         if (freeList.includes(currentPromptKey)) {
-          // Yeh prompt pehle hi 3 free prompts me count ho chuka hai
           setIsPromptUnlocked(true);
           setFreePromptsCount(freeList.length);
         } else if (freeList.length < 3) {
-          // Free quota me space hai (1/3, 2/3, 3/3)
           freeList.push(currentPromptKey);
           localStorage.setItem('promptory_free_unlocked_prompts', JSON.stringify(freeList));
           setIsPromptUnlocked(true);
           setFreePromptsCount(freeList.length);
         } else {
-          // 3 Free prompts khatam -> AUTOMATIC LOCK
+          // Exceeded free quota -> Automatic Lock
           setIsPromptUnlocked(false);
           setFreePromptsCount(freeList.length);
         }
@@ -234,8 +236,8 @@ export default function PromptCustomizer({
     if (splitIdx === -1) {
       splitIdx = generatedPrompt.indexOf('### OUTPUT FORMAT');
     }
-    if (splitIdx === -1 && generatedPrompt.length > 320) {
-      splitIdx = Math.floor(generatedPrompt.length * 0.55);
+    if (splitIdx === -1 && generatedPrompt.length > 250) {
+      splitIdx = Math.floor(generatedPrompt.length * 0.45);
     }
 
     if (splitIdx > 0) {
@@ -266,12 +268,12 @@ export default function PromptCustomizer({
     } catch {}
   };
 
-  // Export API / IDE Feature: Free walo ke liye hamesha locked
+  // Export API / IDE is strictly gated for paying Pro members
   const handleExportClick = () => {
     if (!isPaidPro) {
       setPaywallTitle('Export API / IDE Snippets (Pro Only)');
       setPaywallDesc(
-        'Exporting CLI commands (npx promptory-cli), .cursorrules, Python SDK, and API payloads is exclusively available on Promptory Pro. Upgrade to unlock.'
+        'Exporting ready-to-run Python SDK, TypeScript, cURL, and LangChain snippets directly into your production codebase requires an active Promptory Pro subscription.'
       );
       setShowPaywall(true);
       return;
@@ -279,10 +281,23 @@ export default function PromptCustomizer({
     setShowExportModal(true);
   };
 
+  // Remix is protected so locked prompt content is never leaked
+  const handleRemixClick = () => {
+    if (!isPromptUnlocked) {
+      setPaywallTitle('Remix & Fork Playground (Pro Only)');
+      setPaywallDesc(
+        'You have exhausted your 3 free prompts. Customizing and remixing blueprints requires an active Promptory Pro subscription.'
+      );
+      setShowPaywall(true);
+      return;
+    }
+    setShowRemixModal(true);
+  };
+
   const handleUnlockConstraints = () => {
-    setPaywallTitle('3 Free Prompts Limit Reached');
+    setPaywallTitle('Free Quota Exhausted (3/3 Used)');
     setPaywallDesc(
-      'You have used all 3 free production prompts. Upgrade to Promptory Pro for ₹799/mo to unlock unlimited prompts, negative constraints, and CLI exports.'
+      'You have used your 3 free prompts. Upgrade to Promptory Pro for ₹799/mo to unlock unlimited blueprints, negative constraints, and CLI exports.'
     );
     setShowPaywall(true);
   };
@@ -352,11 +367,16 @@ export default function PromptCustomizer({
             </div>
           </div>
           <button
-            onClick={() => setShowRemixModal(true)}
+            onClick={handleRemixClick}
             className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#21262D] hover:bg-[#30363D] text-cyan-400 hover:text-cyan-300 text-xs font-semibold border border-[#30363D] transition shrink-0"
           >
             <GitFork className="w-3.5 h-3.5" />
             <span>Remix &amp; Add Variables</span>
+            {!isPromptUnlocked && (
+              <span className="text-[9px] font-bold px-1 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-0.5 ml-1">
+                <Lock className="w-2 h-2" /> PRO
+              </span>
+            )}
           </button>
         </div>
       )}
@@ -391,14 +411,19 @@ export default function PromptCustomizer({
 
           <div className="flex items-center gap-2 flex-wrap">
             <button
-              onClick={() => setShowRemixModal(true)}
+              onClick={handleRemixClick}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#21262D] hover:bg-[#30363D] text-slate-200 text-xs font-semibold transition border border-[#30363D]"
             >
               <GitFork className="w-3.5 h-3.5 text-cyan-400" />
               <span>Remix / Fork</span>
+              {!isPromptUnlocked && (
+                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-0.5 ml-0.5">
+                  <Lock className="w-2 h-2" /> PRO
+                </span>
+              )}
             </button>
 
-            {/* Export API / IDE Button: Free users ke liye locked rahega */}
+            {/* Export API / IDE is strictly gated */}
             <button
               onClick={handleExportClick}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#21262D] hover:bg-[#30363D] text-slate-200 text-xs font-semibold transition border border-[#30363D]"
@@ -431,8 +456,9 @@ export default function PromptCustomizer({
           </div>
         </div>
 
+        {/* Prompt Content Box without vertical cutoff */}
         {isPromptUnlocked ? (
-          <div className="p-4 rounded-xl bg-[#0D1117] border border-[#30363D] text-xs md:text-sm text-slate-200 font-mono leading-relaxed whitespace-pre-wrap select-all overflow-visible">
+          <div className="p-4 rounded-xl bg-[#0D1117] border border-[#30363D] text-xs md:text-sm text-slate-200 font-mono leading-relaxed whitespace-pre-wrap select-all">
             {generatedPrompt}
           </div>
         ) : (
@@ -453,7 +479,7 @@ export default function PromptCustomizer({
                     <span>Free Quota Exhausted (3/3 Used)</span>
                   </div>
                   <p className="text-[11px] text-slate-400 text-center max-w-sm mb-3 font-sans leading-normal">
-                    You have unlocked your 3 free prompts. Upgrade to Promptory Pro for unlimited access to all 390+ blueprints.
+                    You have reached the 3 free prompt limit. Upgrade to Promptory Pro for ₹799/mo to unlock unlimited blueprints and export tools.
                   </p>
                   <button
                     type="button"
