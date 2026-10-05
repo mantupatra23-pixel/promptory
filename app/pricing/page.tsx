@@ -144,7 +144,7 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
+        <div className="flex flex-col md:grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
 
           {/* Plan 1: Community Free */}
           <div className="bg-[#0c1017] border border-gray-800/90 hover:border-gray-700/80 rounded-3xl p-7 sm:p-9 flex flex-col justify-between space-y-8 transition shadow-xl">
@@ -182,15 +182,15 @@ export default function PricingPage() {
                   <span>1-Click Launch to ChatGPT, Claude & DeepSeek</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-gray-500">
-                  <X className="w-4 h-4 text-gray-600 shrink-0" />
+                  <X className="w-4 h-4 text-gray-500 shrink-0" />
                   <span className="line-through">Full Blueprints & Negative Boundary Rules</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-gray-500">
-                  <X className="w-4 h-4 text-gray-600 shrink-0" />
+                  <X className="w-4 h-4 text-gray-500 shrink-0" />
                   <span className="line-through">CLI Terminal Sync (`npx promptory-cli`)</span>
                 </div>
                 <div className="flex items-center gap-2.5 text-gray-500">
-                  <X className="w-4 h-4 text-gray-600 shrink-0" />
+                  <X className="w-4 h-4 text-gray-500 shrink-0" />
                   <span className="line-through">.cursorrules & Windsurf IDE File Export</span>
                 </div>
               </div>
