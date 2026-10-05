@@ -432,7 +432,7 @@ export default function PromptCustomizer({
         </div>
 
         {isPromptUnlocked ? (
-          <div className="p-4 rounded-xl bg-[#0D1117] border border-[#30363D] text-xs md:text-sm text-slate-200 font-mono leading-relaxed whitespace-pre-wrap select-all max-h-96 overflow-y-auto">
+          <div className="p-4 rounded-xl bg-[#0D1117] border border-[#30363D] text-xs md:text-sm text-slate-200 font-mono leading-relaxed whitespace-pre-wrap select-all overflow-visible">
             {generatedPrompt}
           </div>
         ) : (
