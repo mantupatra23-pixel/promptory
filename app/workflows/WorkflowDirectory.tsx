@@ -26,7 +26,7 @@ interface Workflow {
 
 const HUBS = [
   { id: 'all', label: 'All Hubs', icon: '🌐' },
-  { id: 'Engineering', label: 'Engineering Hub', icon: '⚙️' },
+  { id: 'Engineering', label: 'Engineering Hub', icon: '⚙️️' },
   { id: 'AI Engineering', label: 'AI Systems Hub', icon: '🤖' },
   { id: 'DevOps', label: 'DevOps & Security Hub', icon: '🛡️' },
   { id: 'Sales & Marketing', label: 'Growth Hub', icon: '📈' },
@@ -46,9 +46,8 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState<boolean>(false);
 
-  // Check Supabase Auth state & Subscription Status
   useEffect(() => {
-    async function checkUserAndSubscription(currentUser: any) {
+    async function verifyUserAndSubscription(currentUser: any) {
       if (!currentUser?.email) {
         setIsSubscribedPro(false);
         return;
@@ -56,13 +55,13 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
 
       const email = currentUser.email.toLowerCase().trim();
 
-      // 1. VIP Founder Lifetime Free Check
+      // 1. Owner / Admin VIP: Sirf mantupatra23@gmail.com hamesha free unlocked rahega
       if (email === 'mantupatra23@gmail.com') {
         setIsSubscribedPro(true);
         return;
       }
 
-      // 2. Real-time Database check from Lemon Squeezy webhook table
+      // 2. Verified Paying User check from Supabase subscriptions table
       try {
         const { data: sub } = await supabase
           .from('subscriptions')
@@ -76,28 +75,28 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
           setIsSubscribedPro(false);
         }
       } catch (err) {
-        console.error('Workflow subscription verification error:', err);
+        console.error('Subscription verification error:', err);
+        setIsSubscribedPro(false);
       }
     }
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
       setAuthLoading(false);
-      checkUserAndSubscription(user);
+      verifyUserAndSubscription(user);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user ?? null;
       setUser(u);
-      checkUserAndSubscription(u);
+      verifyUserAndSubscription(u);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // VIP Founder / Admin Email check
   const isVipFounder = user?.email?.toLowerCase() === 'mantupatra23@gmail.com';
-  // Check either Admin VIP or Active DB Subscription
+  // Sirf admin email ya paid DB subscription par hi true hoga
   const hasProSubscription = isVipFounder || isSubscribedPro;
 
   const parseSteps = (wf: Workflow): Step[] => {
@@ -134,8 +133,9 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
   const currentSteps = selectedWorkflow ? parseSteps(selectedWorkflow) : [];
   const currentStep = currentSteps[activeStepIdx] || null;
 
-  // Phase 1 is free for everyone, Phase 2+ are locked for Pro pipelines until subscribed
-  const isCurrentStepLocked = selectedWorkflow?.is_pro && activeStepIdx > 0 && !hasProSubscription;
+  // Strict Rule: Phase 1 (index 0) free hai, Phase 2, 3, 4 (index > 0) strictly locked hain
+  const isCurrentStepLocked =
+    Boolean(selectedWorkflow?.is_pro) && activeStepIdx > 0 && !hasProSubscription;
 
   const getCompiledPrompt = () => {
     if (!currentStep || isCurrentStepLocked) return '';
@@ -203,7 +203,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {HUBS.map((hub) => {
+          {HUENS: HUBS.map((hub) => {
             const count =
               hub.id === 'all'
                 ? initialWorkflows.length
@@ -349,7 +349,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
         </div>
       )}
 
-      {/* Interactive Workbench Modal with Option A Paywall */}
+      {/* Interactive Workbench Modal with Strict Pro Lock */}
       {selectedWorkflow && currentStep && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
           <div className="bg-[#0b0f17] border border-gray-700/80 rounded-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
@@ -384,12 +384,11 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
               </button>
             </div>
 
-            {/* Stepper Navigation */}
+            {/* Stepper Navigation: Phase 2, 3, 4 will strictly show 🔒 */}
             <div className="bg-[#0e131d] px-4 py-2.5 border-b border-gray-800/80 flex items-center gap-2 overflow-x-auto">
               {currentSteps.map((st, i) => {
                 const isActive = i === activeStepIdx;
-                const isPassed = i < activeStepIdx;
-                const isStepLocked = selectedWorkflow?.is_pro && i > 0 && !hasProSubscription;
+                const isStepLocked = Boolean(selectedWorkflow.is_pro) && i > 0 && !hasProSubscription;
 
                 return (
                   <button
@@ -397,15 +396,15 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
                     onClick={() => setActiveStepIdx(i)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 ${
                       isActive
-                        ? 'bg-emerald-500 text-black font-bold'
+                        ? isStepLocked
+                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold'
+                          : 'bg-emerald-500 text-black font-bold'
                         : isStepLocked
                         ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        : isPassed
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                         : 'bg-[#151b27] text-gray-400 hover:text-gray-200'
                     }`}
                   >
-                    <span>{isStepLocked ? '🔒' : isPassed ? '✓' : `${i + 1}.`}</span>
+                    <span>{isStepLocked ? '🔒' : `${i + 1}.`}</span>
                     <span className="max-w-[120px] truncate">{st.title}</span>
                   </button>
                 );
@@ -425,7 +424,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
                 <p className="text-xs text-gray-400 mt-1">{currentStep.goal}</p>
               </div>
 
-              {/* If current step is locked, show Pro Paywall */}
+              {/* If step is locked (Phases 2, 3, 4 for free users), show Pro Paywall */}
               {isCurrentStepLocked ? (
                 <div className="bg-gradient-to-b from-[#131926] to-[#0a0e16] border border-amber-500/40 rounded-2xl p-6 text-center space-y-4 shadow-xl">
                   <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto text-xl font-bold">
@@ -439,7 +438,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
                       Unlock Phase {activeStepIdx + 1} & All Production Blueprints
                     </h3>
                     <p className="text-xs text-gray-400 max-w-md mx-auto mt-1 leading-relaxed">
-                      Phase 1 was free to test. Subsequent production phases (hardened code, vulnerability tests, and automated PR schemas) are exclusive to Pro subscribers.
+                      Phase 1 is free to test. Subsequent production phases (hardened code, vulnerability tests, and automated PR schemas) are exclusive to Pro subscribers.
                     </p>
                   </div>
 
@@ -460,7 +459,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
                   </div>
                 </div>
               ) : (
-                /* Unlocked Step: Variable Builder & Copy Box */
+                /* Unlocked Step Content */
                 <>
                   {extractVariables(currentStep.prompt || '').length > 0 && (
                     <div className="space-y-2 bg-[#0d121a] border border-gray-800/80 rounded-xl p-3.5">
