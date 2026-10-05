@@ -135,8 +135,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
   const currentStep = currentSteps[activeStepIdx] || null;
 
   // Phase 1 is free for everyone, Phase 2+ are locked for Pro pipelines until subscribed
-  const isCurrentStepLocked =
-    selectedWorkflow?.is_pro && activeStepIdx > 0 && !hasProSubscription;
+  const isCurrentStepLocked = selectedWorkflow?.is_pro && activeStepIdx > 0 && !hasProSubscription;
 
   const getCompiledPrompt = () => {
     if (!currentStep || isCurrentStepLocked) return '';
@@ -390,7 +389,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
               {currentSteps.map((st, i) => {
                 const isActive = i === activeStepIdx;
                 const isPassed = i < activeStepIdx;
-                const isStepLocked = selectedWorkflow.is_pro && i > 0 && !hasProSubscription;
+                const isStepLocked = selectedWorkflow?.is_pro && i > 0 && !hasProSubscription;
 
                 return (
                   <button
