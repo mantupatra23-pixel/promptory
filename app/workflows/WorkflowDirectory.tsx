@@ -26,7 +26,7 @@ interface Workflow {
 
 const HUBS = [
   { id: 'all', label: 'All Hubs', icon: '🌐' },
-  { id: 'Engineering', label: 'Engineering Hub', icon: '⚙️️' },
+  { id: 'Engineering', label: 'Engineering Hub', icon: '⚙️' },
   { id: 'AI Engineering', label: 'AI Systems Hub', icon: '🤖' },
   { id: 'DevOps', label: 'DevOps & Security Hub', icon: '🛡️' },
   { id: 'Sales & Marketing', label: 'Growth Hub', icon: '📈' },
@@ -55,13 +55,13 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
 
       const email = currentUser.email.toLowerCase().trim();
 
-      // 1. Owner / Admin VIP: Sirf mantupatra23@gmail.com hamesha free unlocked rahega
+      // 1. Owner VIP: mantupatra23@gmail.com hamesha free unlocked
       if (email === 'mantupatra23@gmail.com') {
         setIsSubscribedPro(true);
         return;
       }
 
-      // 2. Verified Paying User check from Supabase subscriptions table
+      // 2. Real paying subscriber check from Supabase table
       try {
         const { data: sub } = await supabase
           .from('subscriptions')
@@ -96,7 +96,6 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
   }, []);
 
   const isVipFounder = user?.email?.toLowerCase() === 'mantupatra23@gmail.com';
-  // Sirf admin email ya paid DB subscription par hi true hoga
   const hasProSubscription = isVipFounder || isSubscribedPro;
 
   const parseSteps = (wf: Workflow): Step[] => {
@@ -112,7 +111,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
   };
 
   const filteredWorkflows = useMemo(() => {
-    return initialWorkflows.filter((wf) => {
+    return (initialWorkflows || []).filter((wf) => {
       const matchesHub =
         activeHub === 'all' || wf.category?.toLowerCase() === activeHub.toLowerCase();
       const matchesSearch =
@@ -133,7 +132,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
   const currentSteps = selectedWorkflow ? parseSteps(selectedWorkflow) : [];
   const currentStep = currentSteps[activeStepIdx] || null;
 
-  // Strict Rule: Phase 1 (index 0) free hai, Phase 2, 3, 4 (index > 0) strictly locked hain
+  // Strict Rule: Phase 1 (index 0) free, Phase 2, 3, 4 strictly locked
   const isCurrentStepLocked =
     Boolean(selectedWorkflow?.is_pro) && activeStepIdx > 0 && !hasProSubscription;
 
@@ -203,11 +202,11 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {HUENS: HUBS.map((hub) => {
+          {HUBS.map((hub) => {
             const count =
               hub.id === 'all'
-                ? initialWorkflows.length
-                : initialWorkflows.filter(
+                ? (initialWorkflows || []).length
+                : (initialWorkflows || []).filter(
                     (w) => w.category?.toLowerCase() === hub.id.toLowerCase()
                   ).length;
 
@@ -384,7 +383,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
               </button>
             </div>
 
-            {/* Stepper Navigation: Phase 2, 3, 4 will strictly show 🔒 */}
+            {/* Stepper Navigation: Phase 2, 3, 4 strictly show 🔒 */}
             <div className="bg-[#0e131d] px-4 py-2.5 border-b border-gray-800/80 flex items-center gap-2 overflow-x-auto">
               {currentSteps.map((st, i) => {
                 const isActive = i === activeStepIdx;
@@ -424,7 +423,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
                 <p className="text-xs text-gray-400 mt-1">{currentStep.goal}</p>
               </div>
 
-              {/* If step is locked (Phases 2, 3, 4 for free users), show Pro Paywall */}
+              {/* If step is locked, show Pro Paywall */}
               {isCurrentStepLocked ? (
                 <div className="bg-gradient-to-b from-[#131926] to-[#0a0e16] border border-amber-500/40 rounded-2xl p-6 text-center space-y-4 shadow-xl">
                   <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto text-xl font-bold">
