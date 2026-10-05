@@ -1,6 +1,6 @@
 export const DEFAULT_CHECKOUT_URL =
   process.env.NEXT_PUBLIC_LEMONSQUEEZY_PRO_CHECKOUT_URL ||
-  'https://promptory-ai.lemonsqueezy.com/checkout/buy/d732cb82-7372-4365-95f2-852a9212fab3?discount=0';
+  'https://promptory-ai.lemonsqueezy.com/checkout/buy/750e2a22-3cc6-45fe-9b40-b4549cd38f8c';
 
 export function getCheckoutUrl(email?: string | null, name?: string | null): string {
   const base = DEFAULT_CHECKOUT_URL;

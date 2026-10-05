@@ -50,7 +50,7 @@ export default function ProPaywall({
 
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
           <a
-            href={checkoutUrl}
+            href="/pricing"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
