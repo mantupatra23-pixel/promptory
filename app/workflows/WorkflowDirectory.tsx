@@ -55,13 +55,13 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
 
       const email = currentUser.email.toLowerCase().trim();
 
-      // 1. Owner VIP: mantupatra23@gmail.com hamesha free unlocked
+      // 1. Owner VIP: mantupatra23@gmail.com hamesha free unlocked rahega
       if (email === 'mantupatra23@gmail.com') {
         setIsSubscribedPro(true);
         return;
       }
 
-      // 2. Real paying subscriber check from Supabase table
+      // 2. Verified Paying User check from Supabase subscriptions table
       try {
         const { data: sub } = await supabase
           .from('subscriptions')
@@ -96,6 +96,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
   }, []);
 
   const isVipFounder = user?.email?.toLowerCase() === 'mantupatra23@gmail.com';
+  // Sirf Admin ya Paid DB Subscriber ke liye hi true hoga
   const hasProSubscription = isVipFounder || isSubscribedPro;
 
   const parseSteps = (wf: Workflow): Step[] => {
@@ -132,7 +133,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
   const currentSteps = selectedWorkflow ? parseSteps(selectedWorkflow) : [];
   const currentStep = currentSteps[activeStepIdx] || null;
 
-  // Strict Rule: Phase 1 (index 0) free, Phase 2, 3, 4 strictly locked
+  // Strict Rule: Phase 1 (index 0) free, Phase 2, 3, 4 (index > 0) strictly locked
   const isCurrentStepLocked =
     Boolean(selectedWorkflow?.is_pro) && activeStepIdx > 0 && !hasProSubscription;
 
@@ -235,7 +236,7 @@ export default function WorkflowDirectory({ initialWorkflows }: { initialWorkflo
         </div>
       </div>
 
-      {/* Grid */}
+      {/* Workflows Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredWorkflows.map((wf) => {
           const steps = parseSteps(wf);
