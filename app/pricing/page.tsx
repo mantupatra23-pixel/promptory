@@ -17,7 +17,7 @@ export default function PricingPage() {
   const isVipFounder = user?.email?.toLowerCase() === 'mantupatra23@gmail.com';
 
   // Lemon Squeezy checkout URLs (Set in Vercel or replace with your store checkout link)
-  const checkoutUrl = process.env.NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL || 'https://promptory.lemonsqueezy.com/buy';
+  const checkoutUrl = process.env.NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL || 'https://promptory-ai.lemonsqueezy.com/checkout/buy/750e2a22-3cc6-45fe-9b40-b4549cd38f8c';
 
   return (
     <div className="min-h-screen bg-[#07090e] text-gray-100 py-12 px-4 sm:px-6 lg:px-8">

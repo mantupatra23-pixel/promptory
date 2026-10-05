@@ -109,7 +109,7 @@ export default function ProfilePage() {
   
   const dynamicCheckoutUrl = typeof getCheckoutUrl === 'function' 
     ? getCheckoutUrl(user?.email) 
-    : (process.env.NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL || 'https://promptory.lemonsqueezy.com/buy');
+    : (process.env.NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL || 'https://promptory-ai.lemonsqueezy.com/checkout/buy/750e2a22-3cc6-45fe-9b40-b4549cd38f8c');
 
   const copyCliCommand = () => {
     navigator.clipboard.writeText('npx promptory-cli pull --all');
