@@ -11,6 +11,28 @@ export async function GET() {
     }
     const existingCols = sample && sample.length > 0 ? Object.keys(sample[0]) : [];
 
+    const p1Text = `Act as a Principal Full-Stack Engineer and Cursor IDE configuration architect. Generate strict, production-ready .cursorrules for Next.js 15 App Router with Supabase authentication and Tailwind CSS.
+
+### MANDATORY CONTRACTS
+1. Enforce TypeScript strict mode without any use of "any".
+2. All server mutations must execute inside Server Actions using safe-action patterns.
+3. Always use Supabase SSR client (@supabase/ssr) instead of deprecated auth-helpers.
+4. Output valid, unescaped markdown ready to be placed directly in .cursorrules.`;
+
+    const p2Text = `Act as a Principal Database Reliability Engineer (DBA). Given a slow query and EXPLAIN (ANALYZE, BUFFERS) execution tree, diagnose the root bottleneck.
+
+### ANALYSIS PROTOCOL
+1. Isolate high-cost Seq Scans, nested loops, and memory spill-to-disk events.
+2. Write zero-downtime CREATE INDEX CONCURRENTLY statements.
+3. Provide restructured CTEs / SQL syntax to minimize buffer read counts.`;
+
+    const p3Text = `Act as an AI Systems Architect specializing in autonomous agent tool orchestration. Architect deterministic tool definitions and multi-agent handoff contracts.
+
+### ENFORCEMENT RULES
+1. Define rigid JSON schemas with strict: true validation.
+2. Implement fail-closed timeout budgets and anti-loop escape protocols.
+3. Include fallback handlers when external API parameters fail schema validation.`;
+
     const killerPrompts = [
       {
         title: 'Next.js 15 + Supabase Production .cursorrules Engine',
@@ -23,13 +45,8 @@ export async function GET() {
         quality_score: 99,
         description: 'Zero-hallucination IDE rule configuration for App Router, Server Actions, TypeScript strict types, and Supabase SSR authentication.',
         is_featured: true,
-        prompt_text: `Act as a Principal Full-Stack Engineer and Cursor IDE configuration architect. Generate strict, production-ready .cursorrules for Next.js 15 App Router with Supabase authentication and Tailwind CSS.
-
-### MANDATORY CONTRACTS
-1. Enforce TypeScript strict mode without any use of "any".
-2. All server mutations must execute inside Server Actions using safe-action patterns.
-3. Always use Supabase SSR client (@supabase/ssr) instead of deprecated auth-helpers.
-4. Output valid, unescaped markdown ready to be placed directly in .cursorrules.`
+        prompt_template: p1Text,
+        prompt_text: p1Text
       },
       {
         title: 'DeepSeek-R1 Autonomous SQL EXPLAIN & Index Profiler',
@@ -42,12 +59,8 @@ export async function GET() {
         quality_score: 100,
         description: 'Deterministic PostgreSQL query planner optimizer. Analyzes slow sequential scans, buffer hits, and outputs zero-downtime concurrent index queries.',
         is_featured: true,
-        prompt_text: `Act as a Principal Database Reliability Engineer (DBA). Given a slow query and EXPLAIN (ANALYZE, BUFFERS) execution tree, diagnose the root bottleneck.
-
-### ANALYSIS PROTOCOL
-1. Isolate high-cost Seq Scans, nested loops, and memory spill-to-disk events.
-2. Write zero-downtime CREATE INDEX CONCURRENTLY statements.
-3. Provide restructured CTEs / SQL syntax to minimize buffer read counts.`
+        prompt_template: p2Text,
+        prompt_text: p2Text
       },
       {
         title: 'Multi-Agent Tool Calling JSON Schema & Handoff Contract',
@@ -60,12 +73,8 @@ export async function GET() {
         quality_score: 98,
         description: 'Production-ready JSON schemas and anti-loop recovery protocols for LangGraph, CrewAI, and OpenAI function calling agents.',
         is_featured: true,
-        prompt_text: `Act as an AI Systems Architect specializing in autonomous agent tool orchestration. Architect deterministic tool definitions and multi-agent handoff contracts.
-
-### ENFORCEMENT RULES
-1. Define rigid JSON schemas with strict: true validation.
-2. Implement fail-closed timeout budgets and anti-loop escape protocols.
-3. Include fallback handlers when external API parameters fail schema validation.`
+        prompt_template: p3Text,
+        prompt_text: p3Text
       }
     ];
 
@@ -77,6 +86,9 @@ export async function GET() {
           payload[k] = v;
         }
       }
+      // Ensure required prompt_template column is always assigned
+      payload['prompt_template'] = item.prompt_template;
+
       const { error } = await supabase.from('prompts').upsert(payload, { onConflict: 'slug' });
       if (error) {
         results.push({ slug: item.slug, status: 'error', message: error.message });
