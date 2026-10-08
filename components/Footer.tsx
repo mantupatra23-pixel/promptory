@@ -135,6 +135,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/blog/fastapi-vs-nextjs-for-ai-backend"
+                  className="hover:text-emerald-400 transition"
+                >
+                  ⚡ FastAPI vs Next.js (AI)
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/blog/nextjs-15-server-actions-best-practices"
                   className="hover:text-emerald-400 transition"
                 >
