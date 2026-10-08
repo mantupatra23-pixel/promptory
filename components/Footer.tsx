@@ -135,6 +135,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/blog/deepseek-r1-postgresql-optimization"
+                  className="text-purple-400 font-medium hover:underline flex items-center gap-1"
+                >
+                  <span>🐘 Postgres Profiler (DeepSeek)</span>
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/blog/fastapi-vs-nextjs-for-ai-backend"
                   className="hover:text-emerald-400 transition"
                 >
