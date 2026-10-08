@@ -127,8 +127,16 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/cursor-rules"
+                  className="text-emerald-400 font-semibold hover:underline flex items-center gap-1"
+                >
+                  <span>⚡ Cursor Rules (Next.js 15)</span>
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/blog/best-ai-prompts-for-developers"
-                  className="text-emerald-400 font-semibold hover:underline"
+                  className="hover:text-emerald-400 transition"
                 >
                   ★ Best AI Prompts (2026)
                 </Link>
