@@ -126,12 +126,20 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link
+                  href="/blog/best-ai-prompts-for-developers"
+                  className="text-emerald-400 font-semibold hover:underline"
+                >
+                  ★ Best AI Prompts (2026)
+                </Link>
+              </li>
+              <li>
                 <Link href="/benchmarks" className="hover:text-emerald-400 transition">
                   Architecture Guide
                 </Link>
               </li>
               <li>
-                <Link href="/guides/production-ai-system-prompts" className="hover:text-emerald-400 transition-colors text-emerald-400 font-semibold">
+                <Link href="/guides/production-ai-system-prompts" className="hover:text-emerald-400 transition-colors">
                   Speed Benchmarks
                 </Link>
               </li>
