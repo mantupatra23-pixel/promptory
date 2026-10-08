@@ -45,17 +45,32 @@ Structure each section with explicit directives:
 - Zero generic boilerplate; every heading must solve a specific micro-intent query.
 - Use explicit markdown formatting ready for immediate editorial assignment.`;
 
-    // Database me existing prompt ko find aur update karein
-    const { data, error } = await supabase
+    // 1. Table ke actual columns check karein
+    const { data: sample, error: sampleErr } = await supabase.from('prompts').select('*').limit(1);
+    if (sampleErr) {
+      return NextResponse.json({ error: sampleErr.message }, { status: 500 });
+    }
+    const existingCols = sample && sample.length > 0 ? Object.keys(sample[0]) : [];
+
+    const candidateFields: Record<string, any> = {
+      quality_score: 99,
+      prompt_template: upgradedTemplate,
+      prompt_text: upgradedTemplate,
+      description: 'Enterprise semantic SEO content blueprint. Engineers search-intent architecture, PAA featured snippet capture, LSI entity matrices, and editorial sprint assignments.'
+    };
+
+    // Sirf wahi columns bheje jo schema me maujood hain
+    const updatePayload: Record<string, any> = {};
+    for (const [k, v] of Object.entries(candidateFields)) {
+      if (existingCols.includes(k)) {
+        updatePayload[k] = v;
+      }
+    }
+
+    // 2. Title se update attempt karein
+    let { data, error } = await supabase
       .from('prompts')
-      .update({
-        quality_score: 99,
-        prompt_template: upgradedTemplate,
-        prompt_text: upgradedTemplate,
-        description: 'Enterprise semantic SEO content blueprint. Engineers search-intent architecture, PAA featured snippet capture, LSI entity matrices, and editorial sprint assignments.',
-        category: 'SEO Specialist',
-        target_role: 'SEO Content Architect'
-      })
+      .update(updatePayload)
       .ilike('title', '%SEO-Optimized Content Outline%')
       .select();
 
@@ -63,23 +78,16 @@ Structure each section with explicit directives:
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Agar title se exact match na mile toh slug match try karein
+    // Agar title exact match na ho toh slug se update karein
     if (!data || data.length === 0) {
-      const { data: slugData, error: slugErr } = await supabase
+      const res = await supabase
         .from('prompts')
-        .update({
-          quality_score: 99,
-          prompt_template: upgradedTemplate,
-          prompt_text: upgradedTemplate,
-          description: 'Enterprise semantic SEO content blueprint. Engineers search-intent architecture, PAA featured snippet capture, LSI entity matrices, and editorial sprint assignments.',
-          category: 'SEO Specialist',
-          target_role: 'SEO Content Architect'
-        })
+        .update(updatePayload)
         .ilike('slug', '%content-outline%')
         .select();
 
-      if (slugErr) return NextResponse.json({ error: slugErr.message }, { status: 500 });
-      return NextResponse.json({ success: true, updatedBy: 'slug', count: slugData?.length, data: slugData });
+      if (res.error) return NextResponse.json({ error: res.error.message }, { status: 500 });
+      return NextResponse.json({ success: true, updatedBy: 'slug', count: res.data?.length, data: res.data });
     }
 
     return NextResponse.json({ success: true, updatedBy: 'title', count: data.length, data });
