@@ -135,6 +135,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/blog/nextjs-15-server-actions-best-practices"
+                  className="hover:text-emerald-400 transition"
+                >
+                  🛡️ Server Actions (Next.js 15)
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/blog/best-ai-prompts-for-developers"
                   className="hover:text-emerald-400 transition"
                 >
