@@ -335,7 +335,7 @@ export default function GuidePage() {
                 Eliminate Prompt Trial-and-Error in Your Team
               </h3>
               <p className="text-xs sm:text-sm text-gray-400">
-                Explore 380+ tested prompt blueprints and launch 10+ multi-step sequential pipelines in our interactive workbench.
+                Explore 400+ tested prompt blueprints and launch 10+ multi-step sequential pipelines in our interactive workbench.
               </p>
             </div>
 
@@ -347,10 +347,10 @@ export default function GuidePage() {
                 Launch Workflows Hub &rarr;
               </Link>
               <Link
-                href="/dir"
+                href="/directory"
                 className="px-6 py-3 rounded-xl bg-[#0c1017] hover:bg-gray-800 text-white border border-gray-700 font-semibold text-xs transition-colors"
               >
-                Browse 380+ Blueprints
+                Browse 400+ Blueprints
               </Link>
               <Link
                 href="/pricing"

@@ -50,7 +50,7 @@ export default function PromptBaseComparisonPage() {
             name: 'What is the main difference between Promptory and PromptBase?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'PromptBase operates as a legacy marketplace charging $1.99 to $9.99 for individual text snippets. Promptory is an integrated prompt architecture platform offering 380+ free, quality-scored developer blueprints, 4-phase sequential chaining pipelines, and native IDE synchronization (.cursorrules and CLI).',
+              text: 'PromptBase operates as a legacy marketplace charging $1.99 to $9.99 for individual text snippets. Promptory is an integrated prompt architecture platform offering 400+ free, quality-scored developer blueprints, 4-phase sequential chaining pipelines, and native IDE synchronization (.cursorrules and CLI).',
             },
           },
           {
@@ -85,7 +85,7 @@ export default function PromptBaseComparisonPage() {
   const comparisonFeatures = [
     {
       feature: 'Pricing Model',
-      promptory: '380+ Free Open Blueprints + ₹799/mo Pro Pass',
+      promptory: '400+ Free Open Blueprints + ₹799/mo Pro Pass',
       promptbase: 'Pay-per-prompt ($1.99 – $9.99 each)',
       highlight: true,
     },
@@ -166,7 +166,7 @@ export default function PromptBaseComparisonPage() {
               <Zap className="w-4 h-4" /> Core Evaluation Verdict
             </div>
             <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
-              <strong>PromptBase</strong> is built around a transactional retail model where individual creators sell standalone prompts for $1.99 to $9.99 each. In contrast, <strong>Promptory</strong> provides a modern developer hub designed for software engineering and technical founders—combining 380+ free quality-scored blueprints, multi-step sequential chaining pipelines (4-phase contract-to-code execution), and native IDE rule synchronization (.cursorrules and CLI automation).
+              <strong>PromptBase</strong> is built around a transactional retail model where individual creators sell standalone prompts for $1.99 to $9.99 each. In contrast, <strong>Promptory</strong> provides a modern developer hub designed for software engineering and technical founders—combining 400+ free quality-scored blueprints, multi-step sequential chaining pipelines (4-phase contract-to-code execution), and native IDE rule synchronization (.cursorrules and CLI automation).
             </p>
           </div>
 
@@ -239,7 +239,7 @@ export default function PromptBaseComparisonPage() {
               </div>
               <h3 className="text-base font-bold text-white">3. Zero Friction & Transparent Value</h3>
               <p className="text-xs text-gray-400 leading-relaxed">
-                PromptBase hides prompt contents behind individual credit card paywalls. Promptory allows open exploration of 380+ prompts without sign-up, offering flat-rate ₹799/month Pro access only for power workflows.
+                PromptBase hides prompt contents behind individual credit card paywalls. Promptory allows open exploration of 400+ prompts without sign-up, offering flat-rate ₹799/month Pro access only for power workflows.
               </p>
             </div>
           </section>
@@ -257,7 +257,7 @@ export default function PromptBaseComparisonPage() {
                   <span className="text-emerald-400 font-mono transition group-open:rotate-180">&darr;</span>
                 </summary>
                 <p className="text-xs text-gray-400 mt-3 leading-relaxed border-t border-gray-800/60 pt-3">
-                  PromptBase operates as a legacy marketplace charging $1.99 to $9.99 for individual text snippets. Promptory is an integrated prompt architecture platform offering 380+ free, quality-scored developer blueprints, 4-phase sequential chaining pipelines, and native IDE synchronization (.cursorrules and CLI).
+                  PromptBase operates as a legacy marketplace charging $1.99 to $9.99 for individual text snippets. Promptory is an integrated prompt architecture platform offering 400+ free, quality-scored developer blueprints, 4-phase sequential chaining pipelines, and native IDE synchronization (.cursorrules and CLI).
                 </p>
               </details>
 
@@ -300,7 +300,7 @@ export default function PromptBaseComparisonPage() {
                 Switch to Deterministic AI Workflows
               </h3>
               <p className="text-xs sm:text-sm text-gray-400">
-                Stop paying per prompt. Explore 380+ free blueprints or launch production 4-phase pipelines in our interactive workbench.
+                Stop paying per prompt. Explore 400+ free blueprints or launch production 4-phase pipelines in our interactive workbench.
               </p>
             </div>
 
@@ -313,10 +313,10 @@ export default function PromptBaseComparisonPage() {
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
               <Link
-                href="/dir"
+                href="/directory"
                 className="px-6 py-3 rounded-xl bg-[#0c1017] hover:bg-gray-800 text-white border border-gray-700 font-semibold text-xs transition-colors"
               >
-                Browse 380+ Blueprints
+                Browse 400+ Blueprints
               </Link>
               <Link
                 href="/pricing"

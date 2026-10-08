@@ -93,7 +93,7 @@ export default function PricingPage() {
           </h1>
 
           <p className="max-w-2xl mx-auto text-xs sm:text-base text-gray-400 leading-relaxed font-sans">
-            Unlock 380+ battle-tested system prompt blueprints, chained 4-phase workflows, negative constraints, and 1-click IDE rules for Cursor, Windsurf, and Claude.
+            Unlock 400+ battle-tested system prompt blueprints, chained 4-phase workflows, negative constraints, and 1-click IDE rules for Cursor, Windsurf, and Claude.
           </p>
 
           <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400 font-mono pt-1">
@@ -208,7 +208,7 @@ export default function PricingPage() {
                   <div className="p-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
                     <Check className="w-3.5 h-3.5" />
                   </div>
-                  <span><strong>Unlimited Access to All 380+ Blueprints</strong> (No 3-prompt lock)</span>
+                  <span><strong>Unlimited Access to All 400+ Blueprints</strong> (No 3-prompt lock)</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <div className="p-0.5 rounded bg-emerald-500/20 text-emerald-400 shrink-0">
@@ -285,7 +285,7 @@ export default function PricingPage() {
             <div className="text-[11px] text-gray-400 mt-0.5">Engineers & Founders</div>
           </div>
           <div className="p-4 rounded-2xl bg-[#0b0f17] border border-gray-800">
-            <div className="text-2xl font-extrabold text-emerald-400">380+</div>
+            <div className="text-2xl font-extrabold text-emerald-400">400+</div>
             <div className="text-[11px] text-gray-400 mt-0.5">Production Blueprints</div>
           </div>
           <div className="p-4 rounded-2xl bg-[#0b0f17] border border-gray-800">
@@ -355,7 +355,7 @@ export default function PricingPage() {
                 <tr>
                   <td className="py-3.5 px-4 font-medium text-white">Single System Prompts Directory</td>
                   <td className="py-3.5 px-4 text-center">3 Free Prompts</td>
-                  <td className="py-3.5 px-4 text-center text-emerald-400 font-semibold">380+ with Full Blueprints</td>
+                  <td className="py-3.5 px-4 text-center text-emerald-400 font-semibold">400+ with Full Blueprints</td>
                 </tr>
                 <tr>
                   <td className="py-3.5 px-4 font-medium text-white">Multi-Step Sequential AI Workflows</td>

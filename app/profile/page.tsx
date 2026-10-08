@@ -417,7 +417,7 @@ export default function ProfilePage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-white">Your Bookmarked Blueprints</h3>
-              <Link href="/dir" className="text-xs text-emerald-400 hover:underline">
+              <Link href="/directory" className="text-xs text-emerald-400 hover:underline">
                 Explore Directory &rarr;
               </Link>
             </div>
@@ -430,10 +430,10 @@ export default function ProfilePage() {
                   Click the bookmark icon on any system prompt or workflow in the directory to store it for quick access here.
                 </p>
                 <Link
-                  href="/dir"
+                  href="/directory"
                   className="inline-block mt-2 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-black hover:bg-emerald-400 transition"
                 >
-                  Browse 380+ Prompts
+                  Browse 400+ Prompts
                 </Link>
               </div>
             ) : (

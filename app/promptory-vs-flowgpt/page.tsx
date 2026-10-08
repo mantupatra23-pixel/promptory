@@ -115,8 +115,8 @@ export default function FlowGPTComparisonPage() {
               <span>Explore Workflows</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
-            <Link href="/dir" className="px-5 py-2.5 rounded-xl bg-gray-800 text-white font-semibold text-xs">
-              Browse 380+ Prompts
+            <Link href="/directory" className="px-5 py-2.5 rounded-xl bg-gray-800 text-white font-semibold text-xs">
+              Browse 400+ Prompts
             </Link>
           </div>
         </div>

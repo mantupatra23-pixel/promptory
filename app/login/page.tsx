@@ -100,7 +100,7 @@ export default function LoginPage() {
             {mode === 'forgot'
               ? 'Enter your registered email to receive a secure password recovery link.'
               : mode === 'signup'
-              ? 'Unlock 380+ prompts, frontier model chaining, and IDE sync.'
+              ? 'Unlock 400+ prompts, frontier model chaining, and IDE sync.'
               : 'Sign in to access your saved prompts, active pipelines, and Pro pass.'}
           </p>
         </div>
