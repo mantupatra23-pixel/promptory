@@ -57,7 +57,7 @@ export default function BestAiPromptsPage() {
           <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 uppercase tracking-wider">
             <Link href="/" className="hover:underline">Promptory</Link>
             <span>/</span>
-            <Link href="/dir" className="hover:underline">Engineering Guides</Link>
+            <Link href="/directory" className="hover:underline">Engineering Guides</Link>
             <span>/</span>
             <span className="text-slate-400">Best AI Prompts</span>
           </div>
@@ -268,7 +268,7 @@ EXECUTION PROTOCOL:
           <ol className="list-decimal pl-6 space-y-3 text-slate-300">
             <li><strong>Research & Isolate:</strong> Identify repetitive engineering bottlenecks (e.g., PR code reviews, unit test mocking, database migrations).</li>
             <li><strong>Parameterize:</strong> Replace static context with template variables (<code className="text-emerald-300 font-mono text-xs">{'{{PAYLOAD}}'}</code>, <code className="text-emerald-300 font-mono text-xs">{'{{FRAMEWORK}}'}</code>).</li>
-            <li><strong>Version Control:</strong> Keep prompt templates in Git alongside project code or sync them via <Link href="/dir" className="text-emerald-400 underline">Promptory’s developer directory</Link>.</li>
+            <li><strong>Version Control:</strong> Keep prompt templates in Git alongside project code or sync them via <Link href="/directory" className="text-emerald-400 underline">Promptory’s developer directory</Link>.</li>
             <li><strong>Continuous CI/CD Integration:</strong> Inject your team’s verified prompt rules into automated GitHub Actions review bots.</li>
           </ol>
         </section>
@@ -310,7 +310,7 @@ EXECUTION PROTOCOL:
           </p>
           <div className="pt-2">
             <Link
-              href="/dir"
+              href="/directory"
               className="inline-flex items-center px-6 py-3 rounded-xl font-semibold text-black bg-emerald-400 hover:bg-emerald-300 transition-colors shadow-lg shadow-emerald-500/10 text-sm"
             >
               Explore AI Engineering Directory →
